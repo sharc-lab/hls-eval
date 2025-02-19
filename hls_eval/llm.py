@@ -1,0 +1,17 @@
+COMMON_VLLM_ARGS = {
+    "tensor_parallel_size": 2,
+    "gpu_memory_utilization": 0.9,
+    "trust_remote_code": True,
+    "distributed_executor_backend": "mp",
+    "enable_lora": False,
+    "enforce_eager": False,
+    "enable_prefix_caching": True,
+    "compilation_config": 3,
+    "enable_chunked_prefill": True,
+    "disable_custom_all_reduce": True,
+    "max_model_len": 8192,
+    "max_seq_len_to_capture": 8192,
+    "max_num_batched_tokens": 8192,
+    "max_num_seqs": 128,
+    "seed": 0,
+}
