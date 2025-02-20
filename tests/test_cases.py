@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from hls_eval.data import BenchmarkCase
+from hls_eval.data import BenchmarkCase, find_benchmark_case_dirs
 from hls_eval.tools import CPPCompilerTool, VitisHLSSynthTool, auto_find_vitis_hls_dir
 from hls_eval.utils import unwrap
 
@@ -17,10 +17,10 @@ LOGGER.propagate = True
 LOGGER.setLevel(logging.DEBUG)
 
 
-def find_benchmark_case_dirs(start_dir) -> list[Path]:
-    all_dirs = [d for d in start_dir.rglob("*") if d.is_dir()]
-    benchmark_case_dirs = [d for d in all_dirs if (d / "hls_eval_config.toml").exists()]
-    return benchmark_case_dirs
+# def find_benchmark_case_dirs(start_dir) -> list[Path]:
+#     all_dirs = [d for d in start_dir.rglob("*") if d.is_dir()]
+#     benchmark_case_dirs = [d for d in all_dirs if (d / "hls_eval_config.toml").exists()]
+#     return benchmark_case_dirs
 
 
 ALL_BENCHMARK_CASES = find_benchmark_case_dirs(DIR_HLS_EVAL_DATA)
@@ -30,7 +30,7 @@ ALL_BENCHMARK_CASES = find_benchmark_case_dirs(DIR_HLS_EVAL_DATA)
     "case_dir", ALL_BENCHMARK_CASES, ids=[d.name for d in ALL_BENCHMARK_CASES]
 )
 def test_cases_load(case_dir):
-    benchmark_case = BenchmarkCase(case_dir)
+    benchmark_case = BenchmarkCase(case_dir, name=case_dir.name)
     assert benchmark_case
 
 
@@ -38,8 +38,10 @@ def test_cases_load(case_dir):
     "case_dir", ALL_BENCHMARK_CASES, ids=[d.name for d in ALL_BENCHMARK_CASES]
 )
 def test_cases_compile_and_run(case_dir, tmp_path):
-    benchmark_case = BenchmarkCase(case_dir)
-    benchmark_case_synth = benchmark_case.copy_to(tmp_path)
+    LOGGER.debug(f"Running compile and run in tmp_path: {tmp_path}")
+
+    benchmark_case = BenchmarkCase(case_dir, name=case_dir.name)
+    benchmark_case_synth = benchmark_case.copy_to(tmp_path / "design_base")
 
     vitis_hls_dir = unwrap(auto_find_vitis_hls_dir(), "Vitis HLS bin not auto found")
     tool_compiler = CPPCompilerTool(vitis_hls_dir)
@@ -64,11 +66,10 @@ def test_cases_compile_and_run(case_dir, tmp_path):
     "case_dir", ALL_BENCHMARK_CASES, ids=[d.name for d in ALL_BENCHMARK_CASES]
 )
 def test_cases_synth(case_dir, tmp_path):
-    benchmark_case = BenchmarkCase(case_dir)
-    benchmark_case_synth = benchmark_case.copy_to(tmp_path)
+    LOGGER.debug(f"Running HLS synthesis in case_dir {tmp_path}")
 
-    LOGGER.debug(f"Running HLS synthesis case_dir {case_dir}")
-    LOGGER.debug(f"Running HLS synthesis in {tmp_path}")
+    benchmark_case = BenchmarkCase(case_dir, name=case_dir.name)
+    benchmark_case_synth = benchmark_case.copy_to(tmp_path / "design_base")
 
     vitis_hls_dir = unwrap(auto_find_vitis_hls_dir(), "Vitis HLS bin not auto found")
     tool_hls = VitisHLSSynthTool(vitis_hls_dir)

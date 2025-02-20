@@ -1,5 +1,4 @@
 import shutil
-from dataclasses import dataclass, field
 from pathlib import Path
 
 CPP_EXTENSIONS = [
@@ -15,12 +14,20 @@ H_EXTENSIONS = [
 SOURCE_FILE_EXTENSIONS = CPP_EXTENSIONS + H_EXTENSIONS
 
 
-@dataclass
-class BenchmarkCase:
-    design_dir: str
-    tags: list[str] = field(default_factory=list)
+# @dataclass
+# class BenchmarkCase:
+#     design_dir: Path
+#     tags: list[str] = field(default_factory=list)
 
-    def __post_init__(self):
+
+class BenchmarkCase:
+    def __init__(self, design_dir: Path, name: str | None = None, tags: list[str] = []):
+        self.design_dir = design_dir
+        if name is None:
+            name = design_dir.name
+        self.name = name
+        self.tags = tags
+
         # check that the dir exists
         if not self.design_dir.exists():
             raise FileNotFoundError(
@@ -32,9 +39,40 @@ class BenchmarkCase:
                 f"Design directory {self.design_dir} is not a directory"
             )
 
-    @property
-    def name(self) -> str:
-        return self.design_dir.name
+        # check if it containts a non empty top.txt file
+        if not self.top_file.exists():
+            raise FileNotFoundError(f"Top file {self.top_file} does not exist")
+        if self.top_file.is_dir():
+            raise IsADirectoryError(f"Top file {self.top_file} is a directory")
+        if not self.top_file.read_text().strip():
+            raise ValueError(f"Top file {self.top_file} is empty")
+
+        # check if a single _tb file exists
+        tb_matches = [f for f in self.files if f.stem.endswith("_tb")]
+        if len(tb_matches) != 1:
+            raise ValueError(f"Expected 1 _tb file, found {len(tb_matches)}")
+        tb_file = tb_matches[0]
+        if not tb_file.exists():
+            raise FileNotFoundError(f"Testbench file {tb_file} does not exist")
+        if tb_file.is_dir():
+            raise IsADirectoryError(f"Testbench file {tb_file} is a directory")
+        if not tb_file.read_text().strip():
+            raise ValueError(f"Testbench file {tb_file} is empty")
+
+        # check if a kernel_description.md file exists
+        kernel_description_fp = self.design_dir / "kernel_description.md"
+        if not kernel_description_fp.exists():
+            raise FileNotFoundError(
+                f"Kernel description file {kernel_description_fp} does not exist"
+            )
+        if kernel_description_fp.is_dir():
+            raise IsADirectoryError(
+                f"Kernel description file {kernel_description_fp} is a directory"
+            )
+        if not kernel_description_fp.read_text().strip():
+            raise ValueError(
+                f"Kernel description file {kernel_description_fp} is empty"
+            )
 
     @property
     def files(self) -> list[Path]:
@@ -57,6 +95,20 @@ class BenchmarkCase:
         return [f for f in self.files if f.suffix not in SOURCE_FILE_EXTENSIONS]
 
     @property
+    def tb_file(self) -> Path:
+        tb_matches = [f for f in self.files if f.name.endswith("_tb.cpp")]
+        if len(tb_matches) != 1:
+            raise ValueError(f"Expected 1 _tb file, found {len(tb_matches)}")
+        return tb_matches[0]
+
+    @property
+    def kernel_description_fp(self) -> Path:
+        fp = self.design_dir / "kernel_description.md"
+        if not fp.exists():
+            raise FileNotFoundError(f"Kernel description file {fp} does not exist")
+        return fp
+
+    @property
     def top_file(self) -> Path:
         return self.design_dir / "top.txt"
 
@@ -67,18 +119,15 @@ class BenchmarkCase:
             raise ValueError(f"Top file {self.top_file} is empty")
         return top_fn
 
-    # @property
-    # def makefile(self) -> Path:
-    #     return find_file(self, ["makefile", "Makefile"])
-
-    # @property
-    # def readme(self) -> Path:
-    #     return find_file(self, ["readme", "README", "readme.md", "README.md"])
-
     def copy_to(self, dest: Path) -> "BenchmarkCase":
-        current_dir_name = self.design_dir.name
-        if not dest.exists():
-            raise FileNotFoundError(f"Design directory {dest} does not exist")
-        dest = dest / current_dir_name
-        shutil.copytree(self.design_dir, dest)
+        shutil.copytree(
+            self.design_dir,
+            dst=dest,
+        )
         return BenchmarkCase(dest, tags=self.tags)
+
+
+def find_benchmark_case_dirs(start_dir) -> list[Path]:
+    all_dirs = [d for d in start_dir.rglob("*") if d.is_dir()]
+    benchmark_case_dirs = [d for d in all_dirs if (d / "hls_eval_config.toml").exists()]
+    return benchmark_case_dirs

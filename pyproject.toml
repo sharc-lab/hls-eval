@@ -4,18 +4,10 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = "==3.12.*"
-dependencies = [
-    "psutil>=7.0.0",
-    "vllm>=0.7.2",
-]
+dependencies = ["psutil>=7.0.0", "vllm>=0.7.2"]
 
 [dependency-groups]
-dev = [
-    "mypy>=1.15.0",
-    "pytest>=8.3.4",
-    "pytest-xdist>=3.6.1",
-    "ruff>=0.9.6",
-]
+dev = ["mypy>=1.15.0", "pytest>=8.3.4", "pytest-xdist>=3.6.1", "ruff>=0.9.6"]
 
 [tool.pytest.ini_options]
 log_cli = true
