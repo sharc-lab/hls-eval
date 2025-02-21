@@ -1,0 +1,6 @@
+# config file
+tcl: "inputs/directives.tcl"
+includes: "inputs/shift_rows/shift_rows_inc.txt"
+orig_code: "inputs/shift_rows/shift_rows.txt"
+test_code: "inputs/shift_rows/shift_rows_test.txt"
+top_function: "ShiftRows"

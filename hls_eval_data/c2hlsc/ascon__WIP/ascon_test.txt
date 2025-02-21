@@ -1,0 +1,37 @@
+
+
+
+int main() {
+    /* count = 624 */
+    char message_hex[] = "000102030405060708090A0B0C0D0E0F1011";
+    char ad_hex[] = "000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C";
+
+    char key_hex[] = "000102030405060708090A0B0C0D0E0F";
+    char nonce_hex[] = "000102030405060708090A0B0C0D0E0F";
+
+    uint8_t *message = hex_to_bytes(message_hex, sizeof(message_hex));
+    uint32_t message_len = sizeof(message_hex) / 2;
+    uint8_t *key = hex_to_bytes(key_hex, KEY_SIZE * 2);
+    uint8_t *nonce = hex_to_bytes(nonce_hex, NONCE_SIZE * 2);
+    uint8_t *ad = hex_to_bytes(ad_hex, sizeof(ad_hex));
+    uint32_t adlen = sizeof(ad_hex) / 2;
+
+    uint8_t *cipher_text = (uint8_t*)malloc(message_len);
+    uint8_t tag[20];
+
+    encrypt(cipher_text, tag, message, message_len, key, ad, adlen, nonce); 
+
+    printf("cipher_text: %s\n", bytes_to_hex(cipher_text, message_len));
+    printf("tag: %s\n", bytes_to_hex(tag, 16));
+
+    uint8_t *plaint_text = (uint8_t*)malloc(message_len);
+    uint8_t verify = decrypt(plaint_text, tag, cipher_text, message_len, key, ad, adlen, nonce);
+    printf("decryptted plain text: %s\n", bytes_to_hex(plaint_text, message_len));
+    printf("tag verify: %d\n", verify);
+
+    free(cipher_text);
+    free(plaint_text);
+
+    printf("done!\n");
+    return 0;
+}

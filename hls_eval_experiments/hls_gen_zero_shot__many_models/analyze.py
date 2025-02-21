@@ -167,8 +167,7 @@ def plot_pass_rate(df_pass: pd.DataFrame):
             .mean()
             .to_dict()
         )
-    # df_pass_agg = pd.DataFrame(pass_rates_agg).T
-    # make a column name model
+
     df_pass_agg = (
         pd.DataFrame(pass_rates_agg).T.reset_index().rename(columns={"index": "model"})
     )
@@ -181,8 +180,10 @@ def plot_pass_rate(df_pass: pd.DataFrame):
 
     fig, ax = plt.subplots(figsize=(8, 4))
 
-    ax.grid(axis="y", linestyle="--", alpha=0.8)
+    ax.grid(axis="y", linestyle="--", alpha=0.8, zorder=-10)
     ax.set_axisbelow(True)
+
+    ax.hlines(y=1, color="black", linestyle="--", xmin=-0.5, xmax=len(models) - 0.5)
 
     sns.barplot(
         x="model",
@@ -191,11 +192,10 @@ def plot_pass_rate(df_pass: pd.DataFrame):
         hue_order=["pass_parse", "pass_compile", "pass_tb", "pass_synth"],
         data=df_pass_agg,
         ax=ax,
+        zorder=10,
     )
 
-    # set x range from 0 to 110%
     ax.set_ylim(0, 1.2)
-    # format as percent in 10% increments
 
     ax.set_yticks(np.arange(0, 1.1, 0.1))
     ax.set_yticklabels(

@@ -1,0 +1,6 @@
+# config file
+tcl: "inputs/directives.tcl"
+includes: "inputs/mix_columns/mix_cols_inc.txt"
+orig_code: "inputs/mix_columns/mix_cols.txt"
+test_code: "inputs/mix_columns/mix_col_test.txt"
+top_function: "MixColumns"
