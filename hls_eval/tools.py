@@ -91,6 +91,8 @@ class ExecutionData:
     return_code: int
     stdout: str
     stderr: str
+    t0: float
+    t1: float
     execution_time: float
     timeout: bool
 
@@ -172,6 +174,8 @@ class VitisHLSSynthTool:
                     return_code=-1,
                     stdout="",
                     stderr="",
+                    t0=t_0,
+                    t1=time.monotonic(),
                     execution_time=timeout,
                     timeout=True,
                 ),
@@ -193,6 +197,8 @@ class VitisHLSSynthTool:
                     return_code=p.returncode,
                     stdout=stdout,
                     stderr=stderr,
+                    t0=t_0,
+                    t1=t_1,
                     execution_time=dt,
                     timeout=False,
                 ),
@@ -216,6 +222,8 @@ class VitisHLSSynthTool:
                 return_code=p.returncode,
                 stdout=stdout,
                 stderr=stderr,
+                t0=t_0,
+                t1=t_1,
                 execution_time=dt,
                 timeout=False,
             ),
@@ -306,6 +314,8 @@ class CPPCompilerTool:
                 return_code=p.returncode,
                 stdout=p.stdout,
                 stderr=p.stderr,
+                t0=t_0,
+                t1=t_1,
                 execution_time=dt,
                 timeout=False,
             ),
@@ -331,6 +341,8 @@ class CPPCompilerTool:
                 stdout=p.stdout,
                 stderr=p.stderr,
                 execution_time=dt,
+                t0=t_0,
+                t1=t_1,
                 timeout=False,
             ),
             data_tool=None,

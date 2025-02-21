@@ -1,15 +1,5 @@
 import re
 
-# def build_input_code_prompt_xml(file_paths: list[Path]) -> str:
-#     p = ""
-#     p += "\n"
-#     for file_path in file_paths:
-#         p += f'<INPUT_CODE name="{file_path.name}">\n'
-#         p += f"{file_path.read_text()}\n"
-#         p += f'</INPUT_CODE name="{file_path.name}">\n'
-#     p += "\n"
-#     return p
-
 
 def build_input_code_prompt_xml(code: dict[str, str]) -> str:
     p = ""
@@ -20,17 +10,6 @@ def build_input_code_prompt_xml(code: dict[str, str]) -> str:
         p += f'</INPUT_CODE name="{name}">\n'
     p += "\n"
     return p
-
-
-# def build_input_code_prompt_md(file_paths: list[Path]) -> str:
-#     p = ""
-#     p += "\n"
-#     for file_path in file_paths:
-#         p += f"```{file_path}\n"
-#         p += f"{file_path.read_text()}\n"
-#         p += "```\n"
-#     p += "\n"
-#     return p
 
 
 def build_input_code_prompt_md(code: dict[str, str]) -> str:
@@ -96,3 +75,7 @@ def extract_code_markdown_from_llm_outout(llm_output: str) -> dict[str, str]:
         code[name] = llm_output[start:end]
 
     return code
+
+
+def approx_num_tokens(text: str, char_per_token_guess: int = 3) -> int:
+    return len(text) // char_per_token_guess + 1
