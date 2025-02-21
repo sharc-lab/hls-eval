@@ -14,4 +14,4 @@ struct AES_ctx {
     uint8_t RoundKey[AES_keyExpSize];
 };
 
-void AddRoundKey(uint8_t round, state_t *state, uint8_t *RoundKey);
+void AddRoundKey(unsigned char, unsigned char (*)[4][4], unsigned char const *);
