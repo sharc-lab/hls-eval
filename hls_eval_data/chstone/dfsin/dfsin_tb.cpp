@@ -49,8 +49,12 @@ int main() {
         result = local_sin(test_in[i]);
         main_result += (result != test_out[i]);
 
-        printf("input=%016llx expected=%016llx output=%016llx (%lf)\n",
-               test_in[i], test_out[i], result, ullong_to_double(result));
+        printf(
+            "input=%016llx expected=%016llx output=%016llx (%lf)\n",
+            test_in[i],
+            test_out[i],
+            result,
+            ullong_to_double(result));
     }
     printf("%d\n", main_result);
     return main_result;

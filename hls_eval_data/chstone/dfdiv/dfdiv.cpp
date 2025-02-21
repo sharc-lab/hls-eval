@@ -1,6 +1,5 @@
 #include "dfdiv.h"
 
-
 int8 float_rounding_mode = 0;
 int8 float_exception_flags = 0;
 
@@ -17,8 +16,13 @@ void shift64RightJamming(bits64 a, int16 count, bits64 *zPtr) {
     *zPtr = z;
 }
 
-void add128(bits64 a0, bits64 a1, bits64 b0, bits64 b1, bits64 *z0Ptr,
-            bits64 *z1Ptr) {
+void add128(
+    bits64 a0,
+    bits64 a1,
+    bits64 b0,
+    bits64 b1,
+    bits64 *z0Ptr,
+    bits64 *z1Ptr) {
     bits64 z1;
 
     z1 = a1 + b1;
@@ -26,8 +30,13 @@ void add128(bits64 a0, bits64 a1, bits64 b0, bits64 b1, bits64 *z0Ptr,
     *z0Ptr = a0 + b0 + (z1 < a1);
 }
 
-void sub128(bits64 a0, bits64 a1, bits64 b0, bits64 b1, bits64 *z0Ptr,
-            bits64 *z1Ptr) {
+void sub128(
+    bits64 a0,
+    bits64 a1,
+    bits64 b0,
+    bits64 b1,
+    bits64 *z0Ptr,
+    bits64 *z1Ptr) {
 
     *z1Ptr = a1 - b1;
     *z0Ptr = a0 - b0 - (a1 < b1);
@@ -148,8 +157,8 @@ int16 extractFloat64Exp(float64 a) { return (a >> 52) & 0x7FF; }
 
 flag extractFloat64Sign(float64 a) { return a >> 63; }
 
-static void normalizeFloat64Subnormal(bits64 aSig, int16 *zExpPtr,
-                                      bits64 *zSigPtr) {
+static void
+normalizeFloat64Subnormal(bits64 aSig, int16 *zExpPtr, bits64 *zSigPtr) {
     int8 shiftCount;
 
     shiftCount = countLeadingZeros64(aSig) - 11;

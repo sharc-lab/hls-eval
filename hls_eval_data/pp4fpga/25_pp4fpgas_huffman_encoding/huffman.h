@@ -23,68 +23,64 @@ const static int CODEWORD_LENGTH_BITS = 5;
 const static ap_uint<SYMBOL_BITS> INTERNAL_NODE = -1;
 
 typedef ap_uint<MAX_CODEWORD_LENGTH> Codeword;
-typedef ap_uint<MAX_CODEWORD_LENGTH + CODEWORD_LENGTH_BITS> PackedCodewordAndLength;
+typedef ap_uint<MAX_CODEWORD_LENGTH + CODEWORD_LENGTH_BITS>
+    PackedCodewordAndLength;
 typedef ap_uint<CODEWORD_LENGTH_BITS> CodewordLength;
 typedef ap_uint<32> Frequency;
 
 struct Symbol {
-	 ap_uint<SYMBOL_BITS> value;
-	 ap_uint<32> frequency;
+    ap_uint<SYMBOL_BITS> value;
+    ap_uint<32> frequency;
 };
 
-void huffman_encoding (
-	Symbol in[INPUT_SYMBOL_SIZE],
-	PackedCodewordAndLength encoding[INPUT_SYMBOL_SIZE],
-	int *num_nonzero_symbols
-);
+void huffman_encoding(
+    Symbol in[INPUT_SYMBOL_SIZE],
+    PackedCodewordAndLength encoding[INPUT_SYMBOL_SIZE],
+    int *num_nonzero_symbols);
 
-
-
-
-
-
-void filter(Symbol in[INPUT_SYMBOL_SIZE],
-            Symbol out[INPUT_SYMBOL_SIZE],
-            int *num_symbols);
-void sort(Symbol in[INPUT_SYMBOL_SIZE],
-          int num_symbols,
-          Symbol out[INPUT_SYMBOL_SIZE]);
-void create_tree (
+void filter(
+    Symbol in[INPUT_SYMBOL_SIZE],
+    Symbol out[INPUT_SYMBOL_SIZE],
+    int *num_symbols);
+void sort(
     Symbol in[INPUT_SYMBOL_SIZE],
     int num_symbols,
-    ap_uint<SYMBOL_BITS> parent[INPUT_SYMBOL_SIZE-1],
-    ap_uint<SYMBOL_BITS> left[INPUT_SYMBOL_SIZE-1],
-    ap_uint<SYMBOL_BITS> right[INPUT_SYMBOL_SIZE-1]);
+    Symbol out[INPUT_SYMBOL_SIZE]);
+void create_tree(
+    Symbol in[INPUT_SYMBOL_SIZE],
+    int num_symbols,
+    ap_uint<SYMBOL_BITS> parent[INPUT_SYMBOL_SIZE - 1],
+    ap_uint<SYMBOL_BITS> left[INPUT_SYMBOL_SIZE - 1],
+    ap_uint<SYMBOL_BITS> right[INPUT_SYMBOL_SIZE - 1]);
 
-void compute_bit_length (
-  ap_uint<SYMBOL_BITS> parent[INPUT_SYMBOL_SIZE-1],
-  ap_uint<SYMBOL_BITS> left[INPUT_SYMBOL_SIZE-1],
-  ap_uint<SYMBOL_BITS> right[INPUT_SYMBOL_SIZE-1],
-  int num_symbols,
-  ap_uint<SYMBOL_BITS> bit_length[TREE_DEPTH]);
+void compute_bit_length(
+    ap_uint<SYMBOL_BITS> parent[INPUT_SYMBOL_SIZE - 1],
+    ap_uint<SYMBOL_BITS> left[INPUT_SYMBOL_SIZE - 1],
+    ap_uint<SYMBOL_BITS> right[INPUT_SYMBOL_SIZE - 1],
+    int num_symbols,
+    ap_uint<SYMBOL_BITS> bit_length[TREE_DEPTH]);
 
 void truncate_tree(
-	ap_uint<SYMBOL_BITS> input_bit_length[TREE_DEPTH],
-	ap_uint<SYMBOL_BITS> truncated_bit_length1[TREE_DEPTH],
-	ap_uint<SYMBOL_BITS> truncated_bit_length2[TREE_DEPTH]);
+    ap_uint<SYMBOL_BITS> input_bit_length[TREE_DEPTH],
+    ap_uint<SYMBOL_BITS> truncated_bit_length1[TREE_DEPTH],
+    ap_uint<SYMBOL_BITS> truncated_bit_length2[TREE_DEPTH]);
 
 void canonize_tree(
-	Symbol sorted[INPUT_SYMBOL_SIZE],
-	ap_uint<SYMBOL_BITS> num_symbols,
-	ap_uint<SYMBOL_BITS> bit_length[TREE_DEPTH],
-	CodewordLength symbol_bits[INPUT_SYMBOL_SIZE]);
+    Symbol sorted[INPUT_SYMBOL_SIZE],
+    ap_uint<SYMBOL_BITS> num_symbols,
+    ap_uint<SYMBOL_BITS> bit_length[TREE_DEPTH],
+    CodewordLength symbol_bits[INPUT_SYMBOL_SIZE]);
 
 void create_codeword(
-  CodewordLength symbol_bits[INPUT_SYMBOL_SIZE],
-  ap_uint<SYMBOL_BITS> bit_length[TREE_DEPTH],
-  PackedCodewordAndLength encoding[INPUT_SYMBOL_SIZE]);
-
+    CodewordLength symbol_bits[INPUT_SYMBOL_SIZE],
+    ap_uint<SYMBOL_BITS> bit_length[TREE_DEPTH],
+    PackedCodewordAndLength encoding[INPUT_SYMBOL_SIZE]);
 
 static unsigned int bit_reverse32(unsigned int input) {
-	int i, rev = 0;
-	for (i = 0; i < 32; i++) {
-		rev = (rev << 1) | (input & 1);
-		input = input >> 1;
-	}
-	return rev;
+    int i, rev = 0;
+    for (i = 0; i < 32; i++) {
+        rev = (rev << 1) | (input & 1);
+        input = input >> 1;
+    }
+    return rev;
 }

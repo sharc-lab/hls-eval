@@ -30,15 +30,14 @@ Issue Date: 20/12/2007
 #include "brg_types.h"
 
 #if defined(__cplusplus)
-extern "C"
-{
+extern "C" {
 #endif
 
-#define AES_128     /* if a fast 128 bit key scheduler is needed    */
-#define AES_192     /* if a fast 192 bit key scheduler is needed    */
-#define AES_256     /* if a fast 256 bit key scheduler is needed    */
-#define AES_VAR     /* if variable key size scheduler is needed     */
-#define AES_MODES   /* if support is needed for modes               */
+#define AES_128   /* if a fast 128 bit key scheduler is needed    */
+#define AES_192   /* if a fast 192 bit key scheduler is needed    */
+#define AES_256   /* if a fast 256 bit key scheduler is needed    */
+#define AES_VAR   /* if variable key size scheduler is needed     */
+#define AES_MODES /* if support is needed for modes               */
 
 /* The following must also be set in assembler files if being used  */
 
@@ -46,19 +45,19 @@ extern "C"
 #define AES_DECRYPT /* if support for decryption is needed          */
 #define AES_REV_DKS /* define to reverse decryption key schedule    */
 
-#define AES_BLOCK_SIZE  16  /* the AES block size in bytes          */
-#define N_COLS           4  /* the number of columns in the state   */
+#define AES_BLOCK_SIZE 16 /* the AES block size in bytes          */
+#define N_COLS 4          /* the number of columns in the state   */
 
 /* The key schedule length is 11, 13 or 15 16-byte blocks for 128,  */
 /* 192 or 256-bit keys respectively. That is 176, 208 or 240 bytes  */
 /* or 44, 52 or 60 32-bit words.                                    */
 
-#if defined( AES_VAR ) || defined( AES_256 )
-#define KS_LENGTH       60
-#elif defined( AES_192 )
-#define KS_LENGTH       52
+#if defined(AES_VAR) || defined(AES_256)
+#define KS_LENGTH 60
+#elif defined(AES_192)
+#define KS_LENGTH 52
 #else
-#define KS_LENGTH       44
+#define KS_LENGTH 44
 #endif
 
 #define AES_RETURN INT_RETURN
@@ -68,18 +67,18 @@ extern "C"
 /* to hold the number of rounds multiplied by 16. The other three   */
 /* elements can be used by code that implements additional modes    */
 
-typedef union
-{   uint_32t l;
+typedef union {
+    uint_32t l;
     uint_8t b[4];
 } aes_inf;
 
-typedef struct
-{   uint_32t ks[KS_LENGTH];
+typedef struct {
+    uint_32t ks[KS_LENGTH];
     aes_inf inf;
 } aes_encrypt_ctx;
 
-typedef struct
-{   uint_32t ks[KS_LENGTH];
+typedef struct {
+    uint_32t ks[KS_LENGTH];
     aes_inf inf;
 } aes_decrypt_ctx;
 
@@ -91,51 +90,59 @@ AES_RETURN aes_init(void);
 /* Key lengths in the range 16 <= key_len <= 32 are given in bytes, */
 /* those in the range 128 <= key_len <= 256 are given in bits       */
 
-#if defined( AES_ENCRYPT )
+#if defined(AES_ENCRYPT)
 
-#if defined( AES_128 ) || defined( AES_VAR)
+#if defined(AES_128) || defined(AES_VAR)
 AES_RETURN aes_encrypt_key128(const unsigned char *key, aes_encrypt_ctx cx[1]);
 #endif
 
-#if defined( AES_192 ) || defined( AES_VAR)
+#if defined(AES_192) || defined(AES_VAR)
 AES_RETURN aes_encrypt_key192(const unsigned char *key, aes_encrypt_ctx cx[1]);
 #endif
 
-#if defined( AES_256 ) || defined( AES_VAR)
+#if defined(AES_256) || defined(AES_VAR)
 AES_RETURN aes_encrypt_key256(const unsigned char *key, aes_encrypt_ctx cx[1]);
 #endif
 
-#if defined( AES_VAR )
-AES_RETURN aes_encrypt_key(const unsigned char *key, int key_len, aes_encrypt_ctx cx[1]);
+#if defined(AES_VAR)
+AES_RETURN
+aes_encrypt_key(const unsigned char *key, int key_len, aes_encrypt_ctx cx[1]);
 #endif
 
-AES_RETURN aes_encrypt(const unsigned char *in, unsigned char *out, const aes_encrypt_ctx cx[1]);
+AES_RETURN aes_encrypt(
+    const unsigned char *in,
+    unsigned char *out,
+    const aes_encrypt_ctx cx[1]);
 
 #endif
 
-#if defined( AES_DECRYPT )
+#if defined(AES_DECRYPT)
 
-#if defined( AES_128 ) || defined( AES_VAR)
+#if defined(AES_128) || defined(AES_VAR)
 AES_RETURN aes_decrypt_key128(const unsigned char *key, aes_decrypt_ctx cx[1]);
 #endif
 
-#if defined( AES_192 ) || defined( AES_VAR)
+#if defined(AES_192) || defined(AES_VAR)
 AES_RETURN aes_decrypt_key192(const unsigned char *key, aes_decrypt_ctx cx[1]);
 #endif
 
-#if defined( AES_256 ) || defined( AES_VAR)
+#if defined(AES_256) || defined(AES_VAR)
 AES_RETURN aes_decrypt_key256(const unsigned char *key, aes_decrypt_ctx cx[1]);
 #endif
 
-#if defined( AES_VAR )
-AES_RETURN aes_decrypt_key(const unsigned char *key, int key_len, aes_decrypt_ctx cx[1]);
+#if defined(AES_VAR)
+AES_RETURN
+aes_decrypt_key(const unsigned char *key, int key_len, aes_decrypt_ctx cx[1]);
 #endif
 
-AES_RETURN aes_decrypt(const unsigned char *in, unsigned char *out, const aes_decrypt_ctx cx[1]);
+AES_RETURN aes_decrypt(
+    const unsigned char *in,
+    unsigned char *out,
+    const aes_decrypt_ctx cx[1]);
 
 #endif
 
-#if defined( AES_MODES )
+#if defined(AES_MODES)
 
 /* Multiple calls to the following subroutines for multiple block   */
 /* ECB, CBC, CFB, OFB and CTR mode encryption can be used to handle */
@@ -155,39 +162,70 @@ AES_RETURN aes_decrypt(const unsigned char *in, unsigned char *out, const aes_de
 
 AES_RETURN aes_test_alignment_detection(unsigned int n);
 
-AES_RETURN aes_ecb_encrypt(const unsigned char *ibuf, unsigned char *obuf,
-                    int len, const aes_encrypt_ctx cx[1]);
+AES_RETURN aes_ecb_encrypt(
+    const unsigned char *ibuf,
+    unsigned char *obuf,
+    int len,
+    const aes_encrypt_ctx cx[1]);
 
-AES_RETURN aes_ecb_decrypt(const unsigned char *ibuf, unsigned char *obuf,
-                    int len, const aes_decrypt_ctx cx[1]);
+AES_RETURN aes_ecb_decrypt(
+    const unsigned char *ibuf,
+    unsigned char *obuf,
+    int len,
+    const aes_decrypt_ctx cx[1]);
 
-AES_RETURN aes_cbc_encrypt(const unsigned char *ibuf, unsigned char *obuf,
-                    int len, unsigned char *iv, const aes_encrypt_ctx cx[1]);
+AES_RETURN aes_cbc_encrypt(
+    const unsigned char *ibuf,
+    unsigned char *obuf,
+    int len,
+    unsigned char *iv,
+    const aes_encrypt_ctx cx[1]);
 
-AES_RETURN aes_cbc_decrypt(const unsigned char *ibuf, unsigned char *obuf,
-                    int len, unsigned char *iv, const aes_decrypt_ctx cx[1]);
+AES_RETURN aes_cbc_decrypt(
+    const unsigned char *ibuf,
+    unsigned char *obuf,
+    int len,
+    unsigned char *iv,
+    const aes_decrypt_ctx cx[1]);
 
 AES_RETURN aes_mode_reset(aes_encrypt_ctx cx[1]);
 
-AES_RETURN aes_cfb_encrypt(const unsigned char *ibuf, unsigned char *obuf,
-                    int len, unsigned char *iv, aes_encrypt_ctx cx[1]);
+AES_RETURN aes_cfb_encrypt(
+    const unsigned char *ibuf,
+    unsigned char *obuf,
+    int len,
+    unsigned char *iv,
+    aes_encrypt_ctx cx[1]);
 
-AES_RETURN aes_cfb_decrypt(const unsigned char *ibuf, unsigned char *obuf,
-                    int len, unsigned char *iv, aes_encrypt_ctx cx[1]);
+AES_RETURN aes_cfb_decrypt(
+    const unsigned char *ibuf,
+    unsigned char *obuf,
+    int len,
+    unsigned char *iv,
+    aes_encrypt_ctx cx[1]);
 
 #define aes_ofb_encrypt aes_ofb_crypt
 #define aes_ofb_decrypt aes_ofb_crypt
 
-AES_RETURN aes_ofb_crypt(const unsigned char *ibuf, unsigned char *obuf,
-                    int len, unsigned char *iv, aes_encrypt_ctx cx[1]);
+AES_RETURN aes_ofb_crypt(
+    const unsigned char *ibuf,
+    unsigned char *obuf,
+    int len,
+    unsigned char *iv,
+    aes_encrypt_ctx cx[1]);
 
 typedef void cbuf_inc(unsigned char *cbuf);
 
 #define aes_ctr_encrypt aes_ctr_crypt
 #define aes_ctr_decrypt aes_ctr_crypt
 
-AES_RETURN aes_ctr_crypt(const unsigned char *ibuf, unsigned char *obuf,
-            int len, unsigned char *cbuf, cbuf_inc ctr_inc, aes_encrypt_ctx cx[1]);
+AES_RETURN aes_ctr_crypt(
+    const unsigned char *ibuf,
+    unsigned char *obuf,
+    int len,
+    unsigned char *cbuf,
+    cbuf_inc ctr_inc,
+    aes_encrypt_ctx cx[1]);
 
 #endif
 

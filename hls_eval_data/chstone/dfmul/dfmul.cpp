@@ -1,6 +1,5 @@
 #include "dfmul.h"
 
-
 int8 float_rounding_mode = 0;
 int8 float_exception_flags = 0;
 
@@ -111,8 +110,8 @@ int16 extractFloat64Exp(float64 a) { return (a >> 52) & 0x7FF; }
 
 flag extractFloat64Sign(float64 a) { return a >> 63; }
 
-static void normalizeFloat64Subnormal(bits64 aSig, int16 *zExpPtr,
-                                      bits64 *zSigPtr) {
+static void
+normalizeFloat64Subnormal(bits64 aSig, int16 *zExpPtr, bits64 *zSigPtr) {
     int8 shiftCount;
 
     shiftCount = countLeadingZeros64(aSig) - 11;

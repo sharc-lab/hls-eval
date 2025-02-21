@@ -11,8 +11,7 @@
 
 #include "../host/typedefs.h"
 
-#pragma SDS data access_pattern(input:SEQUENTIAL, output:SEQUENTIAL)
-void rendering(bit32 input[3*NUM_3D_TRI], bit32 output[NUM_FB]);
+#pragma SDS data access_pattern(input : SEQUENTIAL, output : SEQUENTIAL)
+void rendering(bit32 input[3 * NUM_3D_TRI], bit32 output[NUM_FB]);
 
 #endif
-

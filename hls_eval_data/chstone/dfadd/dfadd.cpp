@@ -1,6 +1,5 @@
 #include "dfadd.h"
 
-
 int8 float_rounding_mode = 0;
 int8 float_exception_flags = 0;
 
@@ -143,8 +142,8 @@ static float64 roundAndPackFloat64(flag zSign, int16 zExp, bits64 zSig) {
     return packFloat64(zSign, zExp, zSig);
 }
 
-static float64 normalizeRoundAndPackFloat64(flag zSign, int16 zExp,
-                                            bits64 zSig) {
+static float64
+normalizeRoundAndPackFloat64(flag zSign, int16 zExp, bits64 zSig) {
     int8 shiftCount;
 
     shiftCount = countLeadingZeros64(zSig) - 1;

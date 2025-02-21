@@ -33,21 +33,20 @@
 #ifndef _SHA1_H
 #define _SHA1_H
 
-#include <stdlib.h>
 #include "brg_types.h"
+#include <stdlib.h>
 
-#define SHA1_BLOCK_SIZE  64
+#define SHA1_BLOCK_SIZE 64
 #define SHA1_DIGEST_SIZE 20
 
 #if defined(__cplusplus)
-extern "C"
-{
+extern "C" {
 #endif
 
 /* type to hold the SHA256 context  */
 
-typedef struct
-{   uint_32t count[2];
+typedef struct {
+    uint_32t count[2];
     uint_32t hash[5];
     uint_32t wbuf[16];
 } sha1_ctx;
@@ -62,9 +61,11 @@ typedef struct
 VOID_RETURN sha1_compile(sha1_ctx ctx[1]);
 
 VOID_RETURN sha1_begin(sha1_ctx ctx[1]);
-VOID_RETURN sha1_hash(const unsigned char data[], unsigned long len, sha1_ctx ctx[1]);
+VOID_RETURN
+sha1_hash(const unsigned char data[], unsigned long len, sha1_ctx ctx[1]);
 VOID_RETURN sha1_end(unsigned char hval[], sha1_ctx ctx[1]);
-VOID_RETURN sha1(unsigned char hval[], const unsigned char data[], unsigned long len);
+VOID_RETURN
+sha1(unsigned char hval[], const unsigned char data[], unsigned long len);
 
 #if defined(__cplusplus)
 }

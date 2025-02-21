@@ -3,10 +3,10 @@
 //---------------------------------------------------------
 #ifndef __TIMER_H__
 #define __TIMER_H__
-#include <time.h>
-#include <sys/time.h>
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
+#include <sys/time.h>
+#include <time.h>
 
 #define TIMER_ON
 
@@ -21,27 +21,27 @@
 //---------------------------------------------------------
 class Timer {
 
-  #ifdef TIMER_ON
+#ifdef TIMER_ON
 
     char binName[50];
     unsigned nCalls;
     timeval ts_start;
     float totalTime;
 
-  #endif
-    
-    public:
-      // constructor
-      Timer(const char* Name="", bool On=false);
-      // destructor
-      ~Timer();
-      
-      // start/stop timer
-      void start();
-      void stop();
+#endif
 
-      // returns time in seconds
-      float get_time();
+  public:
+    // constructor
+    Timer(const char *Name = "", bool On = false);
+    // destructor
+    ~Timer();
+
+    // start/stop timer
+    void start();
+    void stop();
+
+    // returns time in seconds
+    float get_time();
 };
 
 #endif

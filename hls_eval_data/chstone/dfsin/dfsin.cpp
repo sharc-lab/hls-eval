@@ -1,6 +1,5 @@
 #include "dfsin.h"
 
-
 int8 float_rounding_mode = 0;
 int8 float_exception_flags = 0;
 
@@ -17,8 +16,12 @@ void shift64RightJamming(bits64 a, int16 count, bits64 *zPtr) {
     *zPtr = z;
 }
 
-void shift64ExtraRightJamming(bits64 a0, bits64 a1, int16 count, bits64 *z0Ptr,
-                              bits64 *z1Ptr) {
+void shift64ExtraRightJamming(
+    bits64 a0,
+    bits64 a1,
+    int16 count,
+    bits64 *z0Ptr,
+    bits64 *z1Ptr) {
     bits64 z0, z1;
     int8 negCount;
     negCount = (-count) & 63;
@@ -41,8 +44,13 @@ void shift64ExtraRightJamming(bits64 a0, bits64 a1, int16 count, bits64 *z0Ptr,
     *z0Ptr = z0;
 }
 
-void add128(bits64 a0, bits64 a1, bits64 b0, bits64 b1, bits64 *z0Ptr,
-            bits64 *z1Ptr) {
+void add128(
+    bits64 a0,
+    bits64 a1,
+    bits64 b0,
+    bits64 b1,
+    bits64 *z0Ptr,
+    bits64 *z1Ptr) {
     bits64 z1;
 
     z1 = a1 + b1;
@@ -50,8 +58,13 @@ void add128(bits64 a0, bits64 a1, bits64 b0, bits64 b1, bits64 *z0Ptr,
     *z0Ptr = a0 + b0 + (z1 < a1);
 }
 
-void sub128(bits64 a0, bits64 a1, bits64 b0, bits64 b1, bits64 *z0Ptr,
-            bits64 *z1Ptr) {
+void sub128(
+    bits64 a0,
+    bits64 a1,
+    bits64 b0,
+    bits64 b1,
+    bits64 *z0Ptr,
+    bits64 *z1Ptr) {
 
     *z1Ptr = a1 - b1;
     *z0Ptr = a0 - b0 - (a1 < b1);
@@ -172,8 +185,8 @@ int16 extractFloat64Exp(float64 a) { return (a >> 52) & 0x7FF; }
 
 flag extractFloat64Sign(float64 a) { return a >> 63; }
 
-static void normalizeFloat64Subnormal(bits64 aSig, int16 *zExpPtr,
-                                      bits64 *zSigPtr) {
+static void
+normalizeFloat64Subnormal(bits64 aSig, int16 *zExpPtr, bits64 *zSigPtr) {
     int8 shiftCount;
 
     shiftCount = countLeadingZeros64(aSig) - 11;
@@ -234,8 +247,8 @@ static float64 roundAndPackFloat64(flag zSign, int16 zExp, bits64 zSig) {
     return packFloat64(zSign, zExp, zSig);
 }
 
-static float64 normalizeRoundAndPackFloat64(flag zSign, int16 zExp,
-                                            bits64 zSig) {
+static float64
+normalizeRoundAndPackFloat64(flag zSign, int16 zExp, bits64 zSig) {
     int8 shiftCount;
 
     shiftCount = countLeadingZeros64(zSig) - 1;
@@ -546,8 +559,9 @@ float64 local_sin(float64 rad) {
     inc = 1;
     m_rad2 = float64_neg(float64_mul(rad, rad));
     do {
-        diff = float64_div(float64_mul(diff, m_rad2),
-                           int32_to_float64((2 * inc) * (2 * inc + 1)));
+        diff = float64_div(
+            float64_mul(diff, m_rad2),
+            int32_to_float64((2 * inc) * (2 * inc + 1)));
         app = float64_add(app, diff);
         inc++;
     } while (float64_ge(float64_abs(diff), 0x3ee4f8b588e368f1ULL));
