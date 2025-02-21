@@ -88,7 +88,7 @@ void sha256_final(SHA256_CTX *ctx, unsigned char hash[]) {
         ctx->data[i++] = 0x80;
         while (i < 64)
             ctx->data[i++] = 0x00;
-        sha256_transform(ctx, ctx->data);
+        sha256_transform(&ctx->state, &ctx->data);
         memset(ctx->data, 0, 56);
     }
 
@@ -102,7 +102,7 @@ void sha256_final(SHA256_CTX *ctx, unsigned char hash[]) {
     ctx->data[58] = ctx->bitlen >> 40;
     ctx->data[57] = ctx->bitlen >> 48;
     ctx->data[56] = ctx->bitlen >> 56;
-    sha256_transform(ctx, ctx->data);
+    sha256_transform(&ctx->state, &ctx->data);
 
     // Since this implementation uses little endian unsigned char ordering and
     // SHA uses big endian, reverse all the unsigned chars when copying the

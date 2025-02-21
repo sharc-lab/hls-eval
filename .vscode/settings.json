@@ -2,6 +2,9 @@
   "python.analysis.typeCheckingMode": "standard",
   "files.associations": {
     "*.html": "html",
-    "ratio": "cpp"
+    "ratio": "cpp",
+    "array": "cpp",
+    "string": "cpp",
+    "string_view": "cpp"
   }
 }

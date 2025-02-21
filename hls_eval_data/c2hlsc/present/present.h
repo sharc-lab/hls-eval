@@ -11,7 +11,7 @@ typedef unsigned char present_key_t[PRESENT_80_KEY_SIZE_BYTES];
 typedef unsigned char round_key_t[ROUND_KEY_SIZE_BYTES];
 typedef unsigned char block_t[PRESENT_BLOCK_SIZE_BYTES];
 
-unsigned char sBox[16] = {
+static const unsigned char sBox[16] = {
     0xC,
     0x5,
     0x6,
@@ -29,7 +29,7 @@ unsigned char sBox[16] = {
     0x1,
     0x2};
 
-unsigned char sBoxInverse[16] = {
+static const unsigned char sBoxInverse[16] = {
     0x5,
     0xE,
     0xF,
