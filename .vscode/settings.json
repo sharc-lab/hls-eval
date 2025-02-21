@@ -1,3 +1,7 @@
 {
-  "python.analysis.typeCheckingMode": "standard"
+  "python.analysis.typeCheckingMode": "standard",
+  "files.associations": {
+    "*.html": "html",
+    "ratio": "cpp"
+  }
 }

@@ -14,4 +14,4 @@ struct AES_ctx {
     uint8_t RoundKey[AES_keyExpSize];
 };
 
-static void MixColumns(state_t *state);
+void MixColumns(state_t *state);

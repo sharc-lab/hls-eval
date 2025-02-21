@@ -2,7 +2,7 @@
 
 // This function produces Nb(Nr+1) round keys. The round keys are used in each
 // round to decrypt the states.
-static void KeyExpansion(uint8_t *RoundKey, const uint8_t *Key) {
+void KeyExpansion(uint8_t *RoundKey, const uint8_t *Key) {
     unsigned i, j, k;
     uint8_t tempa[4]; // Used for the column/row operations
 
@@ -66,8 +66,7 @@ void AES_init_ctx(struct AES_ctx *ctx, const uint8_t *key) {
 
 // This function adds the round key to state.
 // The round key is added to the state by an XOR function.
-static void
-AddRoundKey(uint8_t round, state_t *state, const round_t *RoundKey) {
+void AddRoundKey(uint8_t round, state_t *state, const round_t *RoundKey) {
     uint8_t i, j;
     for (i = 0; i < 4; ++i) {
         for (j = 0; j < 4; ++j) {
@@ -78,7 +77,7 @@ AddRoundKey(uint8_t round, state_t *state, const round_t *RoundKey) {
 
 // The SubBytes Function Substitutes the values in the
 // state matrix with values in an S-box.
-static void SubBytes(state_t *state) {
+void SubBytes(state_t *state) {
     uint8_t i, j;
     for (i = 0; i < 4; ++i) {
         for (j = 0; j < 4; ++j) {
@@ -90,7 +89,7 @@ static void SubBytes(state_t *state) {
 // The ShiftRows() function shifts the rows in the state to the left.
 // Each row is shifted with different offset.
 // Offset = Row number. So the first row is not shifted.
-static void ShiftRows(state_t *state) {
+void ShiftRows(state_t *state) {
     uint8_t temp;
 
     // Rotate first row 1 columns to left
@@ -117,10 +116,10 @@ static void ShiftRows(state_t *state) {
     (*state)[1][3] = temp;
 }
 
-static uint8_t xtime(uint8_t x) { return ((x << 1) ^ (((x >> 7) & 1) * 0x1b)); }
+uint8_t xtime(uint8_t x) { return ((x << 1) ^ (((x >> 7) & 1) * 0x1b)); }
 
 // MixColumns function mixes the columns of the state matrix
-static void MixColumns(state_t *state) {
+void MixColumns(state_t *state) {
     uint8_t i;
     uint8_t Tmp, Tm, t;
     for (i = 0; i < 4; ++i) {
@@ -142,7 +141,7 @@ static void MixColumns(state_t *state) {
 }
 
 // Cipher is the main function that encrypts the PlainText.
-static void Cipher(state_t *state, const round_t *RoundKey) {
+void Cipher(state_t *state, const round_t *RoundKey) {
     uint8_t round = 0;
 
     // Add the First round key to the state before starting the rounds.

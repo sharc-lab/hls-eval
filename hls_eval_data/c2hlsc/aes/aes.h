@@ -12,7 +12,7 @@ typedef uint8_t round_t[176];
 struct AES_ctx {
     uint8_t RoundKey[AES_keyExpSize];
 };
-static const uint8_t sbox[256] = {
+const uint8_t sbox[256] = {
     // 0     1    2      3     4    5     6     7      8    9     A      B    C
     // D     E     F
     0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b,
@@ -38,11 +38,11 @@ static const uint8_t sbox[256] = {
     0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f,
     0xb0, 0x54, 0xbb, 0x16};
 
-static const uint8_t Rcon[11] =
+const uint8_t Rcon[11] =
     {0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36};
 
 #define getSBoxValue(num) (sbox[(num)])
 
 void AES_init_ctx(struct AES_ctx *ctx, const uint8_t *key);
 
-static void Cipher(state_t *state, const round_t *RoundKey);
+void Cipher(state_t *state, const round_t *RoundKey);

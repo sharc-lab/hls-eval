@@ -1,3 +1,5 @@
+#pragma once
+
 #include <stdio.h>
 
 #define N 65535

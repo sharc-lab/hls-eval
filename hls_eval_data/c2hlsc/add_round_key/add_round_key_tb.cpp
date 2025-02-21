@@ -1,6 +1,6 @@
 #include "add_round_key.h"
 
-static void phex(uint8_t *str) {
+void phex(uint8_t *str) {
 
     uint8_t len = 16;
     unsigned char i;
@@ -15,10 +15,11 @@ int main() {
         rkey[i] = i;
     }
 
-    state_t state = {{0xaa, 0xaa, 0xaa, 0xaa},
-                     {0xaa, 0xaa, 0xaa, 0xaa},
-                     {0xaa, 0xaa, 0xaa, 0xaa},
-                     {0xaa, 0xaa, 0xaa, 0xaa}};
+    state_t state = {
+        {0xaa, 0xaa, 0xaa, 0xaa},
+        {0xaa, 0xaa, 0xaa, 0xaa},
+        {0xaa, 0xaa, 0xaa, 0xaa},
+        {0xaa, 0xaa, 0xaa, 0xaa}};
 
     AddRoundKey(0, &state, rkey);
     phex((uint8_t *)state);

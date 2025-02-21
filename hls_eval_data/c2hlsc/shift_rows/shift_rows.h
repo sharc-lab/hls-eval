@@ -14,4 +14,4 @@ struct AES_ctx {
     uint8_t RoundKey[AES_keyExpSize];
 };
 
-static void ShiftRows(state_t *state);
+void ShiftRows(state_t *state);
