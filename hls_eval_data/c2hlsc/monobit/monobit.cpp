@@ -1,3 +1,4 @@
+#include "monobit.h"
 
 void Frequency(int *result) {
     int i, sum;

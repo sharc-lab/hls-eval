@@ -1,3 +1,5 @@
+#include "add_round_key.h"
+
 // This function adds the round key to state.
 // The round key is added to the state by an XOR function.
 static void

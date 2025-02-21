@@ -1,3 +1,4 @@
+#include "present.h"
 
 void copyKey(present_key_t *from, present_key_t *to) {
     int i;

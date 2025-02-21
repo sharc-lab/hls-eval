@@ -5,7 +5,7 @@ from dotenv import dotenv_values
 
 from hls_eval.data import BenchmarkCase, find_benchmark_case_dirs
 from hls_eval.eval import HLSGenerationZeroShotEvaluator
-from hls_eval.llm import build_model_remote_tai
+from hls_eval.llms import build_model_remote_tai
 from hls_eval.tools import CPPCompilerTool, VitisHLSSynthTool, auto_find_vitis_hls_dir
 from hls_eval.utils import check_key, unwrap
 

@@ -1,3 +1,5 @@
+#include "shift_rows.h"
+
 // The ShiftRows() function shifts the rows in the state to the left.
 // Each row is shifted with different offset.
 // Offset = Row number. So the first row is not shifted.

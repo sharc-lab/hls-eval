@@ -1,4 +1,4 @@
-
+#include "qs.h"
 
 // Function to swap two elements
 void swap(int *a, int *b) {

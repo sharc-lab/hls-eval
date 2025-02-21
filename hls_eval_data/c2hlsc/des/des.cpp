@@ -1,17 +1,5 @@
-/*********************************************************************
-* Filename:   des.c
-* Author:     Brad Conte (brad AT radconte.com)
-* Copyright:
-* Disclaimer: This code is presented "as is" without any guarantees.
-* Details:    Implementation of the DES encryption algorithm.
-              Modes of operation (such as CBC) are not included.
-              The formal NIST algorithm specification can be found here:
-               * http://csrc.nist.gov/publications/fips/fips46-3/fips46-3.pdf
-*********************************************************************/
+#include "des.h"
 
-/*************************** HEADER FILES ***************************/
-
-/*********************** FUNCTION DEFINITIONS ***********************/
 // Initial (Inv)Permutation step
 void IP(des_state_t *state, des_block_t *in) {
     (*state)[0] =

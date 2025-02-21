@@ -41,3 +41,5 @@ unsigned char sBoxInverse[16] = {0x5,
                                  0x7,
                                  0x9,
                                  0xA};
+
+void present80_encryptBlock(block_t *block, present_key_t *key);

@@ -1,3 +1,5 @@
+#include "qs.h"
+
 // driver code
 int main() {
     int arr[] = {19, 17, 15, 12, 16, 18, 4, 11, 13};

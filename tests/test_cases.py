@@ -29,7 +29,7 @@ ALL_BENCHMARK_CASES = find_benchmark_case_dirs(DIR_HLS_EVAL_DATA)
 @pytest.mark.parametrize(
     "case_dir", ALL_BENCHMARK_CASES, ids=[d.name for d in ALL_BENCHMARK_CASES]
 )
-def test_cases_load(case_dir):
+def test_cases_load__all(case_dir):
     benchmark_case = BenchmarkCase(case_dir, name=case_dir.name)
     assert benchmark_case
 
@@ -37,7 +37,7 @@ def test_cases_load(case_dir):
 @pytest.mark.parametrize(
     "case_dir", ALL_BENCHMARK_CASES, ids=[d.name for d in ALL_BENCHMARK_CASES]
 )
-def test_cases_compile_and_run(case_dir, tmp_path):
+def test_cases_compile_and_run__all(case_dir, tmp_path):
     LOGGER.debug(f"Running compile and run in tmp_path: {tmp_path}")
 
     benchmark_case = BenchmarkCase(case_dir, name=case_dir.name)
@@ -65,7 +65,7 @@ def test_cases_compile_and_run(case_dir, tmp_path):
 @pytest.mark.parametrize(
     "case_dir", ALL_BENCHMARK_CASES, ids=[d.name for d in ALL_BENCHMARK_CASES]
 )
-def test_cases_synth(case_dir, tmp_path):
+def test_cases_synth__all(case_dir, tmp_path):
     LOGGER.debug(f"Running HLS synthesis in case_dir {tmp_path}")
 
     benchmark_case = BenchmarkCase(case_dir, name=case_dir.name)

@@ -1,6 +1,8 @@
 import shutil
 from pathlib import Path
 
+import tomllib
+
 CPP_EXTENSIONS = [
     ".c",
     ".cc",
@@ -21,12 +23,14 @@ SOURCE_FILE_EXTENSIONS = CPP_EXTENSIONS + H_EXTENSIONS
 
 
 class BenchmarkCase:
-    def __init__(self, design_dir: Path, name: str | None = None, tags: list[str] = []):
+    def __init__(
+        self, design_dir: Path, name: str | None = None, tags_user: list[str] = []
+    ):
         self.design_dir = design_dir
         if name is None:
             name = design_dir.name
         self.name = name
-        self.tags = tags
+        self.tags_user = tags_user
 
         # check that the dir exists
         if not self.design_dir.exists():
@@ -74,6 +78,18 @@ class BenchmarkCase:
                 f"Kernel description file {kernel_description_fp} is empty"
             )
 
+        # check hls_eval_config.toml exists
+        if not (self.design_dir / "hls_eval_config.toml").exists():
+            raise FileNotFoundError(
+                f"hls_eval_config.toml file does not exist in {self.design_dir}"
+            )
+        if (self.design_dir / "hls_eval_config.toml").is_dir():
+            raise IsADirectoryError(
+                f"hls_eval_config.toml file is a directory in {self.design_dir}"
+            )
+        if not (self.design_dir / "hls_eval_config.toml").read_text().strip():
+            raise ValueError(f"hls_eval_config.toml file is empty in {self.design_dir}")
+
     @property
     def files(self) -> list[Path]:
         return [f for f in self.design_dir.rglob("*") if f.is_file()]
@@ -119,12 +135,24 @@ class BenchmarkCase:
             raise ValueError(f"Top file {self.top_file} is empty")
         return top_fn
 
+    @property
+    def toml_data(self) -> dict:
+        return tomllib.loads((self.design_dir / "hls_eval_config.toml").read_text())
+
+    @property
+    def tags_all(self) -> list[str]:
+        return self.toml_data.get("tags", []) + self.tags_user
+
+    @property
+    def tags_in_config(self) -> list[str]:
+        return self.toml_data.get("tags", [])
+
     def copy_to(self, dest: Path) -> "BenchmarkCase":
         shutil.copytree(
             self.design_dir,
             dst=dest,
         )
-        return BenchmarkCase(dest, tags=self.tags)
+        return BenchmarkCase(dest, tags_user=self.tags_user)
 
 
 def find_benchmark_case_dirs(start_dir) -> list[Path]:

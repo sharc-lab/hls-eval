@@ -1,3 +1,4 @@
+#include "block.h"
 
 int main() {
     int i;

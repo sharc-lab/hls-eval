@@ -37,7 +37,6 @@ typedef struct {
     state_t state;
 } SHA256_CTX;
 
-/*********************** FUNCTION DECLARATIONS **********************/
 void sha256_init(SHA256_CTX *ctx);
 void sha256_update(
     data_t *data_int,

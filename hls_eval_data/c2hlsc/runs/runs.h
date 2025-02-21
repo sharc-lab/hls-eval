@@ -2,3 +2,5 @@
 
 #define N 65535
 int epsilon[N]; // array of 0s and 1s
+
+void Runs(int *res_S, int *res_V);

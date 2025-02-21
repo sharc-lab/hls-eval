@@ -13,7 +13,7 @@ from joblib import Parallel, delayed
 from llm import Response
 
 from hls_eval.data import BenchmarkCase
-from hls_eval.llm import Model, TAITimeout, normalize_model_name
+from hls_eval.llms import Model, TAITimeout, normalize_model_name
 from hls_eval.prompting import approx_num_tokens, extract_code_xml_from_llm_outout
 from hls_eval.prompts import build_prompt_gen_zero_shot
 from hls_eval.rate_limit import RemoteLLMRateLimit

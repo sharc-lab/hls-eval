@@ -42,3 +42,7 @@ static const uint8_t Rcon[11] =
     {0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36};
 
 #define getSBoxValue(num) (sbox[(num)])
+
+void AES_init_ctx(struct AES_ctx *ctx, const uint8_t *key);
+
+static void Cipher(state_t *state, const round_t *RoundKey);

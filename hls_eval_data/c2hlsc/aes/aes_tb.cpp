@@ -1,4 +1,4 @@
-
+#include "aes.h"
 
 // prints string as hex
 static void phex(uint8_t *str) {

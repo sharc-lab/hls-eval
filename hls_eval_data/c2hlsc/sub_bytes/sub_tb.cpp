@@ -1,4 +1,4 @@
-
+#include "sub.h"
 
 static void phex(uint8_t *str) {
 

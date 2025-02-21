@@ -1,3 +1,4 @@
+#include "block.h"
 
 void BlockFrequency(double *result) {
     int i, j, blockSum;

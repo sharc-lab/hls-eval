@@ -13,3 +13,5 @@ typedef uint8_t state_t[4][4];
 struct AES_ctx {
     uint8_t RoundKey[AES_keyExpSize];
 };
+
+static void MixColumns(state_t *state);

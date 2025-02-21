@@ -13,3 +13,5 @@ typedef uint8_t state_t[4][4];
 struct AES_ctx {
     uint8_t RoundKey[AES_keyExpSize];
 };
+
+void AddRoundKey(uint8_t round, state_t *state, uint8_t *RoundKey);

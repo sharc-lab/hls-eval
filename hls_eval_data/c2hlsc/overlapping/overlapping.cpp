@@ -1,4 +1,6 @@
 
+#include "overlapping.h"
+
 void Overlapping(double *result) {
     int i, j, k, match;
     double W_obs, chi2, eta, sum;

@@ -3,7 +3,7 @@ import logging
 import pytest
 from dotenv import dotenv_values
 
-from hls_eval.llm import build_model_remote_tai
+from hls_eval.llms import build_model_remote_tai
 from hls_eval.utils import check_key
 
 API_KEY_TOGETHERAI = check_key(dotenv_values(".env")["TOGETHER_API_KEY"])

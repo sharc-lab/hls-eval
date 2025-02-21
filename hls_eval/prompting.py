@@ -77,5 +77,15 @@ def extract_code_markdown_from_llm_outout(llm_output: str) -> dict[str, str]:
     return code
 
 
+def extract_code_from_markdown_simple(markdown: str) -> str:
+    start = markdown.find("```")
+    if start == -1:
+        raise ValueError("No code block found")
+    end = markdown.find("```", start + 3)
+    if end == -1:
+        raise ValueError("No closing code block found")
+    return markdown[start:end].removeprefix("```").strip()
+
+
 def approx_num_tokens(text: str, char_per_token_guess: int = 3) -> int:
     return len(text) // char_per_token_guess + 1

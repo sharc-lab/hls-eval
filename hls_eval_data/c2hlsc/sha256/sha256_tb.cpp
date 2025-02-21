@@ -1,7 +1,8 @@
 
+#include "sha256.h"
+
 int main() {
-    unsigned char text[57] = {
-        "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"};
+    data_t text = {"abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"};
     unsigned char buf[SHA256_BLOCK_SIZE];
     SHA256_CTX ctx;
     sha256_init(&ctx);
@@ -10,8 +11,8 @@ int main() {
         &(ctx.datalen),
         &(ctx.state),
         &(ctx.bitlen),
-        text,
-        strlen(text));
+        &text,
+        strlen(reinterpret_cast<const char *>(text)));
     sha256_final(&ctx, buf);
     for (int i = 0; i < SHA256_BLOCK_SIZE; i++) {
         printf("%x", buf[i]);
