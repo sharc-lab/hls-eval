@@ -201,7 +201,6 @@ class HLSGenerationZeroShotEvaluator(Evaluator):
 
         n_tokens_guess = approx_num_tokens(prompt)
 
-        llm_rate_limiter = pools.llm_rate_limiter
         llm_pool = pools.pool_llm
 
         llm = model.llm
