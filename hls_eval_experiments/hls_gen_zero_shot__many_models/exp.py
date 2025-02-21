@@ -9,7 +9,7 @@ from hls_eval.llm import build_model_remote_tai
 from hls_eval.tools import CPPCompilerTool, VitisHLSSynthTool, auto_find_vitis_hls_dir
 from hls_eval.utils import check_key, unwrap
 
-EXP_NAME = "hls_gen_zero_shot"
+EXP_NAME = "hls_gen_zero_shot__many_models"
 
 DIR_CURRENT = Path(__file__).resolve().parent
 DIR_ROOT = DIR_CURRENT.parent.parent
@@ -33,8 +33,16 @@ if __name__ == "__main__":
         BenchmarkCase(d, name=d.name) for d in all_benchmark_case_dirs
     ]
 
-    model_to_test = "Qwen/Qwen2.5-Coder-32B-Instruct"
-    model = build_model_remote_tai(model_to_test, api_key=API_KEY_TOGETHERAI)
+    model_names_to_test = [
+        "Qwen/Qwen2.5-Coder-32B-Instruct",
+        "google/gemma-2-27b-it",
+        "meta-llama/Llama-3-70b-chat-hf",
+        "meta-llama/Llama-3-8b-chat-hf",
+    ]
+    models = [
+        build_model_remote_tai(model_name, api_key=API_KEY_TOGETHERAI)
+        for model_name in model_names_to_test
+    ]
 
     vitis_hls_dir = unwrap(auto_find_vitis_hls_dir(), "Vitis HLS bin not auto found")
 
@@ -45,12 +53,12 @@ if __name__ == "__main__":
     )
 
     evaluator.evaluate_designs(
-        all_benchmark_cases,
-        [model],
+        benchmark_cases=all_benchmark_cases,
+        models=models,
         n_jobs=16,
         n_jobs_pool_llm=4,
-        n_jobs_pool_csim=2,
-        n_jobs_pool_synth=8,
+        n_jobs_pool_csim=8,
+        n_jobs_pool_synth=16,
         # tokens_per_minute=500_000,
         # requests_per_minute=3_000,
     )
