@@ -329,12 +329,12 @@ class TogetherAI(llm.Model):
         codes_to_retry = {520, 502, 503}
 
         if status_code in codes_to_retry:
-            print(f"ERROR {status_code}")
+            print(f"Error on inital request: {status_code}")
             # try again 5 times if status code is still broken
             i = 0
             while i < 5 and status_code in codes_to_retry:
                 time.sleep(5)
-                print(f"Erorr {status_code}")
+                print(f"Erorr logged in retry loop: {status_code}")
                 print(f"Retrying {i + 1}/5")
                 r = requests.post(self.API_URL_INFERENCE, json=payload, headers=headers)
                 status_code = r.status_code

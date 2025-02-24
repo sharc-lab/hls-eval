@@ -17,7 +17,7 @@ from hls_eval.llms import Model, TAITimeout, normalize_model_name
 from hls_eval.prompting import approx_num_tokens, extract_code_xml_from_llm_outout
 from hls_eval.prompts import build_prompt_gen_zero_shot
 from hls_eval.rate_limit import RemoteLLMRateLimit
-from hls_eval.tools import CPPCompilerTool, VitisHLSSynthTool
+from hls_eval.tools import CPPCompilerTool, VitisHLSCSimTool, VitisHLSSynthTool
 
 
 class EvalThreadPools:
@@ -62,12 +62,12 @@ class EvalThreadPools:
 class Evaluator(ABC):
     def __init__(
         self,
-        cpp_compiler_tool: CPPCompilerTool,
-        vitis_hls_tool: VitisHLSSynthTool,
+        vitis_hls_tool_csim: VitisHLSCSimTool,
+        vitis_hls_tool_synth: VitisHLSSynthTool,
         output_data_dir: Path,
     ) -> None:
-        self.cpp_compiler_tool = cpp_compiler_tool
-        self.vitis_hls_tool = vitis_hls_tool
+        self.cpp_compiler_tool = vitis_hls_tool_csim
+        self.vitis_hls_tool = vitis_hls_tool_synth
         self.output_data_dir = output_data_dir
         self.logger = logging.getLogger(__name__)
 
@@ -105,7 +105,6 @@ class Evaluator(ABC):
         combos: list[tuple[BenchmarkCase, Model]] = self.build_eval_combos(
             benchmark_cases, models
         )
-
         pools = EvalThreadPools(
             n_jobs_pool_llm,
             n_jobs_pool_csim,
@@ -113,18 +112,34 @@ class Evaluator(ABC):
             tokens_per_minute,
             requests_per_minute,
         )
-
-        # with ThreadPoolExecutor(max_workers=n_jobs) as executor:
-        #     executor.map(
-        #         lambda x: self.evaluate_design(x[0], x[1], pools, **kwargs),
-        #         combos,
-        #         chunksize=1,
-        #     )
         Parallel(n_jobs=n_jobs, backend="threading")(
             delayed(self.evaluate_design)(design, model, pools)
             for design, model in combos
         )
+        pools.shutdown()
 
+    def evaluate_design_model_paris(
+        self,
+        design_model_pairs: list[tuple[BenchmarkCase, Model]],
+        n_jobs: int = 1,
+        n_jobs_pool_llm: int = 1,
+        n_jobs_pool_csim: int = 1,
+        n_jobs_pool_synth: int = 1,
+        tokens_per_minute: int | None = None,
+        requests_per_minute: int | None = None,
+        **kwargs,
+    ):
+        pools = EvalThreadPools(
+            n_jobs_pool_llm,
+            n_jobs_pool_csim,
+            n_jobs_pool_synth,
+            tokens_per_minute,
+            requests_per_minute,
+        )
+        Parallel(n_jobs=n_jobs, backend="threading")(
+            delayed(self.evaluate_design)(design, model, pools)
+            for design, model in design_model_pairs
+        )
         pools.shutdown()
 
 
@@ -137,8 +152,8 @@ def serialize_eval_data(eval_id: str, eval_output_dir: Path, single_eval_data: d
 class HLSGenerationZeroShotEvaluator(Evaluator):
     def __init__(
         self,
-        cpp_compiler_tool: CPPCompilerTool,
-        vitis_hls_tool: VitisHLSSynthTool,
+        vitis_hls_tool_csim: VitisHLSCSimTool,
+        vitis_hls_tool_synth: VitisHLSSynthTool,
         output_data_dir: Path,
         # prompt_task: str | None = None,
         # prompt_system: str | None = None,
@@ -150,7 +165,7 @@ class HLSGenerationZeroShotEvaluator(Evaluator):
         self.n_samples = n_samples
         self.temperature = temperature
 
-        super().__init__(cpp_compiler_tool, vitis_hls_tool, output_data_dir)
+        super().__init__(vitis_hls_tool_csim, vitis_hls_tool_synth, output_data_dir)
 
     def evaluate_design(
         self,
@@ -169,6 +184,7 @@ class HLSGenerationZeroShotEvaluator(Evaluator):
         eval_data["eval_type"] = "hls_gen_zero_shot"
         eval_data["eval_id"] = eval_id
         eval_data["benchmark_case_name"] = benchmark_case_name
+        eval_data["benchmark_case_tags"] = benchmark_case.tags_all
         eval_data["model_name"] = model_name
         eval_data["model_name_normalized"] = model_name_normalized
 

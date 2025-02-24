@@ -19,6 +19,7 @@ df = pd.DataFrame(
     columns=[
         "eval_id",
         "benchmark_case_name",
+        "benchmark_case_tags",
         "model_name",
         "pass_parse",
         "pass_compile",
@@ -40,6 +41,19 @@ df = pd.DataFrame(
     ]
 )
 
+
+# count how many are missing the single_eval_data.json
+missing = []
+for eval_case_run_dir in DIR_CURRENT_OUTPUT_DATA.iterdir():
+    eval_data_fp = eval_case_run_dir / "single_eval_data.json"
+    if not eval_data_fp.exists():
+        missing.append(eval_case_run_dir.name)
+print(f"Missing {len(missing)} evals")
+print(missing)
+
+if len(missing) > 0:
+    raise ValueError(f"Missing {len(missing)} evals")
+
 rows = []
 
 for eval_case_run_dir in DIR_CURRENT_OUTPUT_DATA.iterdir():
@@ -50,6 +64,7 @@ for eval_case_run_dir in DIR_CURRENT_OUTPUT_DATA.iterdir():
     df_row["eval_id"] = eval_data["eval_id"]
     df_row["benchmark_case_name"] = eval_data["benchmark_case_name"]
     df_row["model_name"] = eval_data["model_name"]
+    df_row["benchmark_case_tags"] = eval_data["benchmark_case_tags"]
 
     if "can_parse_output" not in eval_data:
         df_row["pass_parse"] = False
@@ -131,6 +146,7 @@ df_pass = df[
     [
         "eval_id",
         "benchmark_case_name",
+        "benchmark_case_tags",
         "model_name",
         "pass_parse",
         "pass_compile",
@@ -226,7 +242,102 @@ FIG_DIR = DIR_CURRENT / "output_figures"
 FIG_DIR.mkdir(exist_ok=True)
 fig.savefig(FIG_DIR / "pass_rate_plot.png", dpi=300)
 
+
+def plot_pass_rate_grouped(df_pass: pd.DataFrame, group_tags: list[str]):
+    # print(df_pass)
+    # print the typeof the benchmark_case_name column
+    # print(df_pass["benchmark_case_name"].dtype)
+    tag_map: dict[str, pd.DataFrame] = {}
+    for tag in group_tags:
+        tag_map[tag] = df_pass[df_pass["benchmark_case_tags"].apply(lambda x: tag in x)]
+
+    pass_rates_agg: dict[str, dict[str, dict[str, float]]] = {}
+    for tag, df_tag in tag_map.items():
+        models = df_tag["model_name"].unique()
+        pass_rates_agg[tag] = {}
+        for model in models:
+            df_model = df_tag[df_tag["model_name"] == model]
+            pass_rates_agg[tag][model] = (
+                df_model[["pass_parse", "pass_compile", "pass_tb", "pass_synth"]]
+                .mean()
+                .to_dict()
+            )
+
+    df_pass_aggs = {}
+    for tag, pass_rates in pass_rates_agg.items():
+        df_pass_agg = (
+            pd.DataFrame(pass_rates).T.reset_index().rename(columns={"index": "model"})
+        )
+        df_pass_agg["tag"] = tag
+        df_pass_aggs[tag] = df_pass_agg
+
+    fig, axs = plt.subplots(
+        len(group_tags),
+        1,
+        figsize=(8, 6),
+    )
+
+    for idx, (tag, ax) in enumerate(zip(group_tags, axs)):
+        df_pass_agg = df_pass_aggs[tag]
+        df_pass_agg = df_pass_agg.melt(
+            id_vars=["model", "tag"], var_name="metric", value_name="pass_rate"
+        )
+
+        models = df_pass_agg["model"].unique()
+
+        ax.grid(axis="y", linestyle="--", alpha=0.8, zorder=-10)
+        ax.set_axisbelow(True)
+
+        ax.hlines(y=1, color="black", linestyle="--", xmin=-0.5, xmax=len(models) - 0.5)
+
+        sns.barplot(
+            x="model",
+            y="pass_rate",
+            hue="metric",
+            hue_order=["pass_parse", "pass_compile", "pass_tb", "pass_synth"],
+            data=df_pass_agg,
+            ax=ax,
+            zorder=10,
+        )
+
+        ax.set_ylim(0, 1.2)
+
+        ax.set_yticks(np.arange(0, 1.1, 0.1))
+        ax.set_yticklabels(
+            [f"{x:.0%}" for x in np.arange(0, 1.1, 0.1)]
+        )  # format as percent in 10% increments
+
+        current_x_ticks = ax.get_xticks()
+        ax.set_xticks(current_x_ticks)
+        ax.set_xticklabels(
+            [model_name_map[model] for model in models], rotation=0, ha="center"
+        )
+
+        fig.tight_layout()
+        ax.legend(
+            [
+                metric_name_map[metric]
+                for metric in ["pass_parse", "pass_compile", "pass_tb", "pass_synth"]
+            ],
+            loc="upper center",
+            ncol=4,
+        )
+
+        ax.set_title(f"Benchmark Set: {tag}")
+
+    fig.suptitle("Pass Rate of Zero-Shot HLS Generation by Model")
+    fig.tight_layout()
+    return fig
+
+
+fig = plot_pass_rate_grouped(df_pass, group_tags=["polybench", "c2hlsc"])
+FIG_DIR = DIR_CURRENT / "output_figures"
+FIG_DIR.mkdir(exist_ok=True)
+fig.savefig(FIG_DIR / "pass_rate_plot_grouped.png", dpi=300)
+
+
 exit()
+
 
 df_exec = df[
     [
@@ -306,6 +417,31 @@ def build_timeline_plot(df_exec: pd.DataFrame, n_steps: int = 50) -> Figure:
     df_exec.loc[:, "exec_synth__t0"] = df_exec["exec_synth__t0"] - min_time_pre
     df_exec.loc[:, "exec_synth__t1"] = df_exec["exec_synth__t1"] - min_time_pre
 
+    # sort all the start times in a single list
+    # print(
+    all_start_times = sorted(
+        list(df_exec["exec_llm__t0"])
+        + list(df_exec["exec_compile__t0"])
+        + list(df_exec["exec_tb__t0"])
+        + list(df_exec["exec_synth__t0"])
+    )
+    # compute the gap sizes and if there are any gaps over 10 minutes remove any events that occur after the first gap
+    gaps = [
+        (all_start_times[i + 1] - all_start_times[i])
+        for i in range(len(all_start_times) - 1)
+    ]
+    gaps = [0] + gaps
+    gap_indices = [i for i, gap in enumerate(gaps) if gap > 60 * 8]
+    if len(gap_indices) > 0:
+        first_gap_idx = gap_indices[0]
+        first_gap_time = all_start_times[first_gap_idx]
+        df_exec = df_exec[
+            (df_exec["exec_llm__t0"] < first_gap_time)
+            & (df_exec["exec_compile__t0"] < first_gap_time)
+            & (df_exec["exec_tb__t0"] < first_gap_time)
+            & (df_exec["exec_synth__t0"] < first_gap_time)
+        ]
+
     min_time = min(
         df_exec["exec_llm__t0"].min(),
         df_exec["exec_compile__t0"].min(),
@@ -347,12 +483,12 @@ def build_timeline_plot(df_exec: pd.DataFrame, n_steps: int = 50) -> Figure:
     pool_size = {
         "llm": 4,
         "csim": 8,
-        "synth": 16,
+        "synth": 12,
     }
     realtive_sizes = {
-        "llm": 8,
+        "llm": 4,
         "csim": 8,
-        "synth": 16,
+        "synth": 12,
     }
 
     pool_labels = {
@@ -435,7 +571,7 @@ def build_timeline_plot(df_exec: pd.DataFrame, n_steps: int = 50) -> Figure:
         ax.set_ylim(
             0,
             pool_size[pool_type]
-            + (pool_size[pool_type] / realtive_sizes[pool_type]) * 2,
+            + (pool_size[pool_type] / realtive_sizes[pool_type]) * 1.5,
         )
         ax.hlines(
             y=pool_size[pool_type],
