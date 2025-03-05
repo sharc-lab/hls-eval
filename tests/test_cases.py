@@ -26,7 +26,7 @@ LOGGER.setLevel(logging.DEBUG)
 ALL_BENCHMARK_CASES = find_benchmark_case_dirs(DIR_HLS_EVAL_DATA)
 
 # filter by tag
-tag_to_keep = "polybench"
+tag_to_keep = "machsuite"
 ALL_BENCHMARK_CASES = [
     d for d in ALL_BENCHMARK_CASES if tag_to_keep in BenchmarkCase(d).tags_all
 ]
@@ -43,20 +43,21 @@ def test_cases_load__all(case_dir):
 @pytest.mark.parametrize(
     "case_dir", ALL_BENCHMARK_CASES, ids=[d.name for d in ALL_BENCHMARK_CASES]
 )
-def test_cases_compile_and_run__all(case_dir, tmp_path):
+def test_cases_compile_and_run__all(case_dir, tmp_path: Path):
     LOGGER.debug(f"Running compile and run in tmp_path: {tmp_path}")
 
     benchmark_case = BenchmarkCase(case_dir, name=case_dir.name)
     benchmark_case_synth = benchmark_case.copy_to(tmp_path / "design_base")
 
     vitis_hls_dir = unwrap(auto_find_vitis_hls_dir(), "Vitis HLS bin not auto found")
-    # tool_compiler = CPPCompilerTool(vitis_hls_dir)
     tool_compiler = VitisHLSCSimTool(vitis_hls_dir)
 
     results_compile, results_run = tool_compiler.run(
         tmp_path,
         source_files=benchmark_case_synth.source_files,
+        aux_files=benchmark_case_synth.not_source_files,
         build_name=benchmark_case_synth.name,
+        warn_all=True,
     )
 
     assert results_compile.data_execution.return_code == 0

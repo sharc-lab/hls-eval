@@ -369,6 +369,7 @@ class VitisHLSCSimTool:
         hls_clock_period_ns: float = 5,
         hls_top_function: str | None = None,
         hls_flow_target: str = "vivado",
+        warn_all: bool = False,
         timeout: float = 60.0 * 5,
     ) -> tuple[ToolDataOutput, ToolDataOutput | None]:
         if build_name is None:
@@ -389,6 +390,14 @@ class VitisHLSCSimTool:
         tcl_script = ""
         tcl_script += f"open_project {build_name}__proj\n"
         for fp in source_files:
+            # tcl_script += f"add_files -tb {fp}\n"
+            if warn_all:
+                tcl_script += (
+                    f'add_files -tb -cflags "-Wall -Wextra -Wno-unused-function" {fp}\n'
+                )
+            else:
+                tcl_script += f"add_files -tb {fp}\n"
+        for fp in aux_files:
             tcl_script += f"add_files -tb {fp}\n"
         tcl_script += f"open_solution solution__synth -flow_target {hls_flow_target}\n"
         if hls_top_function is not None:
