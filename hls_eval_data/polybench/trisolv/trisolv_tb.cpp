@@ -5,11 +5,7 @@
 
 #include "trisolv.h"
 
-void init_array(
-    int n,
-    double L[40 + 0][40 + 0],
-    double x[40 + 0],
-    double b[40 + 0]) {
+void init_array(int n, double L[40][40], double x[40], double b[40]) {
     int i, j;
 
     for (i = 0; i < n; i++) {
@@ -20,7 +16,7 @@ void init_array(
     }
 }
 
-void print_array(int n, double x[40 + 0])
+void print_array(int n, double x[40])
 
 {
     int i;
@@ -40,9 +36,9 @@ int main(int argc, char **argv) {
 
     int n = 40;
 
-    double L[40 + 0][40 + 0];
-    double x[40 + 0];
-    double b[40 + 0];
+    double L[40][40];
+    double x[40];
+    double b[40];
 
     init_array(n, L, x, b);
 

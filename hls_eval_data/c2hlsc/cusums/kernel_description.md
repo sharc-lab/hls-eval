@@ -1,4 +1,4 @@
-Description:
+Kernel Description:
 The CumulativeSums kernel is a high-level synthesis design that calculates the cumulative sum of a binary array `epsilon` and returns the indices of the maximum and minimum cumulative sums. The kernel is designed to operate on a large array of 0s and 1s, where each element represents a binary value. The cumulative sum is calculated by iterating through the array and incrementing or decrementing a running sum based on the binary value. The maximum and minimum cumulative sums are tracked and returned as output.
 
 Top-Level Function: `CumulativeSums`

@@ -1,11 +1,11 @@
 #include "mvt.h"
 
 void kernel_mvt(
-    double x1[40 + 0],
-    double x2[40 + 0],
-    double y_1[40 + 0],
-    double y_2[40 + 0],
-    double A[40 + 0][40 + 0]) {
+    double x1[40],
+    double x2[40],
+    double y_1[40],
+    double y_2[40],
+    double A[40][40]) {
 #pragma HLS top name = kernel_mvt
 
     const int n = 40;

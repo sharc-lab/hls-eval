@@ -9,8 +9,8 @@ void init_array(
     int m,
     int n,
     double *alpha,
-    double A[20 + 0][20 + 0],
-    double B[20 + 0][30 + 0]) {
+    double A[20][20],
+    double B[20][30]) {
     int i, j;
 
     *alpha = 1.5;
@@ -25,7 +25,7 @@ void init_array(
     }
 }
 
-void print_array(int m, int n, double B[20 + 0][30 + 0]) {
+void print_array(int m, int n, double B[20][30]) {
     int i, j;
 
     fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
@@ -46,8 +46,8 @@ int main(int argc, char **argv) {
     int n = 30;
 
     double alpha;
-    double A[20 + 0][20 + 0];
-    double B[20 + 0][30 + 0];
+    double A[20][20];
+    double B[20][30];
 
     init_array(m, n, &alpha, A, B);
 

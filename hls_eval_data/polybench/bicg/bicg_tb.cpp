@@ -5,12 +5,7 @@
 
 #include "bicg.h"
 
-void init_array(
-    int m,
-    int n,
-    double A[42 + 0][38 + 0],
-    double r[42 + 0],
-    double p[38 + 0]) {
+void init_array(int m, int n, double A[42][38], double r[42], double p[38]) {
     int i, j;
 
     for (i = 0; i < m; i++)
@@ -22,7 +17,7 @@ void init_array(
     }
 }
 
-void print_array(int m, int n, double s[38 + 0], double q[42 + 0])
+void print_array(int m, int n, double s[38], double q[42])
 
 {
     int i;
@@ -50,11 +45,11 @@ int main(int argc, char **argv) {
     int n = 42;
     int m = 38;
 
-    double A[42 + 0][38 + 0];
-    double s[38 + 0];
-    double q[42 + 0];
-    double p[38 + 0];
-    double r[42 + 0];
+    double A[42][38];
+    double s[38];
+    double q[42];
+    double p[38];
+    double r[42];
 
     init_array(m, n, A, r, p);
 

@@ -5,7 +5,7 @@
 
 #include "jacobi-1d.h"
 
-void init_array(int n, double A[30 + 0], double B[30 + 0]) {
+void init_array(int n, double A[30], double B[30]) {
     int i;
 
     for (i = 0; i < n; i++) {
@@ -14,7 +14,7 @@ void init_array(int n, double A[30 + 0], double B[30 + 0]) {
     }
 }
 
-void print_array(int n, double A[30 + 0])
+void print_array(int n, double A[30])
 
 {
     int i;
@@ -35,8 +35,8 @@ int main(int argc, char **argv) {
     int n = 30;
     int tsteps = 20;
 
-    double A[30 + 0];
-    double B[30 + 0];
+    double A[30];
+    double B[30];
 
     init_array(n, A, B);
 

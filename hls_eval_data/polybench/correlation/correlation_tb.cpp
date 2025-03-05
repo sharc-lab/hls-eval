@@ -5,7 +5,7 @@
 
 #include "correlation.h"
 
-void init_array(int m, int n, double *float_n, double data[32 + 0][28 + 0]) {
+void init_array(int m, int n, double *float_n, double data[32][28]) {
     int i, j;
 
     *float_n = (double)32;
@@ -15,7 +15,7 @@ void init_array(int m, int n, double *float_n, double data[32 + 0][28 + 0]) {
             data[i][j] = (double)(i * j) / 28 + i;
 }
 
-void print_array(int m, double corr[28 + 0][28 + 0])
+void print_array(int m, double corr[28][28])
 
 {
     int i, j;
@@ -38,10 +38,10 @@ int main(int argc, char **argv) {
     int m = 28;
 
     double float_n;
-    double data[32 + 0][28 + 0];
-    double corr[28 + 0][28 + 0];
-    double mean[28 + 0];
-    double stddev[28 + 0];
+    double data[32][28];
+    double corr[28][28];
+    double mean[28];
+    double stddev[28];
 
     init_array(m, n, &float_n, data);
 

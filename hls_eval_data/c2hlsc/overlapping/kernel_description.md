@@ -1,4 +1,4 @@
-Description:
+Kernel Description:
 The Overlapping kernel is a high-level synthesis design that computes the chi-squared statistic for a given sequence of binary values. The kernel takes as input a sequence of binary values, represented as an array of 0s and 1s, and outputs a single value representing the chi-squared statistic. The kernel uses a sliding window approach to compute the chi-squared statistic, where each window is 9 elements long. The kernel iterates over the input sequence, counting the number of matches between the current window and the input sequence. The kernel then computes the chi-squared statistic by summing the squared counts of each match.
 
 Top-Level Function: `Overlapping`

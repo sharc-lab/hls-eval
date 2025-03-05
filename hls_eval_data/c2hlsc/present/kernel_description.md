@@ -1,4 +1,4 @@
-Description:
+Kernel Description:
 The `present80_encryptBlock` kernel is a high-level synthesis design that implements the PRESENT-80 encryption algorithm. The algorithm is a lightweight block cipher designed for low-power and high-speed applications. The kernel takes a plaintext block and a key as input, and produces a ciphertext block as output.
 
 Top-Level Function: `present80_encryptBlock`

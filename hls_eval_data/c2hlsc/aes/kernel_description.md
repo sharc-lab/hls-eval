@@ -1,4 +1,4 @@
-Description:
+Kernel Description:
 The AES (Advanced Encryption Standard) is a widely used symmetric-key block cipher. The provided code implements the AES algorithm in C++. The AES algorithm consists of several rounds, each of which includes four main operations: SubBytes, ShiftRows, MixColumns, and AddRoundKey. The SubBytes operation applies a substitution table to each byte of the state matrix. The ShiftRows operation shifts the rows of the state matrix to the left. The MixColumns operation mixes the columns of the state matrix using a linear transformation. The AddRoundKey operation adds the round key to the state matrix.
 
 Top-Level Function: `Cipher`

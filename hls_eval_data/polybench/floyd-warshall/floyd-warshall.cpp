@@ -1,6 +1,6 @@
 #include "floyd-warshall.h"
 
-void kernel_floyd_warshall(int path[60 + 0][60 + 0]) {
+void kernel_floyd_warshall(int path[60][60]) {
 #pragma HLS top name = kernel_floyd_warshall
 
     const int n = 60;

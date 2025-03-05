@@ -5,7 +5,7 @@
 
 #include "seidel-2d.h"
 
-void init_array(int n, double A[40 + 0][40 + 0]) {
+void init_array(int n, double A[40][40]) {
     int i, j;
 
     for (i = 0; i < n; i++)
@@ -13,7 +13,7 @@ void init_array(int n, double A[40 + 0][40 + 0]) {
             A[i][j] = ((double)i * (j + 2) + 2) / n;
 }
 
-void print_array(int n, double A[40 + 0][40 + 0])
+void print_array(int n, double A[40][40])
 
 {
     int i, j;
@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
     int n = 40;
     int tsteps = 20;
 
-    double A[40 + 0][40 + 0];
+    double A[40][40];
 
     init_array(n, A);
 

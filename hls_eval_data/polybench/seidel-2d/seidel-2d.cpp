@@ -2,7 +2,7 @@
 
 void kernel_seidel_2d(
 
-    double A[40 + 0][40 + 0]) {
+    double A[40][40]) {
 #pragma HLS top name = kernel_seidel_2d
 
     const int n = 40;

@@ -11,10 +11,10 @@ void init_array(
     int nk,
     int nl,
     int nm,
-    double A[16 + 0][20 + 0],
-    double B[20 + 0][18 + 0],
-    double C[18 + 0][24 + 0],
-    double D[24 + 0][22 + 0]) {
+    double A[16][20],
+    double B[20][18],
+    double C[18][24],
+    double D[24][22]) {
     int i, j;
 
     for (i = 0; i < ni; i++)
@@ -31,7 +31,7 @@ void init_array(
             D[i][j] = (double)((i * (j + 2) + 2) % nk) / (5 * nk);
 }
 
-void print_array(int ni, int nl, double G[16 + 0][22 + 0]) {
+void print_array(int ni, int nl, double G[16][22]) {
     int i, j;
 
     fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
@@ -54,13 +54,13 @@ int main(int argc, char **argv) {
     int nl = 22;
     int nm = 24;
 
-    double E[16 + 0][18 + 0];
-    double A[16 + 0][20 + 0];
-    double B[20 + 0][18 + 0];
-    double F[18 + 0][22 + 0];
-    double C[18 + 0][24 + 0];
-    double D[24 + 0][22 + 0];
-    double G[16 + 0][22 + 0];
+    double E[16][18];
+    double A[16][20];
+    double B[20][18];
+    double F[18][22];
+    double C[18][24];
+    double D[24][22];
+    double G[16][22];
 
     init_array(ni, nj, nk, nl, nm, A, B, C, D);
 

@@ -5,7 +5,7 @@
 
 #include "lu.h"
 
-void init_array(int n, double A[40 + 0][40 + 0]) {
+void init_array(int n, double A[40][40]) {
     int i, j;
 
     for (i = 0; i < n; i++) {
@@ -18,7 +18,7 @@ void init_array(int n, double A[40 + 0][40 + 0]) {
     }
 
     int r, s, t;
-    double B[40 + 0][40 + 0];
+    double B[40][40];
     for (r = 0; r < n; ++r)
         for (s = 0; s < n; ++s)
             B[r][s] = 0;
@@ -31,7 +31,7 @@ void init_array(int n, double A[40 + 0][40 + 0]) {
             A[r][s] = B[r][s];
 }
 
-void print_array(int n, double A[40 + 0][40 + 0])
+void print_array(int n, double A[40][40])
 
 {
     int i, j;
@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
 
     int n = 40;
 
-    double A[40 + 0][40 + 0];
+    double A[40][40];
 
     init_array(n, A);
 

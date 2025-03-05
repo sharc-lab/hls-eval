@@ -3,8 +3,8 @@
 void kernel_syrk(
     double alpha,
     double beta,
-    double C[30 + 0][30 + 0],
-    double A[30 + 0][20 + 0]) {
+    double C[30][30],
+    double A[30][20]) {
 #pragma HLS top name = kernel_syrk
 
     const int n = 30;

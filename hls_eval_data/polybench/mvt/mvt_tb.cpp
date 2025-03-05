@@ -7,11 +7,11 @@
 
 void init_array(
     int n,
-    double x1[40 + 0],
-    double x2[40 + 0],
-    double y_1[40 + 0],
-    double y_2[40 + 0],
-    double A[40 + 0][40 + 0]) {
+    double x1[40],
+    double x2[40],
+    double y_1[40],
+    double y_2[40],
+    double A[40][40]) {
     int i, j;
 
     for (i = 0; i < n; i++) {
@@ -24,7 +24,7 @@ void init_array(
     }
 }
 
-void print_array(int n, double x1[40 + 0], double x2[40 + 0])
+void print_array(int n, double x1[40], double x2[40])
 
 {
     int i;
@@ -52,11 +52,11 @@ int main(int argc, char **argv) {
 
     int n = 40;
 
-    double A[40 + 0][40 + 0];
-    double x1[40 + 0];
-    double x2[40 + 0];
-    double y_1[40 + 0];
-    double y_2[40 + 0];
+    double A[40][40];
+    double x1[40];
+    double x2[40];
+    double y_1[40];
+    double y_2[40];
 
     init_array(n, x1, x2, y_1, y_2, A);
 

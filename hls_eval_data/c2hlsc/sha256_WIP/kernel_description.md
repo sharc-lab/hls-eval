@@ -1,4 +1,4 @@
-Description:
+Kernel Description:
 The SHA256 update kernel is a high-level synthesis design that implements the SHA-256 hash function. The kernel takes in a block of data and updates the internal state of the hash function. The kernel is designed to be highly efficient and scalable, making it suitable for use in a variety of applications.
 
 Top-Level Function: `sha256_update`

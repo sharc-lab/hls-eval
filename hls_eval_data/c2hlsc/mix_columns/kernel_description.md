@@ -1,4 +1,4 @@
-Description:
+Kernel Description:
 The MixColumns kernel is a high-level synthesis design that represents the MixColumns step of the Advanced Encryption Standard (AES) encryption algorithm. The MixColumns step is a crucial component of the AES encryption process, responsible for mixing the columns of the state matrix to ensure the security and integrity of the encrypted data.
 
 Top-Level Function: `MixColumns`

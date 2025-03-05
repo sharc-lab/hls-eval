@@ -27,8 +27,6 @@ class TokenBucket:
         Block until the requested number of tokens are available.
         FIFO ordering is enforced: tasks are served in the order they call this method.
         """
-        if self.buckets == {}:
-            return
         with self.condition:
             # Assign a ticket number for FIFO ordering.
             ticket = self.next_ticket

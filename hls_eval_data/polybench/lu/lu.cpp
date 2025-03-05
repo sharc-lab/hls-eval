@@ -1,6 +1,6 @@
 #include "lu.h"
 
-void kernel_lu(double A[40 + 0][40 + 0]) {
+void kernel_lu(double A[40][40]) {
 #pragma HLS top name = kernel_lu
 
     const int n = 40;

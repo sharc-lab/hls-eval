@@ -3,6 +3,6 @@
 
 void kernel_covariance(
     double float_n,
-    double data[32 + 0][28 + 0],
-    double cov[28 + 0][28 + 0],
-    double mean[28 + 0]);
+    double data[32][28],
+    double cov[28][28],
+    double mean[28]);

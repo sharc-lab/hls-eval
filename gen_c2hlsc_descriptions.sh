@@ -1,8 +1,5 @@
 #!/usr/bin/sh
 
-# uv run ./hls_eval/meta_hls_bench_builder_tool.py --source-bench-dir ./hls_eval_data/c2hlsc/add_round_key/ --output-dir . --model-name meta-llama/Llama-3-70b-chat-hf --mode description
-
-# get all dirs in ./hls_eval_data/c2hlsc/*
 dirs_to_run=$(ls -d ./hls_eval_data/c2hlsc/*/)
 
 n_jobs=4

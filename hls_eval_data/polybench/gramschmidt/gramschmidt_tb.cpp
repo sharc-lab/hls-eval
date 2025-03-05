@@ -8,9 +8,9 @@
 void init_array(
     int m,
     int n,
-    double A[20 + 0][30 + 0],
-    double R[30 + 0][30 + 0],
-    double Q[20 + 0][30 + 0]) {
+    double A[20][30],
+    double R[30][30],
+    double Q[20][30]) {
     int i, j;
 
     for (i = 0; i < m; i++)
@@ -26,9 +26,9 @@ void init_array(
 void print_array(
     int m,
     int n,
-    double A[20 + 0][30 + 0],
-    double R[30 + 0][30 + 0],
-    double Q[20 + 0][30 + 0]) {
+    double A[20][30],
+    double R[30][30],
+    double Q[20][30]) {
     int i, j;
 
     fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
@@ -57,9 +57,9 @@ int main(int argc, char **argv) {
     int m = 20;
     int n = 30;
 
-    double A[20 + 0][30 + 0];
-    double R[30 + 0][30 + 0];
-    double Q[20 + 0][30 + 0];
+    double A[20][30];
+    double R[30][30];
+    double Q[20][30];
 
     init_array(m, n, A, R, Q);
 

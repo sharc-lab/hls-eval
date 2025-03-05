@@ -9,8 +9,8 @@ void init_array(
     int nr,
     int nq,
     int np,
-    double A[10 + 0][8 + 0][12 + 0],
-    double C4[12 + 0][12 + 0]) {
+    double A[10][8][12],
+    double C4[12][12]) {
     int i, j, k;
 
     for (i = 0; i < nr; i++)
@@ -22,7 +22,7 @@ void init_array(
             C4[i][j] = (double)(i * j % np) / np;
 }
 
-void print_array(int nr, int nq, int np, double A[10 + 0][8 + 0][12 + 0]) {
+void print_array(int nr, int nq, int np, double A[10][8][12]) {
     int i, j, k;
 
     fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
@@ -44,9 +44,9 @@ int main(int argc, char **argv) {
     int nq = 8;
     int np = 12;
 
-    double A[10 + 0][8 + 0][12 + 0];
-    double sum[12 + 0];
-    double C4[12 + 0][12 + 0];
+    double A[10][8][12];
+    double sum[12];
+    double C4[12][12];
 
     init_array(nr, nq, np, A, C4);
 

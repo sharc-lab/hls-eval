@@ -2,8 +2,8 @@
 
 void kernel_heat_3d(
 
-    double A[10 + 0][10 + 0][10 + 0],
-    double B[10 + 0][10 + 0][10 + 0]) {
+    double A[10][10][10],
+    double B[10][10][10]) {
 #pragma HLS top name = kernel_heat_3d
 
     const int n = 10;

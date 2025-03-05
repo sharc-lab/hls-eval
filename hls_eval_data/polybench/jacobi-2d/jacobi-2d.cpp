@@ -2,8 +2,8 @@
 
 void kernel_jacobi_2d(
 
-    double A[30 + 0][30 + 0],
-    double B[30 + 0][30 + 0]) {
+    double A[30][30],
+    double B[30][30]) {
 #pragma HLS top name = kernel_jacobi_2d
 
     const int n = 30;

@@ -5,7 +5,7 @@
 
 #include "nussinov.h"
 
-void init_array(int n, char seq[60 + 0], int table[60 + 0][60 + 0]) {
+void init_array(int n, char seq[60], int table[60][60]) {
     int i, j;
 
     for (i = 0; i < n; i++) {
@@ -17,7 +17,7 @@ void init_array(int n, char seq[60 + 0], int table[60 + 0][60 + 0]) {
             table[i][j] = 0;
 }
 
-void print_array(int n, int table[60 + 0][60 + 0])
+void print_array(int n, int table[60][60])
 
 {
     int i, j;
@@ -41,8 +41,8 @@ int main(int argc, char **argv) {
 
     int n = 60;
 
-    char seq[60 + 0];
-    int table[60 + 0][60 + 0];
+    char seq[60];
+    int table[60][60];
 
     init_array(n, seq, table);
 

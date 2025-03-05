@@ -1,4 +1,4 @@
-Description:
+Kernel Description:
 The QuickSort algorithm is a divide-and-conquer algorithm that sorts an array of integers in ascending order. The algorithm works by selecting a pivot element from the array and partitioning the other elements into two sub-arrays, according to whether they are less than or greater than the pivot. The sub-arrays are then recursively sorted. The partitioning step is done using the partition function, which rearranges the array such that all elements less than the pivot are on the left of the pivot, and all elements greater than the pivot are on the right. The pivot element is then moved to its final position in the sorted array.
 
 Top-Level Function: `quickSort`

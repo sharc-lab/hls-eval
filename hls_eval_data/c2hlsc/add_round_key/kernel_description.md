@@ -1,4 +1,4 @@
-Description:
+Kernel Description:
 The AddRoundKey kernel is a high-level synthesis design that implements the AddRoundKey function from the Advanced Encryption Standard (AES) algorithm. The function takes three inputs: the current round number, a state matrix, and a round key. The function adds the round key to the state matrix using an XOR operation. The state matrix is a 4x4 matrix of 8-bit unsigned integers, and the round key is an array of 176 8-bit unsigned integers.
 
 Top-Level Function: `AddRoundKey`

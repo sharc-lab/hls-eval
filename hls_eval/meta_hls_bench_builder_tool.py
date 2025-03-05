@@ -19,27 +19,35 @@ prompt_template = Template(
     Someone should be able to fully implement the design from the description provided.
     Assume the reader knows little about the design and needs a detailed explanation.
     Also include all details about any implementation quirks, edge cases, or design decisions that are important to this specific design.
+    This should include any latex equations if important or relevent to the design.
            
     Include the list of top-level function inputs and outputs as well as a brief description of the functionality the kernel represents.
     All arguments in the top-level function should be described in the inputs and outputs sections with details about the data type and layout.
-    Include a list of any important data structures and data types used in the design.
-    Include a list of sub-components and a brief description of the functionality of each sub-component.
+    Include a list of any important data structures and data types used in the design only if they are explictly listed in the code.
+    Include a list of sub-components and a brief description of the functionality of each sub-component only if they are explictly listed as seperate C++ functions in the code.
+    If a sub-component is not listed as a seperate C++ function, it should not be listed at all. 
 
     Make sure descriptions about the high-level algorithm, inputs, outputs, data structures, and sub-components are detailed and thorough and include information about implementation, data type size layout, and architecture.
     Each description can be multiple sentences long.
+
+    Sometimes a pre-existing kernel_description.md file is provided. If so use it as a starting guide but not the final output. Try to use all the information in the pre-existing description.
 
     The top level kernel function is: `${top_name}`
 
     Only output the description in a code block representing markdown.
 
-    The output should be formatted as follows:
+    The output should be formatted excatly follows with no deviation:
     ```
-    Description:
+    Kernel Description:
     A high level natural language description of the design...
-    (be detailed and thorough, can be lengthy if needed, do not omit any details)
+    (be detailed and thorough, can be lengthy if needed, do not omit any details, can include latex equations if important or relevent to the design)
+
+    ---
 
     Top-Level Function: `name_of_top_level_function`
-    Complete Function Signature of the Top-Level Function: `return_type name_of_top_level_function(input_1_type input_1, ...);`
+    
+    Complete Function Signature of the Top-Level Function:
+    `return_type name_of_top_level_function(input_1_type input_1, ...);`
             
     Inputs:
     - `input_1`: description of input_1...
@@ -50,7 +58,7 @@ prompt_template = Template(
     - ....
 
     Important Data Structures and Data Types:
-    - `data_structure_1`: description of data_structure_1... (description of the data structure, data type, size, layout, felids, use in the design, etc. are required)
+    - `data_structure_1`: description of data_structure_1... (description of the data structure, data type, size, layout, fields, use in the design, etc. are required)
 
     Sub-Components:
     - `subcomponent_1`:
@@ -59,11 +67,15 @@ prompt_template = Template(
     - ...
     ```
 
+    Optional pre-existing simple kernel_description.md file:
+    
+    ${existing_description}
+           
     Input Kernel Code:
 
     ${kernel_code}
 
-    Description in requested markdown code block format (do not provide anythign other than the description in the requested format):
+    Description in requested markdown code block format (do not provide anything other than the description in the requested format):
     """).strip()
 )
 
@@ -82,6 +94,18 @@ def run_description_builder(args, model: Model):
     assert source_dir.exists(), f"source bench directory {source_dir} does not exist"
     source_files = list(source_dir.glob("*.cpp")) + list(source_dir.glob("*.h"))
     source_files = sorted([f for f in source_files if f.is_file()])
+
+    if args.use_existing_description:
+        existing_description_file = source_dir / "kernel_description.md"
+        if existing_description_file.exists():
+            existing_description = existing_description_file.read_text()
+        else:
+            existing_description = None
+    else:
+        existing_description = None
+
+    if existing_description is not None:
+        print("Using existing description")
 
     all_code_formatted = []
     for source_file in source_files:
@@ -103,6 +127,7 @@ def run_description_builder(args, model: Model):
     prompt = prompt_template.substitute(
         top_name=top_name,
         kernel_code=all_code,
+        existing_description=existing_description,
     )
 
     r = model.llm.prompt(prompt, temperature=args.model_temperature, stream=False)
@@ -125,7 +150,7 @@ def run_description_builder(args, model: Model):
         raise FileNotFoundError(f"output directory {output_dir} does not exist")
 
     # write the description to a file
-    output_file = output_dir / args.output_desciption_file_name
+    output_file = output_dir / args.output_description_file_name
     output_file.write_text(description_clean)
 
 
@@ -174,17 +199,22 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--output-desciption-file-name",
+        "--output-description-file-name",
         type=str,
-        default="kernel_description.md",
+        default="kernel_description_generated.md",
         help="output description file name",
     )
 
     parser.add_argument(
         "--enable-hierarchical",
-        type=bool,
-        default=False,
+        action="store_true",
         help="enable hierarchical mode",
+    )
+
+    parser.add_argument(
+        "--use-existing-description",
+        action="store_true",
+        help="use existing kernel_description.md file",
     )
 
     args = parser.parse_args()

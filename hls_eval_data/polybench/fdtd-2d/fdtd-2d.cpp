@@ -2,10 +2,10 @@
 
 void kernel_fdtd_2d(
 
-    double ex[20 + 0][30 + 0],
-    double ey[20 + 0][30 + 0],
-    double hz[20 + 0][30 + 0],
-    double _fict_[20 + 0]) {
+    double ex[20][30],
+    double ey[20][30],
+    double hz[20][30],
+    double _fict_[20]) {
 #pragma HLS top name = kernel_fdtd_2d
 
     const int tmax = 20;

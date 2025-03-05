@@ -5,7 +5,7 @@
 
 #include "durbin.h"
 
-void init_array(int n, double r[40 + 0]) {
+void init_array(int n, double r[40]) {
     int i, j;
 
     for (i = 0; i < n; i++) {
@@ -13,7 +13,7 @@ void init_array(int n, double r[40 + 0]) {
     }
 }
 
-void print_array(int n, double y[40 + 0])
+void print_array(int n, double y[40])
 
 {
     int i;
@@ -33,8 +33,8 @@ int main(int argc, char **argv) {
 
     int n = 40;
 
-    double r[40 + 0];
-    double y[40 + 0];
+    double r[40];
+    double y[40];
 
     init_array(n, r);
 

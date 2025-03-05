@@ -5,10 +5,7 @@
 
 #include "heat-3d.h"
 
-void init_array(
-    int n,
-    double A[10 + 0][10 + 0][10 + 0],
-    double B[10 + 0][10 + 0][10 + 0]) {
+void init_array(int n, double A[10][10][10], double B[10][10][10]) {
     int i, j, k;
 
     for (i = 0; i < n; i++)
@@ -17,7 +14,7 @@ void init_array(
                 A[i][j][k] = B[i][j][k] = (double)(i + j + (n - k)) * 10 / (n);
 }
 
-void print_array(int n, double A[10 + 0][10 + 0][10 + 0])
+void print_array(int n, double A[10][10][10])
 
 {
     int i, j, k;
@@ -40,8 +37,8 @@ int main(int argc, char **argv) {
     int n = 10;
     int tsteps = 20;
 
-    double A[10 + 0][10 + 0][10 + 0];
-    double B[10 + 0][10 + 0][10 + 0];
+    double A[10][10][10];
+    double B[10][10][10];
 
     init_array(n, A, B);
 

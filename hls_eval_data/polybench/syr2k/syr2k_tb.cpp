@@ -10,9 +10,9 @@ void init_array(
     int m,
     double *alpha,
     double *beta,
-    double C[30 + 0][30 + 0],
-    double A[30 + 0][20 + 0],
-    double B[30 + 0][20 + 0]) {
+    double C[30][30],
+    double A[30][20],
+    double B[30][20]) {
     int i, j;
 
     *alpha = 1.5;
@@ -28,7 +28,7 @@ void init_array(
         }
 }
 
-void print_array(int n, double C[30 + 0][30 + 0]) {
+void print_array(int n, double C[30][30]) {
     int i, j;
 
     fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
@@ -50,9 +50,9 @@ int main(int argc, char **argv) {
 
     double alpha;
     double beta;
-    double C[30 + 0][30 + 0];
-    double A[30 + 0][20 + 0];
-    double B[30 + 0][20 + 0];
+    double C[30][30];
+    double A[30][20];
+    double B[30][20];
 
     init_array(n, m, &alpha, &beta, C, A, B);
 

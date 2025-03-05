@@ -1,4 +1,4 @@
-Description:
+Kernel Description:
 The Frequency kernel is a high-level synthesis design that calculates the frequency of a binary sequence. The kernel takes an array of 0s and 1s as input and returns the frequency of 1s in the sequence. The frequency is calculated by summing up the values of the input array, where each value is either 0 or 2. The kernel uses a simple loop to iterate over the input array and accumulate the sum.
 
 Top-Level Function: `Frequency`

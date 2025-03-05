@@ -1,6 +1,6 @@
 #include "nussinov.h"
 
-void kernel_nussinov(char seq[60 + 0], int table[60 + 0][60 + 0]) {
+void kernel_nussinov(char seq[60], int table[60][60]) {
 #pragma HLS top name = kernel_nussinov
 
     const int n = 60;

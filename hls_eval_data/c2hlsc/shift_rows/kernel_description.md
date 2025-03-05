@@ -1,4 +1,4 @@
-Description:
+Kernel Description:
 The ShiftRows kernel is a high-level synthesis hardware design that implements the ShiftRows operation from the Advanced Encryption Standard (AES) algorithm. The ShiftRows operation is a key component of the AES encryption and decryption process, responsible for rearranging the columns of the state matrix to prepare it for the next round of encryption or decryption.
 
 Top-Level Function: `ShiftRows`

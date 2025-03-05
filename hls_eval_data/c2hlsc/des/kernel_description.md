@@ -1,4 +1,4 @@
-Description:
+Kernel Description:
 The DES (Data Encryption Standard) is a symmetric-key block cipher that was widely used for encrypting data. The design is based on the Feistel cipher structure, which is a type of block cipher that uses a substitution-permutation network (SPN) to encrypt data. The DES algorithm operates on 64-bit blocks of data, using a 56-bit key. The key is divided into 16 rounds, each consisting of a permutation and a substitution step. The permutation step rearranges the bits of the data block, while the substitution step replaces each bit with a different bit based on the current round key.
 
 Top-Level Function: `des_crypt`

@@ -5,7 +5,7 @@
 
 #include "atax.h"
 
-void init_array(int m, int n, double A[38 + 0][42 + 0], double x[42 + 0]) {
+void init_array(int m, int n, double A[38][42], double x[42]) {
     int i, j;
     double fn;
     fn = (double)n;
@@ -17,7 +17,7 @@ void init_array(int m, int n, double A[38 + 0][42 + 0], double x[42 + 0]) {
             A[i][j] = (double)((i + j) % n) / (5 * m);
 }
 
-void print_array(int n, double y[42 + 0])
+void print_array(int n, double y[42])
 
 {
     int i;
@@ -38,10 +38,10 @@ int main(int argc, char **argv) {
     int m = 38;
     int n = 42;
 
-    double A[38 + 0][42 + 0];
-    double x[42 + 0];
-    double y[42 + 0];
-    double tmp[38 + 0];
+    double A[38][42];
+    double x[42];
+    double y[42];
+    double tmp[38];
 
     init_array(m, n, A, x);
 

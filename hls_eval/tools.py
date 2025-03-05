@@ -118,6 +118,7 @@ class VitisHLSSynthTool:
         hls_clock_period_ns: float = 5,
         hls_top_function: str | None = None,
         hls_flow_target: str = "vivado",
+        hls_unsafe_math: bool = True,
         timeout: float = 60.0 * 5,
     ) -> ToolDataOutput:
         if build_name is None:
@@ -144,6 +145,8 @@ class VitisHLSSynthTool:
             tcl_script += f"set_top {hls_top_function}\n"
         tcl_script += f"set_part {hls_fpga_part}\n"
         tcl_script += f"create_clock -period {hls_clock_period_ns} -name clk_default\n"
+        if hls_unsafe_math:
+            tcl_script += "config_compile -unsafe_math_optimizations\n"
         tcl_script += "csynth_design\n"
         tcl_script += "exit\n"
 

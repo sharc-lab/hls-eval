@@ -1,6 +1,6 @@
 #include "durbin.h"
 
-void kernel_durbin(double r[40 + 0], double y[40 + 0]) {
+void kernel_durbin(double r[40], double y[40]) {
 #pragma HLS top name = kernel_durbin
 
     const int n = 40;

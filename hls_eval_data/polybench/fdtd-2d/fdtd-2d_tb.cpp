@@ -9,10 +9,10 @@ void init_array(
     int tmax,
     int nx,
     int ny,
-    double ex[20 + 0][30 + 0],
-    double ey[20 + 0][30 + 0],
-    double hz[20 + 0][30 + 0],
-    double _fict_[20 + 0]) {
+    double ex[20][30],
+    double ey[20][30],
+    double hz[20][30],
+    double _fict_[20]) {
     int i, j;
 
     for (i = 0; i < tmax; i++)
@@ -28,9 +28,9 @@ void init_array(
 void print_array(
     int nx,
     int ny,
-    double ex[20 + 0][30 + 0],
-    double ey[20 + 0][30 + 0],
-    double hz[20 + 0][30 + 0]) {
+    double ex[20][30],
+    double ey[20][30],
+    double hz[20][30]) {
     int i, j;
 
     fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
@@ -69,10 +69,10 @@ int main(int argc, char **argv) {
     int nx = 20;
     int ny = 30;
 
-    double ex[20 + 0][30 + 0];
-    double ey[20 + 0][30 + 0];
-    double hz[20 + 0][30 + 0];
-    double _fict_[20 + 0];
+    double ex[20][30];
+    double ey[20][30];
+    double hz[20][30];
+    double _fict_[20];
 
     init_array(tmax, nx, ny, ex, ey, hz, _fict_);
 

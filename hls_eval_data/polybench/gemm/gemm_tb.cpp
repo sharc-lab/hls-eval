@@ -11,9 +11,9 @@ void init_array(
     int nk,
     double *alpha,
     double *beta,
-    double C[20 + 0][25 + 0],
-    double A[20 + 0][30 + 0],
-    double B[30 + 0][25 + 0]) {
+    double C[20][25],
+    double A[20][30],
+    double B[30][25]) {
     int i, j;
 
     *alpha = 1.5;
@@ -29,7 +29,7 @@ void init_array(
             B[i][j] = (double)(i * (j + 2) % nj) / nj;
 }
 
-void print_array(int ni, int nj, double C[20 + 0][25 + 0]) {
+void print_array(int ni, int nj, double C[20][25]) {
     int i, j;
 
     fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
@@ -52,9 +52,9 @@ int main(int argc, char **argv) {
 
     double alpha;
     double beta;
-    double C[20 + 0][25 + 0];
-    double A[20 + 0][30 + 0];
-    double B[30 + 0][25 + 0];
+    double C[20][25];
+    double A[20][30];
+    double B[30][25];
 
     init_array(ni, nj, nk, &alpha, &beta, C, A, B);
 

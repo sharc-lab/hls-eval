@@ -1,4 +1,4 @@
-Description:
+Kernel Description:
 The BlockFrequency kernel is a high-level synthesis design that calculates the frequency of blocks in a 2D array. The kernel takes an array of 0s and 1s as input and outputs a single value representing the frequency of blocks. The frequency is calculated by summing the squared differences between the probability of each block and 0.5.
 
 Top-Level Function: `BlockFrequency`

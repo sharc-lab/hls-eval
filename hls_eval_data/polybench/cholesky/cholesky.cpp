@@ -1,6 +1,6 @@
 #include "cholesky.h"
 
-void kernel_cholesky(double A[40 + 0][40 + 0]) {
+void kernel_cholesky(double A[40][40]) {
 #pragma HLS top name = kernel_cholesky
 
     const int n = 40;

@@ -9,15 +9,15 @@ void init_array(
     int n,
     double *alpha,
     double *beta,
-    double A[40 + 0][40 + 0],
-    double u1[40 + 0],
-    double v1[40 + 0],
-    double u2[40 + 0],
-    double v2[40 + 0],
-    double w[40 + 0],
-    double x[40 + 0],
-    double y[40 + 0],
-    double z[40 + 0]) {
+    double A[40][40],
+    double u1[40],
+    double v1[40],
+    double u2[40],
+    double v2[40],
+    double w[40],
+    double x[40],
+    double y[40],
+    double z[40]) {
     int i, j;
 
     *alpha = 1.5;
@@ -39,7 +39,7 @@ void init_array(
     }
 }
 
-void print_array(int n, double w[40 + 0]) {
+void print_array(int n, double w[40]) {
     int i;
 
     fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
@@ -59,15 +59,15 @@ int main(int argc, char **argv) {
 
     double alpha;
     double beta;
-    double A[40 + 0][40 + 0];
-    double u1[40 + 0];
-    double v1[40 + 0];
-    double u2[40 + 0];
-    double v2[40 + 0];
-    double w[40 + 0];
-    double x[40 + 0];
-    double y[40 + 0];
-    double z[40 + 0];
+    double A[40][40];
+    double u1[40];
+    double v1[40];
+    double u2[40];
+    double v2[40];
+    double w[40];
+    double x[40];
+    double y[40];
+    double z[40];
 
     init_array(n, &alpha, &beta, A, u1, v1, u2, v2, w, x, y, z);
 

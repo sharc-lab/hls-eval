@@ -17,7 +17,7 @@ from hls_eval.llms import Model, TAITimeout, normalize_model_name
 from hls_eval.prompting import approx_num_tokens, extract_code_xml_from_llm_outout
 from hls_eval.prompts import build_prompt_gen_zero_shot
 from hls_eval.rate_limit import RemoteLLMRateLimit
-from hls_eval.tools import CPPCompilerTool, VitisHLSCSimTool, VitisHLSSynthTool
+from hls_eval.tools import VitisHLSCSimTool, VitisHLSSynthTool
 
 
 class EvalThreadPools:
@@ -388,7 +388,7 @@ class HLSGenerationZeroShotEvaluator(Evaluator):
 class HLSEditingZeroShotEvaluator(Evaluator):
     def __init__(
         self,
-        cpp_compiler_tool: CPPCompilerTool,
+        cpp_compiler_tool: VitisHLSCSimTool,
         vitis_hls_tool: VitisHLSSynthTool,
         output_data_dir: Path,
         prompt_task: str,

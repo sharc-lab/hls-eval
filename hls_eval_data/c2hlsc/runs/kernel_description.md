@@ -1,4 +1,4 @@
-Description:
+Kernel Description:
 The `Runs` kernel is a high-level synthesis design that counts the number of ones in an array `epsilon` and the number of changes from 0 to 1 and 1 to 0 in the array. The design is implemented as a C++ function that takes two integer pointers as inputs, `res_S` and `res_V`, and returns the counts through these pointers.
 
 Top-Level Function: `Runs`

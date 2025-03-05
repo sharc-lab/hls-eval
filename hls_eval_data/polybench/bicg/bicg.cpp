@@ -1,11 +1,11 @@
 #include "bicg.h"
 
 void kernel_bicg(
-    double A[42 + 0][38 + 0],
-    double s[38 + 0],
-    double q[42 + 0],
-    double p[38 + 0],
-    double r[42 + 0]) {
+    double A[42][38],
+    double s[38],
+    double q[42],
+    double p[38],
+    double r[42]) {
 #pragma HLS top name = kernel_bicg
 
     const int n = 42;

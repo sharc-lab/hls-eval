@@ -3,11 +3,11 @@
 void kernel_2mm(
     double alpha,
     double beta,
-    double tmp[16 + 0][18 + 0],
-    double A[16 + 0][22 + 0],
-    double B[22 + 0][18 + 0],
-    double C[18 + 0][24 + 0],
-    double D[16 + 0][24 + 0]) {
+    double tmp[16][18],
+    double A[16][22],
+    double B[22][18],
+    double C[18][24],
+    double D[16][24]) {
 #pragma HLS top name = kernel_2mm
 
     const int ni = 16;

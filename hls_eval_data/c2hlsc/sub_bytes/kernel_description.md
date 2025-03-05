@@ -1,4 +1,4 @@
-Description:
+Kernel Description:
 The `SubBytes` kernel is a high-level synthesis design that implements the SubBytes step of the Advanced Encryption Standard (AES) encryption algorithm. The SubBytes step is responsible for substituting the values in the state matrix with values from an S-box. The S-box is a pre-defined table that maps input values to output values using a specific substitution function.
 
 Top-Level Function: `SubBytes`

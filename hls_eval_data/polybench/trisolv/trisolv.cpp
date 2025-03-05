@@ -1,9 +1,6 @@
 #include "trisolv.h"
 
-void kernel_trisolv(
-    double L[40 + 0][40 + 0],
-    double x[40 + 0],
-    double b[40 + 0]) {
+void kernel_trisolv(double L[40][40], double x[40], double b[40]) {
 #pragma HLS top name = kernel_trisolv
 
     const int n = 40;

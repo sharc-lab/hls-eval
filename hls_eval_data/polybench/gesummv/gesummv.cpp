@@ -3,11 +3,11 @@
 void kernel_gesummv(
     double alpha,
     double beta,
-    double A[30 + 0][30 + 0],
-    double B[30 + 0][30 + 0],
-    double tmp[30 + 0],
-    double x[30 + 0],
-    double y[30 + 0]) {
+    double A[30][30],
+    double B[30][30],
+    double tmp[30],
+    double x[30],
+    double y[30]) {
 #pragma HLS top name = kernel_gesummv
 
     const int n = 30;

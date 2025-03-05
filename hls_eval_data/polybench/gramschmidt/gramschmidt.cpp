@@ -1,9 +1,6 @@
 #include "gramschmidt.h"
 
-void kernel_gramschmidt(
-    double A[20 + 0][30 + 0],
-    double R[30 + 0][30 + 0],
-    double Q[20 + 0][30 + 0]) {
+void kernel_gramschmidt(double A[20][30], double R[30][30], double Q[20][30]) {
 #pragma HLS top name = kernel_gramschmidt
 
     const int m = 20;

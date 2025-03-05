@@ -1,10 +1,6 @@
 #include "ludcmp.h"
 
-void kernel_ludcmp(
-    double A[40 + 0][40 + 0],
-    double b[40 + 0],
-    double x[40 + 0],
-    double y[40 + 0]) {
+void kernel_ludcmp(double A[40][40], double b[40], double x[40], double y[40]) {
 #pragma HLS top name = kernel_ludcmp
 
     const int n = 40;

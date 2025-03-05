@@ -9,9 +9,9 @@ void init_array(
     int n,
     double *alpha,
     double *beta,
-    double A[30 + 0][30 + 0],
-    double B[30 + 0][30 + 0],
-    double x[30 + 0]) {
+    double A[30][30],
+    double B[30][30],
+    double x[30]) {
     int i, j;
 
     *alpha = 1.5;
@@ -25,7 +25,7 @@ void init_array(
     }
 }
 
-void print_array(int n, double y[30 + 0])
+void print_array(int n, double y[30])
 
 {
     int i;
@@ -47,11 +47,11 @@ int main(int argc, char **argv) {
 
     double alpha;
     double beta;
-    double A[30 + 0][30 + 0];
-    double B[30 + 0][30 + 0];
-    double tmp[30 + 0];
-    double x[30 + 0];
-    double y[30 + 0];
+    double A[30][30];
+    double B[30][30];
+    double tmp[30];
+    double x[30];
+    double y[30];
 
     init_array(n, &alpha, &beta, A, B, x);
 

@@ -1,8 +1,4 @@
 #pragma once
 #include <cmath>
 
-void kernel_syrk(
-    double alpha,
-    double beta,
-    double C[30 + 0][30 + 0],
-    double A[30 + 0][20 + 0]);
+void kernel_syrk(double alpha, double beta, double C[30][30], double A[30][20]);
