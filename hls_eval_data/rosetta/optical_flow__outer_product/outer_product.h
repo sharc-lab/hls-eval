@@ -28,10 +28,6 @@ typedef struct {
     vel_pixel_t y;
 } velocity_t;
 
-void gradient_z_calc(
-    input_t frame1[MAX_HEIGHT][MAX_WIDTH],
-    input_t frame2[MAX_HEIGHT][MAX_WIDTH],
-    input_t frame3[MAX_HEIGHT][MAX_WIDTH],
-    input_t frame4[MAX_HEIGHT][MAX_WIDTH],
-    input_t frame5[MAX_HEIGHT][MAX_WIDTH],
-    pixel_t gradient_z[MAX_HEIGHT][MAX_WIDTH]);
+void outer_product(
+    gradient_t gradient[MAX_HEIGHT][MAX_WIDTH],
+    outer_t outer_product[MAX_HEIGHT][MAX_WIDTH]);

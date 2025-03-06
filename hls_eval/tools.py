@@ -161,7 +161,7 @@ class VitisHLSSynthTool:
             cwd=unique_build_dir,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            bufsize=io.DEFAULT_BUFFER_SIZE * 64,
+            bufsize=io.DEFAULT_BUFFER_SIZE * 1024,
             text=True,
         )
         try:
@@ -307,7 +307,7 @@ class CPPCompilerTool:
             capture_output=True,
             text=True,
             env=env_for_vitis_hls_clang,
-            bufsize=io.DEFAULT_BUFFER_SIZE * 64,
+            bufsize=io.DEFAULT_BUFFER_SIZE * 1024,
         )
         t_1 = time.monotonic()
 
@@ -418,7 +418,7 @@ class VitisHLSCSimTool:
             cwd=unique_build_dir,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            bufsize=io.DEFAULT_BUFFER_SIZE * 64,
+            bufsize=io.DEFAULT_BUFFER_SIZE * 1024,
             text=True,
         )
         try:
@@ -479,7 +479,7 @@ class VitisHLSCSimTool:
             / "build",
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            bufsize=io.DEFAULT_BUFFER_SIZE * 64,
+            bufsize=io.DEFAULT_BUFFER_SIZE * 1024,
             text=True,
         )
 

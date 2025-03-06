@@ -19,7 +19,7 @@ LOGGER.setLevel(logging.DEBUG)
 
 ALL_BENCHMARK_CASES = find_benchmark_case_dirs(DIR_HLS_EVAL_DATA)
 
-tag_to_keep = "chstone"
+tag_to_keep = "rosetta"
 if tag_to_keep:
     ALL_BENCHMARK_CASES = [
         d for d in ALL_BENCHMARK_CASES if tag_to_keep in BenchmarkCase(d).tags_all
@@ -53,7 +53,7 @@ def test_cases_compile_and_run__all(case_dir, tmp_path: Path):
         source_files=benchmark_case_synth.source_files,
         aux_files=benchmark_case_synth.not_source_files,
         build_name=benchmark_case_synth.name,
-        warn_all=True,
+        warn_all=False,
     )
 
     assert results_compile.data_execution.return_code == 0

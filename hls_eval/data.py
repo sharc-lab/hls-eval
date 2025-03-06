@@ -92,7 +92,7 @@ class BenchmarkCase:
 
     @property
     def files(self) -> list[Path]:
-        return [f for f in self.design_dir.rglob("*") if f.is_file()]
+        return [f for f in self.design_dir.glob("*") if f.is_file()]
 
     @property
     def source_files(self) -> list[Path]:
@@ -116,6 +116,14 @@ class BenchmarkCase:
         if len(tb_matches) != 1:
             raise ValueError(f"Expected 1 _tb file, found {len(tb_matches)}")
         return tb_matches[0]
+
+    @property
+    def kernel_fp(self) -> Path:
+        cpp_files = self.cpp_files
+        cpp_files = [f for f in cpp_files if f != self.tb_file]
+        if len(cpp_files) != 1:
+            raise ValueError(f"Expected 1 kernel file, found {len(cpp_files)}")
+        return cpp_files[0]
 
     @property
     def kernel_description_fp(self) -> Path:

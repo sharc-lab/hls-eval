@@ -1,1 +1,0 @@
-gradient_z_calc

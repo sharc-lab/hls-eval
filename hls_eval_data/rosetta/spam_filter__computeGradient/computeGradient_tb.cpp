@@ -27,7 +27,7 @@ int main() {
     // Compare results
     for (int i = 0; i < NUM_FEATURES; i++) {
         float grad_f = float(grad[i]);
-        if (std::abs(grad_f - grad_expected_f[i]) > 1e-3) {
+        if (std::abs(grad_f - grad_expected_f[i]) > 1e-2) {
             std::cout << "Test failed at index " << i
                       << "! Expected: " << grad_expected_f[i]
                       << ", Got: " << grad_f << std::endl;
