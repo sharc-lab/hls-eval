@@ -1,0 +1,1 @@
+void float_raise(int8 flags) { float_exception_flags |= flags; }

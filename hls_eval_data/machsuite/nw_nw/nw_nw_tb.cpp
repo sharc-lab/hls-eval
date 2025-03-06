@@ -240,7 +240,7 @@ int check_data(void *vdata, void *vref) {
     return !has_errors;
 }
 
-int main(int argc, char **argv) {
+int main() {
     // Parse command line.
     char *in_file;
     char *check_file;

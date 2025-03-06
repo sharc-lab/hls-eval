@@ -17,19 +17,15 @@ LOGGER.propagate = True
 LOGGER.setLevel(logging.DEBUG)
 
 
-# def find_benchmark_case_dirs(start_dir) -> list[Path]:
-#     all_dirs = [d for d in start_dir.rglob("*") if d.is_dir()]
-#     benchmark_case_dirs = [d for d in all_dirs if (d / "hls_eval_config.toml").exists()]
-#     return benchmark_case_dirs
-
-
 ALL_BENCHMARK_CASES = find_benchmark_case_dirs(DIR_HLS_EVAL_DATA)
 
-# filter by tag
 tag_to_keep = "chstone"
-ALL_BENCHMARK_CASES = [
-    d for d in ALL_BENCHMARK_CASES if tag_to_keep in BenchmarkCase(d).tags_all
-]
+if tag_to_keep:
+    ALL_BENCHMARK_CASES = [
+        d for d in ALL_BENCHMARK_CASES if tag_to_keep in BenchmarkCase(d).tags_all
+    ]
+else:
+    ALL_BENCHMARK_CASES = list(ALL_BENCHMARK_CASES)
 
 
 @pytest.mark.parametrize(

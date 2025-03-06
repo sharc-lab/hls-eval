@@ -46,7 +46,7 @@ void print_array(int ni, int nl, double G[16][22]) {
     fprintf(stderr, "==END   DUMP_ARRAYS==\n");
 }
 
-int main(int argc, char **argv) {
+int main() {
 
     int ni = 16;
     int nj = 18;

@@ -265,6 +265,174 @@ def run_testbench_builder(args, model):
     output_file.write_text(tb_clean)
 
 
+prompt_list_subcomponents = Template(
+    dedent(""""
+    You are a high-level synthesis expert."
+    Help me identify all the sub-components in this high-level synthesis hardware design."
+
+    Given the exsigin kernel code, header, and optional description, identify all the sub-components in the design.
+    A sub-component is a seperate C++ function in the code that is not the top-level function.
+    This can also include sub-functions that are called by other sub-functions.
+    A sub-component should be identified by the function name.
+    If a sub-component is not listed as a seperate C++ function, it should not be listed at all.
+           
+    Output the list of sub-components in the design in a code block representing markdown.
+        
+    The top level HLS kernel function is: `${top_name}`
+           
+    Only output the list of sub-components in a code block representing markdown. Do not nest the list, just have a flat list of sub-components.
+    The output should be formatted exactly follows with no deviation:
+           
+    ```
+    - `subcomponent_1`
+    - `subcomponent_2`
+    - ...
+    ```
+           
+    Optional pre-existing simple kernel_description.md file:
+        
+    ${existing_description}
+           
+    Input Kernel Code:
+           
+    ${kernel_code}
+           
+    List of Sub-Components in requested markdown code block format (do not provide anything other than the list of sub-components in the requested format):
+    """).strip()
+)
+
+prompt_extract_subcomponent = Template(
+    dedent(""""
+    You are a high-level synthesis expert."
+    Help me extract the code for a specific sub-component in this high-level synthesis hardware design."
+           
+    Given the exsigin kernel code, header, and optional description, extract the code for a specific sub-component in the design.
+    A sub-component is a seperate C++ function in the code that is not the top-level function.
+           
+    The top level HLS kernel function is: `${top_name}`
+    
+    The sub-component to extract is: `${subcomponent_name}`
+    
+    Only output the code in a single C++ code block that contains the code for the sub-component and all additional code needed to compile and run the sub-component (including other sub-components called by target sub-component).
+    Assume you can use the same header file and any other code in the directory to compile and run the sub-component.
+    Do not include the `cpp` identifier in the markdown code block, just the code block ticks.
+           
+    The output should be formatted exactly follows with no deviation:
+    ```
+    C++ code for the sub-component...
+    ```
+           
+    Optional pre-existing simple kernel_description.md file:
+           
+    ${existing_description}
+           
+    Input Kernel Code:
+    
+    ${kernel_code}
+           
+    Code for the Sub-Component in requested C++ code block format (do not provide anything other than the code for the sub-component in the requested format):
+    """).strip()
+)
+
+
+def run_hierarchy_builder(args, model):
+    source_dir: Path = args.source_bench_dir
+    assert source_dir.exists(), f"source bench directory {source_dir} does not exist"
+    source_files = list(source_dir.glob("*.cpp")) + list(source_dir.glob("*.h"))
+    source_files = sorted([f for f in source_files if f.is_file()])
+    all_code_formatted = []
+    for source_file in source_files:
+        c = code_file_template.substitute(
+            file_name=source_file.name,
+            md_code_block_type=source_file.suffix.removeprefix("."),
+            file_contents=source_file.read_text(),
+        )
+        all_code_formatted.append(c)
+
+    all_code = "\n\n".join(all_code_formatted)
+
+    top_file = source_dir / "top.txt"
+    assert top_file.exists(), f"top.txt file not found in {source_dir}"
+    top_name = top_file.read_text().strip()
+
+    if args.use_existing_description:
+        existing_description_file = source_dir / "kernel_description.md"
+        if existing_description_file.exists():
+            existing_description = existing_description_file.read_text()
+        else:
+            existing_description = None
+    else:
+        existing_description = None
+
+    prompt = prompt_list_subcomponents.substitute(
+        top_name=top_name,
+        kernel_code=all_code,
+        existing_description=existing_description,
+    )
+
+    r = model.llm.prompt(prompt, temperature=args.model_temperature, stream=False)
+    r._force()
+    r_txt = r.text().strip()
+
+    try:
+        subcomponents_clean = extract_code_from_markdown_simple(r_txt)
+    except ValueError:
+        subcomponents_clean = r_txt
+        if r_txt.startswith("```"):
+            subcomponents_clean = r_txt.removeprefix("```").strip()
+        if r_txt.endswith("```"):
+            subcomponents_clean = r_txt.removesuffix("```").strip()
+        subcomponents_clean = subcomponents_clean.strip()
+
+    subcomponents = []
+    for line in subcomponents_clean.splitlines():
+        subcomponents.append(
+            line.strip().removeprefix("- ").removeprefix("`").removesuffix("`").strip()
+        )
+
+    if not subcomponents:
+        print("no subcomponents found")
+        return
+
+    output_dir: Path = args.output_dir
+    if not output_dir.exists():
+        raise FileNotFoundError(f"output directory {output_dir} does not exist")
+
+    output_file = output_dir / "subcomponents.md"
+    output_file.write_text(subcomponents_clean)
+
+    for subcomponent in subcomponents:
+        print(f"extracting subcomponent: {subcomponent}")
+        prompt = prompt_extract_subcomponent.substitute(
+            top_name=top_name,
+            subcomponent_name=subcomponent,
+            kernel_code=all_code,
+            existing_description=existing_description,
+        )
+
+        r = model.llm.prompt(prompt, temperature=args.model_temperature, stream=False)
+        r._force()
+        r_txt = r.text().strip()
+
+        try:
+            subcomponent_code_clean = extract_code_from_markdown_simple(r_txt)
+        except ValueError:
+            subcomponent_code_clean = r_txt
+            if r_txt.startswith("```"):
+                subcomponent_code_clean = r_txt.removeprefix("```").strip()
+            if r_txt.endswith("```"):
+                subcomponent_code_clean = r_txt.removesuffix("```").strip()
+            subcomponent_code_clean = subcomponent_code_clean.strip()
+
+        output_subcomponent_dir = output_dir / args.hierarchy_sub_dir_name
+        output_subcomponent_dir.mkdir(exist_ok=True)
+
+        output_subcomponent_file = (
+            output_subcomponent_dir / f"{source_dir.name}__{subcomponent}.cpp"
+        )
+        output_subcomponent_file.write_text(subcomponent_code_clean)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Meta HLS Bench Builder Tool")
 
@@ -301,7 +469,7 @@ if __name__ == "__main__":
         type=str,
         required=True,
         default="description",
-        choices=["description", "testbench"],
+        choices=["description", "testbench", "hierarchy"],
         help="mode",
     )
 
@@ -320,15 +488,16 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--enable-hierarchical",
-        action="store_true",
-        help="enable hierarchical mode",
-    )
-
-    parser.add_argument(
         "--use-existing-description",
         action="store_true",
         help="use existing kernel_description.md file",
+    )
+
+    parser.add_argument(
+        "--hierarchy-sub-dir-name",
+        type=str,
+        default="subcomponents",
+        help="subcomponents directory name",
     )
 
     args = parser.parse_args()
@@ -340,7 +509,6 @@ if __name__ == "__main__":
     logger.info(f"output-dir: {args.output_dir}")
     logger.info(f"source-bench-dir: {args.source_bench_dir}")
     logger.info(f"mode: {args.mode}")
-    logger.info(f"enable-hierarchical: {args.enable_hierarchical}")
 
     model = build_model_remote_tai(args.model_name, API_KEY_TOGETHERAI)
 
@@ -349,5 +517,7 @@ if __name__ == "__main__":
             run_description_builder(args, model)
         case "testbench":
             run_testbench_builder(args, model)
+        case "hierarchy":
+            run_hierarchy_builder(args, model)
         case _:
             raise ValueError(f"invalid mode: {args.mode}")

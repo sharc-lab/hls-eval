@@ -32,7 +32,7 @@ void print_array(int m, double cov[28][28])
     fprintf(stderr, "==END   DUMP_ARRAYS==\n");
 }
 
-int main(int argc, char **argv) {
+int main() {
 
     int n = 32;
     int m = 28;

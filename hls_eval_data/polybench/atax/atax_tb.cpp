@@ -33,7 +33,7 @@ void print_array(int n, double y[42])
     fprintf(stderr, "==END   DUMP_ARRAYS==\n");
 }
 
-int main(int argc, char **argv) {
+int main() {
 
     int m = 38;
     int n = 42;

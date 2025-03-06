@@ -32,7 +32,7 @@ void print_array(int n, double A[30][30])
     fprintf(stderr, "==END   DUMP_ARRAYS==\n");
 }
 
-int main(int argc, char **argv) {
+int main() {
 
     int n = 30;
     int tsteps = 20;

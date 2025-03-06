@@ -48,7 +48,7 @@ void print_array(int n, double A[40][40])
     fprintf(stderr, "==END   DUMP_ARRAYS==\n");
 }
 
-int main(int argc, char **argv) {
+int main() {
 
     int n = 40;
 

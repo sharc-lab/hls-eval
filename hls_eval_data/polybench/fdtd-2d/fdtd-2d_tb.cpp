@@ -63,7 +63,7 @@ void print_array(
     fprintf(stderr, "\nend   dump: %s\n", "hz");
 }
 
-int main(int argc, char **argv) {
+int main() {
 
     int tmax = 20;
     int nx = 20;

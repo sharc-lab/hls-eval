@@ -52,7 +52,7 @@ void print_array(
     fprintf(stderr, "==END   DUMP_ARRAYS==\n");
 }
 
-int main(int argc, char **argv) {
+int main() {
 
     int m = 20;
     int n = 30;

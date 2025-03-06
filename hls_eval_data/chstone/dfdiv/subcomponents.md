@@ -1,0 +1,17 @@
+- `shift64RightJamming`
+- `add128`
+- `sub128`
+- `mul64To128`
+- `estimateDiv128To64`
+- `countLeadingZeros32`
+- `countLeadingZeros64`
+- `float_raise`
+- `float64_is_nan`
+- `float64_is_signaling_nan`
+- `propagateFloat64NaN`
+- `extractFloat64Frac`
+- `extractFloat64Exp`
+- `extractFloat64Sign`
+- `normalizeFloat64Subnormal`
+- `packFloat64`
+- `roundAndPackFloat64`

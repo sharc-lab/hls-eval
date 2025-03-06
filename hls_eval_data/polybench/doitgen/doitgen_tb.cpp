@@ -38,7 +38,7 @@ void print_array(int nr, int nq, int np, double A[10][8][12]) {
     fprintf(stderr, "==END   DUMP_ARRAYS==\n");
 }
 
-int main(int argc, char **argv) {
+int main() {
 
     int nr = 10;
     int nq = 8;

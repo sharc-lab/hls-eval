@@ -33,7 +33,7 @@ void print_array(int n, int path[60][60])
     fprintf(stderr, "==END   DUMP_ARRAYS==\n");
 }
 
-int main(int argc, char **argv) {
+int main() {
 
     int n = 60;
 
