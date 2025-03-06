@@ -1,3 +1,4 @@
+import io
 import os
 import shutil
 import subprocess
@@ -160,7 +161,7 @@ class VitisHLSSynthTool:
             cwd=unique_build_dir,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            bufsize=-1,
+            bufsize=io.DEFAULT_BUFFER_SIZE * 64,
             text=True,
         )
         try:
@@ -306,7 +307,7 @@ class CPPCompilerTool:
             capture_output=True,
             text=True,
             env=env_for_vitis_hls_clang,
-            bufsize=-1,
+            bufsize=io.DEFAULT_BUFFER_SIZE * 64,
         )
         t_1 = time.monotonic()
 
@@ -417,7 +418,7 @@ class VitisHLSCSimTool:
             cwd=unique_build_dir,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            bufsize=-1,
+            bufsize=io.DEFAULT_BUFFER_SIZE * 64,
             text=True,
         )
         try:
@@ -465,7 +466,6 @@ class VitisHLSCSimTool:
             return compile_data, None
 
         t_0 = time.monotonic()
-        # vitis_hls_csim_tool__design_base/vitis_hls_csim_tool__design_base__proj/solution__synth/csim/build/csim.exe
 
         csim_exe_fp = (
             unique_build_dir / f"{build_name}__proj/solution__synth/csim/build/csim.exe"
@@ -479,7 +479,7 @@ class VitisHLSCSimTool:
             / "build",
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            bufsize=-1,
+            bufsize=io.DEFAULT_BUFFER_SIZE * 64,
             text=True,
         )
 
