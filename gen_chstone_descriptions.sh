@@ -1,6 +1,6 @@
 #!/usr/bin/sh
 
-dirs_to_run=$(ls -d ./hls_eval_data/chstone/*/)
+dirs_to_run=$(ls -d ./hls_eval_data/chstone/df_*/)
 
 n_jobs=2
 
