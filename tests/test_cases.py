@@ -26,7 +26,7 @@ LOGGER.setLevel(logging.DEBUG)
 ALL_BENCHMARK_CASES = find_benchmark_case_dirs(DIR_HLS_EVAL_DATA)
 
 # filter by tag
-tag_to_keep = "machsuite"
+tag_to_keep = "chstone"
 ALL_BENCHMARK_CASES = [
     d for d in ALL_BENCHMARK_CASES if tag_to_keep in BenchmarkCase(d).tags_all
 ]
