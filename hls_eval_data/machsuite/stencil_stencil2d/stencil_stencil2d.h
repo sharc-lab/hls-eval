@@ -20,9 +20,3 @@ void stencil(
     TYPE orig[row_size * col_size],
     TYPE sol[row_size * col_size],
     TYPE filter[f_size]);
-
-struct bench_args_t {
-    TYPE orig[row_size * col_size];
-    TYPE sol[row_size * col_size];
-    TYPE filter[f_size];
-};

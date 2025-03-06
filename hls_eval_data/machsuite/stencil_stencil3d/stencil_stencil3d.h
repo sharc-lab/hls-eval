@@ -24,9 +24,3 @@ Oliker, D. Patterson, J. Shalf, K. Yelick SC 2008
     ((_i) + _row_size * ((_j) + _col_size * (_k)))
 
 void stencil3d(TYPE C[2], TYPE orig[SIZE], TYPE sol[SIZE]);
-
-struct bench_args_t {
-    TYPE C[2];
-    TYPE orig[SIZE];
-    TYPE sol[SIZE];
-};

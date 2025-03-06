@@ -6,7 +6,6 @@ Lawrence Rabiner. "A Tutorial on Hidden Markov Models and Selected Applications
 in Speech Recognition." Proc. IEEE, v77, #2. 1989.
 */
 
-#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,11 +29,3 @@ int viterbi(
     prob_t transition[N_STATES * N_STATES],
     prob_t emission[N_STATES * N_TOKENS],
     state_t path[N_OBS]);
-
-struct bench_args_t {
-    tok_t obs[N_OBS];
-    prob_t init[N_STATES];
-    prob_t transition[N_STATES * N_STATES];
-    prob_t emission[N_STATES * N_TOKENS];
-    state_t path[N_OBS];
-};
