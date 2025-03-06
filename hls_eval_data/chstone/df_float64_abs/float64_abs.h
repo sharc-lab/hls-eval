@@ -1,0 +1,1 @@
+typedef unsigned long long float64;

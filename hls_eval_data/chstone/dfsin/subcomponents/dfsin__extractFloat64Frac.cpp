@@ -1,1 +1,0 @@
-bits64 extractFloat64Frac(float64 a) { return a & 0x000FFFFFFFFFFFFFLL; }
