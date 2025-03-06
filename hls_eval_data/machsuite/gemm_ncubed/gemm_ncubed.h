@@ -20,10 +20,3 @@
 #define MAX_ITERATION 1
 
 void gemm(TYPE m1[N], TYPE m2[N], TYPE prod[N]);
-// Test harness interface code.
-
-struct bench_args_t {
-    TYPE m1[N];
-    TYPE m2[N];
-    TYPE prod[N];
-};

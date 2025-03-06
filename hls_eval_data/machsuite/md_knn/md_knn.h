@@ -28,14 +28,3 @@ void md_kernel(
     TYPE position_y[nAtoms],
     TYPE position_z[nAtoms],
     int32_t NL[nAtoms * maxNeighbors]);
-// Test harness interface code.
-
-struct bench_args_t {
-    TYPE force_x[nAtoms];
-    TYPE force_y[nAtoms];
-    TYPE force_z[nAtoms];
-    TYPE position_x[nAtoms];
-    TYPE position_y[nAtoms];
-    TYPE position_z[nAtoms];
-    int32_t NL[nAtoms * maxNeighbors];
-};

@@ -6,28 +6,15 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define WRITE_OUTPUT
-#define CHECK_OUTPUT
-
 #include "support.h"
 
 int main(int argc, char **argv) {
     // Parse command line.
     char *in_file;
-#ifdef CHECK_OUTPUT
     char *check_file;
-#endif
-    assert(argc < 4 && "Usage: ./benchmark <input_file> <check_file>");
+
     in_file = "input.data";
-#ifdef CHECK_OUTPUT
     check_file = "check.data";
-#endif
-    if (argc > 1)
-        in_file = argv[1];
-#ifdef CHECK_OUTPUT
-    if (argc > 2)
-        check_file = argv[2];
-#endif
 
     // Load input data
     int in_fd;

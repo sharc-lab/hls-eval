@@ -219,11 +219,11 @@ int check_data(void *vdata, void *vref) {
         real_diff = data->real[i] - ref->real[i];
         img_diff = data->img[i] - ref->img[i];
         has_errors |= (real_diff < -EPSILON) || (EPSILON < real_diff);
-        // if( has_errors )
-        // printf("%d (real): %f (%f)\n", i, real_diff, EPSILON);
+        if (has_errors)
+            printf("ERROR: %d (real): %f (%f)\n", i, real_diff, EPSILON);
         has_errors |= (img_diff < -EPSILON) || (EPSILON < img_diff);
-        // if( has_errors )
-        // printf("%d (img): %f (%f)\n", i, img_diff, EPSILON);
+        if (has_errors)
+            printf("ERROR: %d (img): %f (%f)\n", i, img_diff, EPSILON);
     }
 
     // Return true if it's correct.

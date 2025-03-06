@@ -31,12 +31,3 @@ void ss_sort(
     int b[SIZE],
     int bucket[BUCKETSIZE],
     int sum[SCAN_RADIX]);
-
-// Test harness interface code.
-
-struct bench_args_t {
-    int a[SIZE];
-    int b[SIZE];
-    int bucket[BUCKETSIZE];
-    int sum[SCAN_RADIX];
-};

@@ -28,10 +28,3 @@ ASPLOS 1991
 #define MAX_ITERATION 1
 
 void bbgemm(TYPE m1[N], TYPE m2[N], TYPE prod[N]);
-// Test harness interface code.
-
-struct bench_args_t {
-    TYPE m1[N];
-    TYPE m2[N];
-    TYPE prod[N];
-};

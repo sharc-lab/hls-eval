@@ -227,11 +227,9 @@ int check_data(void *vdata, void *vref) {
     //     has_errors |= (data->level_counts[i] != ref->level_counts[i]);
     // }
 
-    // More verbose and fine grained comparison
     for (i = 0; i < N_LEVELS; i++) {
         if (data->level_counts[i] != ref->level_counts[i]) {
-            fprintf(
-                stderr,
+            printf(
                 "Mismatch at level %d: (actual) %" PRIu64 " != %" PRIu64
                 " (expected)\n",
                 i,

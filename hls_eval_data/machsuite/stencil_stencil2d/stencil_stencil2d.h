@@ -21,8 +21,6 @@ void stencil(
     TYPE sol[row_size * col_size],
     TYPE filter[f_size]);
 
-// Test harness interface code.
-
 struct bench_args_t {
     TYPE orig[row_size * col_size];
     TYPE sol[row_size * col_size];

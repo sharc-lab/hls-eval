@@ -16,11 +16,3 @@ http://www.cs.berkeley.edu/~mhoemmen/matrix-seminar/slides/UCB_sparse_tutorial_1
 #define TYPE double
 
 void ellpack(TYPE nzval[N * L], int32_t cols[N * L], TYPE vec[N], TYPE out[N]);
-// Test harness interface code.
-
-struct bench_args_t {
-    TYPE nzval[N * L];
-    int32_t cols[N * L];
-    TYPE vec[N];
-    TYPE out[N];
-};

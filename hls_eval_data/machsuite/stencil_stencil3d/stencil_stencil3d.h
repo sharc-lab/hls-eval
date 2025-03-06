@@ -25,8 +25,6 @@ Oliker, D. Patterson, J. Shalf, K. Yelick SC 2008
 
 void stencil3d(TYPE C[2], TYPE orig[SIZE], TYPE sol[SIZE]);
 
-// Test harness interface code.
-
 struct bench_args_t {
     TYPE C[2];
     TYPE orig[SIZE];

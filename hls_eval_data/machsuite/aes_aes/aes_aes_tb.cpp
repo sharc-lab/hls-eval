@@ -189,11 +189,9 @@ int check_data(void *vdata, void *vref) {
     // Exact compare encrypted output buffers
     // has_errors |= memcmp(&data->buf, &ref->buf, 16 * sizeof(uint8_t));
 
-    // Make the check more finegrained
     for (int i = 0; i < 16; i++) {
         if (data->buf[i] != ref->buf[i]) {
-            fprintf(
-                stderr,
+            printf(
                 "Output data mismatch at index %d: (actual) %d != %d "
                 "(expected)\n",
                 i,
