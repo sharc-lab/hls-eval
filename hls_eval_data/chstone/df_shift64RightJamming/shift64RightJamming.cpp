@@ -1,8 +1,5 @@
 #include "shift64RightJamming.h"
 
-int8 float_rounding_mode = 0;
-int8 float_exception_flags = 0;
-
 void shift64RightJamming(bits64 a, int16 count, bits64 *zPtr) {
     bits64 z;
 

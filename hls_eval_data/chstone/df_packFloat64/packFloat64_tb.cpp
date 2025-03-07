@@ -24,7 +24,6 @@ int main() {
          0xFFF0000000000000ULL}, // negative infinity
         {0, 0x7FF, 0x8000000000000ULL, 0x7FF8000000000000ULL},   // quiet NaN
         {1, 0x400, 0x0008000000000000ULL, 0xC008000000000000ULL} // -3.0
-                                                                 // -3.0
     };
 
     for (int i = 0; i < 7; ++i) {
