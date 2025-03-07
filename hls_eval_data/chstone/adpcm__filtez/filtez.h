@@ -1,0 +1,1 @@
+int filtez(int *bpl, int *dlt);

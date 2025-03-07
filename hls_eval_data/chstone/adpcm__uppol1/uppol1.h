@@ -1,0 +1,1 @@
+int uppol1(int al1, int apl2, int plt, int plt1);

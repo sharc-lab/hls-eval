@@ -1,0 +1,1 @@
+int filtep(int rlt1, int al1, int rlt2, int al2);

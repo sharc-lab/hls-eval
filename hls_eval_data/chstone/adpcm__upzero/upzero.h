@@ -1,0 +1,1 @@
+void upzero(int dlt, int *dlti, int *bli);
