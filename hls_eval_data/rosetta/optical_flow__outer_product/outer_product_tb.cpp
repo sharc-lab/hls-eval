@@ -26,13 +26,12 @@ int main() {
             pixel_t x = test_gradient[r][c].x;
             pixel_t y = test_gradient[r][c].y;
             pixel_t z = test_gradient[r][c].z;
-            outer_pixel_t expected_val[6] = {
-                (outer_pixel_t)(x * x),
-                (outer_pixel_t)(y * y),
-                (outer_pixel_t)(z * z),
-                (outer_pixel_t)(x * y),
-                (outer_pixel_t)(x * z),
-                (outer_pixel_t)(y * z)};
+            outer_pixel_t expected_val[6] = {(outer_pixel_t)(x * x),
+                                             (outer_pixel_t)(y * y),
+                                             (outer_pixel_t)(z * z),
+                                             (outer_pixel_t)(x * y),
+                                             (outer_pixel_t)(x * z),
+                                             (outer_pixel_t)(y * z)};
 
             for (int i = 0; i < 6; i++) {
                 if (test_output[r][c].val[i] != expected_val[i]) {

@@ -37,8 +37,9 @@ int main() {
     for (int i = 0; i < numTests; ++i) {
         flag result = float64_is_nan(testInputs[i]);
         if (result != expectedOutputs[i]) {
-            std::cerr << "Test failed for input " << std::hex << testInputs[i] << std::dec
-                      << ": expected " << expectedOutputs[i] << ", got " << result << std::endl;
+            std::cerr << "Test failed for input " << std::hex << testInputs[i]
+                      << std::dec << ": expected " << expectedOutputs[i]
+                      << ", got " << result << std::endl;
             return 1;
         }
     }

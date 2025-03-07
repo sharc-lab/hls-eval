@@ -14,22 +14,21 @@ typedef struct {
 int main() {
     bits64 z0, z1;
 
-    TestCase tests[] = {
-        {0ULL, 0ULL, 0ULL, 0ULL, 0ULL, 0ULL},
-        {0xFFFFFFFFFFFFFFFFULL, 0ULL, 1ULL, 0ULL, 0ULL, 0ULL},
-        {0ULL, 0xFFFFFFFFFFFFFFFFULL, 0ULL, 1ULL, 1ULL, 0ULL},
-        {0x123456789ABCDEF0ULL,
-         0x0FEDCBA987654321ULL,
-         0x1111111111111111ULL,
-         0x2222222222222222ULL,
-         0x23456789ABCDF001ULL,
-         0x320FEDCBA9876543ULL},
-        {0xFFFFFFFFFFFFFFFFULL,
-         0xFFFFFFFFFFFFFFFFULL,
-         0xFFFFFFFFFFFFFFFFULL,
-         0xFFFFFFFFFFFFFFFFULL,
-         0xFFFFFFFFFFFFFFFFULL,
-         0xFFFFFFFFFFFFFFFEULL}};
+    TestCase tests[] = {{0ULL, 0ULL, 0ULL, 0ULL, 0ULL, 0ULL},
+                        {0xFFFFFFFFFFFFFFFFULL, 0ULL, 1ULL, 0ULL, 0ULL, 0ULL},
+                        {0ULL, 0xFFFFFFFFFFFFFFFFULL, 0ULL, 1ULL, 1ULL, 0ULL},
+                        {0x123456789ABCDEF0ULL,
+                         0x0FEDCBA987654321ULL,
+                         0x1111111111111111ULL,
+                         0x2222222222222222ULL,
+                         0x23456789ABCDF001ULL,
+                         0x320FEDCBA9876543ULL},
+                        {0xFFFFFFFFFFFFFFFFULL,
+                         0xFFFFFFFFFFFFFFFFULL,
+                         0xFFFFFFFFFFFFFFFFULL,
+                         0xFFFFFFFFFFFFFFFFULL,
+                         0xFFFFFFFFFFFFFFFFULL,
+                         0xFFFFFFFFFFFFFFFEULL}};
 
     int num_tests = sizeof(tests) / sizeof(TestCase);
     int fail = 0;
