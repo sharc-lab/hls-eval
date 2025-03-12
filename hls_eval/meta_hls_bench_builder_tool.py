@@ -267,8 +267,8 @@ def run_testbench_builder(args, model):
 
 prompt_list_subcomponents = Template(
     dedent(""""
-    You are a high-level synthesis expert."
-    Help me identify all the sub-components in this high-level synthesis hardware design."
+    You are a high-level synthesis expert.
+    Help me identify all the sub-components in this high-level synthesis hardware design.
 
     Given the exsigin kernel code, header, and optional description, identify all the sub-components in the design.
     A sub-component is a seperate C++ function in the code that is not the top-level function.
@@ -303,7 +303,7 @@ prompt_list_subcomponents = Template(
 
 prompt_extract_subcomponent = Template(
     dedent(""""
-    You are a high-level synthesis expert."
+    You are a high-level synthesis expert.
     Help me extract the code for a specific sub-component in this high-level synthesis hardware design."
            
     Given the exsigin kernel code, header, and optional description, extract the code for a specific sub-component in the design.
