@@ -238,7 +238,7 @@ class TogetherAI(llm.Model):
     needs_key = "togetherai"
     key_env_var = "TOGETHER_API_KEY"
 
-    class Options(llm.Options):
+    class Options(llm.Options):  # type: ignore
         max_tokens: int | None = Field(
             ge=1,
             default=None,
@@ -294,12 +294,10 @@ class TogetherAI(llm.Model):
             payload["messages"].append({"role": "system", "content": prompt.system})
 
         if conversation:
-            for response in conversation.responses:
+            for r in conversation.responses:
+                payload["messages"].append({"role": "user", "content": r.prompt.prompt})
                 payload["messages"].append(
-                    {"role": "user", "content": response.prompt.prompt}
-                )
-                payload["messages"].append(
-                    {"role": "assistant", "content": response.text()}
+                    {"role": "assistant", "content": r.text()}  # type: ignore
                 )
 
         payload["messages"].append({"role": "user", "content": prompt.prompt})
@@ -378,6 +376,63 @@ def build_model_remote_tai(
     else:
         settings = {}
     return Model(name=model_name, llm=model, settings=settings)
+
+
+class vLLMModel(llm.Model):
+    # needs_key = "togetherai"
+    # key_env_var = "TOGETHER_API_KEY"
+
+    class Options(llm.Options):  # type: ignore
+        max_tokens: int | None = Field(
+            ge=1,
+            default=None,
+        )
+        stop: list[str] | None = Field(
+            default=["<|eot_id|>", "</s>", "[INST]"],
+        )
+        temperature: float | None = Field(
+            ge=0,
+            default=None,
+        )
+        top_p: float | None = Field(
+            ge=0,
+            default=None,
+        )
+        top_k: int | None = Field(
+            ge=0,
+            default=None,
+        )
+        repetition_penalty: float | None = Field(
+            ge=0,
+            default=None,
+        )
+        json_schema_output: dict[str, Any] | None = Field(
+            default=None,
+        )
+
+    def __init__(self, model_id, model_id_hf):
+        self.model_id = model_id
+        self.model_id_hf = model_id_hf
+
+        # TODO: implement rest of local inference
+        # slef.vllm_llm = LLM(model_id_hf)
+        raise NotImplementedError
+
+    def execute(
+        self,
+        prompt: llm.Prompt,
+        stream: bool,
+        response: llm.Response,
+        conversation: llm.Conversation | None,
+    ):
+        assert prompt.options
+        assert isinstance(prompt.options, self.Options)
+
+        if stream:
+            raise NotImplementedError("streaming not supported")
+
+        # TODO: implement rest of lcoal infernece
+        raise NotImplementedError
 
 
 def normalize_model_name(model_name: str) -> str:
