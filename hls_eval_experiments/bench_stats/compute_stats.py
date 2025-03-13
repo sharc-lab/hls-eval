@@ -74,15 +74,63 @@ if __name__ == "__main__":
     pp(source_counts.to_dict())
 
     # Calculate average LOC by source
-    avg_stats = df.groupby("source").agg({"kernel_loc": "mean", "header_loc": "mean"})
+    avg_stats = df.groupby("source").agg(
+        {"kernel_loc": "mean", "header_loc": "mean", "name": "count"}
+    )
 
     # Print results
     pp(avg_stats["kernel_loc"].to_dict())
     pp(avg_stats["header_loc"].to_dict())
+    pp(avg_stats["name"].to_dict())
 
     EXP_DATA_DIR.mkdir(exist_ok=True)
     df.to_csv(EXP_DATA_DIR / "bench_stats.csv", index=False)
     avg_stats.to_csv(EXP_DATA_DIR / "avg_stats.csv")
+
+    order = ["polybench", "machsuite", "rosetta", "chstone", "c2hlsc"]
+    display_name = {
+        "polybench": "Polybench",
+        "machsuite": "MachSuite",
+        "rosetta": "Rosetta",
+        "chstone": "CHStone",
+        "c2hlsc": "C2HLSC",
+    }
+
+    # write code to eit the folling
+    # \begin{tabular}{l|ccccc}
+    #         \toprule
+    #         \textbf{\makecell{Data\\Source}} & \textbf{\makecell{\# of Bench.\\Designs}} & \textbf{\makecell{Average\\Kernel LoC}} & \textbf{\makecell{Average HLS\\ Synthesis Runtime}} \\
+    #         \midrule
+    #         \textbf{Polybench \cite{polybench}} & 28 & 34 & Yes \\
+    #         \textbf{MachSuite \cite{machsuite}} & 18 & 85 & Yes \\
+    #         \textbf{CHStone \cite{machsuite}} & ??? & ???  & ???   \\
+    #         \textbf{Rosetta \cite{rosetta}} & ???   & ???  & ???   \\
+    #         \textbf{C2HLSC \cite{c2hlsc}} & ???   & ???  & ???   \\
+    #         \textbf{PP4FPGA \cite{pp4fpga}} & ???   & ???  & ???   \\
+    #         \textbf{GNNBuilder \cite{gn_builder}} & ???   & ???  & ???   \\
+    #         \textbf{FlowGNN \cite{flow_gnn}} & ???   & ???  & ???   \\
+    #         \midrule
+    #         \textbf{Totals} & 85 & ??? & -   \\
+    #         \bottomrule
+    #     \end{tabular}
+
+    tabular_txt = ""
+    tabular_txt += "\\begin{tabular}{l|ccc}\n"
+    tabular_txt += "\\toprule\n"
+    tabular_txt += "\\textbf{Data\\\\Source} & \\textbf{\\# of Bench.\\\\Designs} & \\textbf{Average\\\\Kernel LoC} & \\textbf{Average HLS\\\\Synthesis Runtime} \\\\\n"
+    tabular_txt += "\\midrule\n"
+    for src in order:
+        tabular_txt += f"\\textbf{{{display_name[src]}}}"
+        tabular_txt += f" & {avg_stats['name'][src]} & {int(round(avg_stats['kernel_loc'][src]))} & - \\\\\n"
+    tabular_txt += "\\midrule\n"
+    tabular_txt += f"\\textbf{{Total}} & {avg_stats['name'].sum()} & - & - \\\\\n"
+    tabular_txt += "\\bottomrule\n"
+    tabular_txt += "\\end{tabular}\n"
+
+    with open(EXP_DATA_DIR / "tabular.txt", "w") as f:
+        f.write(tabular_txt)
+
+    exit()
 
     def measure_synth(bc: BenchmarkCase) -> float:
         with tempfile.TemporaryDirectory() as tmp_dir:

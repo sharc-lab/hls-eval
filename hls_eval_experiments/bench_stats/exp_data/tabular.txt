@@ -1,0 +1,13 @@
+\begin{tabular}{l|ccc}
+\toprule
+\textbf{Data\\Source} & \textbf{\# of Bench.\\Designs} & \textbf{Average\\Kernel LoC} & \textbf{Average HLS\\Synthesis Runtime} \\
+\midrule
+\textbf{Polybench} & 28 & 23 & - \\
+\textbf{MachSuite} & 17 & 59 & - \\
+\textbf{Rosetta} & 8 & 17 & - \\
+\textbf{CHStone} & 20 & 70 & - \\
+\textbf{C2HLSC} & 12 & 47 & - \\
+\midrule
+\textbf{Total} & 85 & - & - \\
+\bottomrule
+\end{tabular}

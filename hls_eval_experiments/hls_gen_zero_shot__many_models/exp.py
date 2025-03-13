@@ -116,7 +116,7 @@ if __name__ == "__main__":
         for case_name, model_name in one_off_cases
     ]
 
-    evaluator.evaluate_design_model_paris(
+    evaluator.evaluate_design_model_pairs(
         one_off_cases_objects,
         n_jobs=16,
         n_jobs_pool_llm=4,

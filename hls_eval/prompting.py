@@ -23,7 +23,7 @@ def build_input_code_prompt_md(code: dict[str, str]) -> str:
     return p
 
 
-def extract_code_xml_from_llm_outout(llm_output: str) -> dict[str, str]:
+def extract_code_xml_from_llm_output(llm_output: str) -> dict[str, str]:
     code = {}
 
     tags_matches: list[re.Match] = []

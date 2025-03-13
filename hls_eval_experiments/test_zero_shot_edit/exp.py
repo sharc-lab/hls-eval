@@ -4,8 +4,9 @@ from pathlib import Path
 from dotenv import dotenv_values
 
 from hls_eval.data import BenchmarkCase, find_benchmark_case_dirs
-from hls_eval.eval import HLSGenerationZeroShotEvaluator
+from hls_eval.eval import HLSEditingZeroShotEvaluator, HLSGenerationZeroShotEvaluator
 from hls_eval.llms import build_model_remote_tai
+from hls_eval.prompts import prompt_loop_tiling
 from hls_eval.tools import VitisHLSCSimTool, VitisHLSSynthTool, auto_find_vitis_hls_dir
 from hls_eval.utils import check_key, unwrap
 
@@ -58,11 +59,15 @@ if __name__ == "__main__":
 
     vitis_hls_dir = unwrap(auto_find_vitis_hls_dir(), "Vitis HLS bin not auto found")
 
-    evaluator = HLSGenerationZeroShotEvaluator(
+    prompt_task = prompt_loop_tiling
+
+    evaluator = HLSEditingZeroShotEvaluator(
         vitis_hls_tool_csim=VitisHLSCSimTool(vitis_hls_dir),
         vitis_hls_tool_synth=VitisHLSSynthTool(vitis_hls_dir),
         output_data_dir=DIR_CURRENT_OUTPUT_DATA,
-        n_samples=2,
+        prompt_task=prompt_task,
+        n_samples=4,
+        temperature=0.7,
     )
 
     # evaluator.evaluate_designs(
@@ -79,20 +84,8 @@ if __name__ == "__main__":
     # one_off_models = [m for m in models if m.name == "google/gemma-2-27b-it"]
 
     one_off_cases = [
-        # ("floyd-warshall", "google/gemma-2-27b-it"),
-        # ("gemver", "google/gemma-2-27b-it"),
-        # ("heat-3d", "google/gemma-2-27b-it"),
-        # ("heat-3d", "meta-llama/Llama-3-8b-chat-hf"),
-        # ("mix_columns", "google/gemma-2-27b-it"),
-        # ("mix_columns", "meta-llama/Llama-3-70b-chat-hf"),
-        ("mix_columns", "meta-llama/Llama-3-8b-chat-hf"),
-        # ("monobit", "Qwen/Qwen2.5-Coder-32B-Instruct"),
-        # ("monobit", "google/gemma-2-27b-it"),
-        # ("monobit", "meta-llama/Llama-3-70b-chat-hf"),
-        ("monobit", "meta-llama/Llama-3-8b-chat-hf"),
-        # ("mvt", "Qwen/Qwen2.5-Coder-32B-Instruct"),
-        # ("mvt", "google/gemma-2-27b-it"),
-        # ("mvt", "meta-llama/Llama-3-70b-chat-hf"),
+        ("gemm", "meta-llama/Llama-3-8b-chat-hf"),
+        ("atax", "meta-llama/Llama-3-8b-chat-hf"),
     ]
 
     one_off_cases_objects = [

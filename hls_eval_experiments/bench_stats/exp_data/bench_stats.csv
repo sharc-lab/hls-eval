@@ -74,12 +74,12 @@ rendering_3d__pixel_in_triangle,rosetta,12,14
 rendering_3d__projection,rosetta,38,26
 add_round_key,c2hlsc,11,13
 aes,c2hlsc,144,42
-block,c2hlsc,15,5
-cusums,c2hlsc,16,4
+block,c2hlsc,15,4
+cusums,c2hlsc,16,3
 des,c2hlsc,183,67
 mix_columns,c2hlsc,23,13
 monobit,c2hlsc,8,4
-overlapping,c2hlsc,30,4
+overlapping,c2hlsc,30,3
 present,c2hlsc,81,43
 runs,c2hlsc,16,5
 shift_rows,c2hlsc,26,13

@@ -4,12 +4,13 @@ from pathlib import Path
 from dotenv import dotenv_values
 
 from hls_eval.data import BenchmarkCase, find_benchmark_case_dirs
-from hls_eval.eval import HLSGenerationZeroShotEvaluator
+from hls_eval.eval import HLSEditingZeroShotEvaluator, HLSGenerationZeroShotEvaluator
 from hls_eval.llms import build_model_remote_tai
+from hls_eval.prompts import prompt_loop_tiling
 from hls_eval.tools import VitisHLSCSimTool, VitisHLSSynthTool, auto_find_vitis_hls_dir
 from hls_eval.utils import check_key, unwrap
 
-EXP_NAME = "test_zero_shot_gen"
+EXP_NAME = "test_zero_shot_edit__loop_tile"
 
 DIR_CURRENT = Path(__file__).resolve().parent
 DIR_ROOT = DIR_CURRENT.parent.parent
@@ -33,7 +34,7 @@ if __name__ == "__main__":
         BenchmarkCase(d, name=d.name) for d in all_benchmark_case_dirs
     ]
 
-    sets_to_test = set(["polybench", "c2hlsc"])
+    sets_to_test = set(["polybench"])
 
     all_benchmark_cases = [
         bc
@@ -43,10 +44,10 @@ if __name__ == "__main__":
     all_benchmark_cases_map = {bc.name: bc for bc in all_benchmark_cases}
 
     model_names_to_test = [
-        "Qwen/Qwen2.5-Coder-32B-Instruct",
-        "google/gemma-2-27b-it",
         "meta-llama/Llama-3-70b-chat-hf",
         "meta-llama/Llama-3-8b-chat-hf",
+        "Qwen/Qwen2.5-Coder-32B-Instruct",
+        "deepseek-ai/DeepSeek-V3",
     ]
     models = [
         build_model_remote_tai(model_name, api_key=API_KEY_TOGETHERAI)
@@ -58,52 +59,44 @@ if __name__ == "__main__":
 
     vitis_hls_dir = unwrap(auto_find_vitis_hls_dir(), "Vitis HLS bin not auto found")
 
-    evaluator = HLSGenerationZeroShotEvaluator(
+    prompt_task = prompt_loop_tiling
+
+    evaluator = HLSEditingZeroShotEvaluator(
         vitis_hls_tool_csim=VitisHLSCSimTool(vitis_hls_dir),
         vitis_hls_tool_synth=VitisHLSSynthTool(vitis_hls_dir),
         output_data_dir=DIR_CURRENT_OUTPUT_DATA,
-        n_samples=2,
+        prompt_task=prompt_task,
+        n_samples=5,
+        temperature=0.7,
     )
 
-    # evaluator.evaluate_designs(
-    #     benchmark_cases=all_benchmark_cases,
-    #     models=models,
-    #     n_jobs=16,
-    #     n_jobs_pool_llm=4,
-    #     n_jobs_pool_csim=8,
-    #     n_jobs_pool_synth=12,
-    # )
+    evaluator.evaluate_designs(
+        benchmark_cases=all_benchmark_cases,
+        models=models,
+        n_jobs=16,
+        n_jobs_pool_llm=4,
+        n_jobs_pool_csim=12,
+        n_jobs_pool_synth=12,
+    )
 
     # one off runs to get any by hand that failed for some network reasons
     # one_off_benchmark_cases = [bc for bc in all_benchmark_cases if bc.name == "fdtd-2d"]
     # one_off_models = [m for m in models if m.name == "google/gemma-2-27b-it"]
 
-    one_off_cases = [
-        # ("floyd-warshall", "google/gemma-2-27b-it"),
-        # ("gemver", "google/gemma-2-27b-it"),
-        # ("heat-3d", "google/gemma-2-27b-it"),
-        # ("heat-3d", "meta-llama/Llama-3-8b-chat-hf"),
-        # ("mix_columns", "google/gemma-2-27b-it"),
-        # ("mix_columns", "meta-llama/Llama-3-70b-chat-hf"),
-        ("mix_columns", "meta-llama/Llama-3-8b-chat-hf"),
-        # ("monobit", "Qwen/Qwen2.5-Coder-32B-Instruct"),
-        # ("monobit", "google/gemma-2-27b-it"),
-        # ("monobit", "meta-llama/Llama-3-70b-chat-hf"),
-        ("monobit", "meta-llama/Llama-3-8b-chat-hf"),
-        # ("mvt", "Qwen/Qwen2.5-Coder-32B-Instruct"),
-        # ("mvt", "google/gemma-2-27b-it"),
-        # ("mvt", "meta-llama/Llama-3-70b-chat-hf"),
-    ]
+    # one_off_cases = [
+    #     ("gemm", "meta-llama/Llama-3-8b-chat-hf"),
+    #     ("atax", "meta-llama/Llama-3-8b-chat-hf"),
+    # ]
 
-    one_off_cases_objects = [
-        (all_benchmark_cases_map[case_name], models_map[model_name])
-        for case_name, model_name in one_off_cases
-    ]
+    # one_off_cases_objects = [
+    #     (all_benchmark_cases_map[case_name], models_map[model_name])
+    #     for case_name, model_name in one_off_cases
+    # ]
 
-    evaluator.evaluate_design_model_pairs(
-        one_off_cases_objects,
-        n_jobs=16,
-        n_jobs_pool_llm=4,
-        n_jobs_pool_csim=16,
-        n_jobs_pool_synth=16,
-    )
+    # evaluator.evaluate_design_model_pairs(
+    #     one_off_cases_objects,
+    #     n_jobs=16,
+    #     n_jobs_pool_llm=4,
+    #     n_jobs_pool_csim=16,
+    #     n_jobs_pool_synth=16,
+    # )

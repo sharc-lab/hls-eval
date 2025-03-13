@@ -51,6 +51,4 @@ if __name__ == "__main__":
         n_jobs_pool_llm=4,
         n_jobs_pool_csim=8,
         n_jobs_pool_synth=8,
-        # tokens_per_minute=500_000,
-        # requests_per_minute=3_000,
     )
