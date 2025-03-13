@@ -174,215 +174,238 @@ class HLSGenerationZeroShotEvaluator(Evaluator):
         pools: EvalThreadPools,
         **kwargs,
     ) -> None:
-        eval_data: dict[str, Any] = {}
-
         model_name: str = model.name
         model_name_normalized = normalize_model_name(model_name)
         benchmark_case_name = benchmark_case.name
         eval_id = f"{benchmark_case_name}__{model_name_normalized}"
 
-        eval_data["eval_type"] = "hls_gen_zero_shot"
-        eval_data["eval_id"] = eval_id
-        eval_data["benchmark_case_name"] = benchmark_case_name
-        eval_data["benchmark_case_tags"] = benchmark_case.tags_all
-        eval_data["model_name"] = model_name
-        eval_data["model_name_normalized"] = model_name_normalized
+        eval_dir_top = self.output_data_dir / eval_id
+        if eval_dir_top.exists():
+            self.logger.info(f"Removing existing top eval dir: {eval_dir_top}")
+            shutil.rmtree(eval_dir_top)
+        eval_dir_top.mkdir(parents=True)
 
-        eval_data["temperature"] = self.temperature
-        eval_data["n_samples"] = self.n_samples
+        for sample_idx in range(self.n_samples):
+            eval_data: dict[str, Any] = {}
 
-        self.logger.info(f"[{eval_id}] Running eval...")
+            eval_data["eval_type"] = "hls_gen_zero_shot"
+            eval_data["eval_id"] = eval_id
+            eval_data["benchmark_case_name"] = benchmark_case_name
+            eval_data["benchmark_case_tags"] = benchmark_case.tags_all
+            eval_data["model_name"] = model_name
+            eval_data["model_name_normalized"] = model_name_normalized
 
-        eval_dir = self.output_data_dir / eval_id
-        if eval_dir.exists():
-            self.logger.info(f"Removing existing eval dir: {eval_dir}")
-            shutil.rmtree(eval_dir)
-        eval_dir.mkdir(parents=True)
+            eval_data["temperature"] = self.temperature
+            eval_data["n_samples"] = self.n_samples
 
-        design_dir = eval_dir / "design"
-        benchmark_case = benchmark_case.copy_to(design_dir)
+            self.logger.info(f"[{eval_id}] Running eval...")
 
-        assert len(benchmark_case.h_files) == 1
-        design_header = benchmark_case.h_files[0]
-        design_tb = benchmark_case.tb_file
-        design_description = benchmark_case.kernel_description_fp
+            eval_dir = eval_dir_top / f"sample__{sample_idx}"
+            if eval_dir.exists():
+                self.logger.info(f"Removing existing sample eval dir: {eval_dir}")
+                shutil.rmtree(eval_dir)
+            eval_dir.mkdir(parents=True)
 
-        prompt = build_prompt_gen_zero_shot(
-            design_description,
-            design_tb,
-            design_header,
-        )
-        eval_data["prompt"] = prompt
-        (eval_dir / "raw_llm_prompt.txt").write_text(prompt)
+            design_dir = eval_dir / "design"
+            benchmark_case = benchmark_case.copy_to(design_dir)
 
-        n_tokens_guess = approx_num_tokens(prompt)
+            assert len(benchmark_case.h_files) == 1
+            design_header = benchmark_case.h_files[0]
+            design_tb = benchmark_case.tb_file
+            design_description = benchmark_case.kernel_description_fp
 
-        llm_pool = pools.pool_llm
+            prompt = build_prompt_gen_zero_shot(
+                design_description,
+                design_tb,
+                design_header,
+            )
+            eval_data["prompt"] = prompt
+            (eval_dir / "raw_llm_prompt.txt").write_text(prompt)
 
-        llm = model.llm
+            n_tokens_guess = approx_num_tokens(prompt)
 
-        t0 = time.monotonic()
+            llm_pool = pools.pool_llm
 
-        def call_model(
-            prompt,
-        ) -> tuple[Response | None, str | None, dict | None, bool, float, float, float]:
-            print(f"[{eval_id}] Calling model...")
-            print(f"[{eval_id}] Waiting for {n_tokens_guess} tokens")
-            # llm_rate_limiter.wait_for(n_tokens_guess)
-            t_0 = time.monotonic()
-            r: Response | None = None
-            r_text: str | None = None
-            r_json: dict | None = None
+            llm = model.llm
+
+            t0 = time.monotonic()
+
+            def call_model(
+                prompt,
+            ) -> tuple[
+                Response | None, str | None, dict | None, bool, float, float, float
+            ]:
+                print(f"[{eval_id}] Calling model...")
+                print(f"[{eval_id}] Waiting for {n_tokens_guess} tokens")
+                # llm_rate_limiter.wait_for(n_tokens_guess)
+                t_0 = time.monotonic()
+                r: Response | None = None
+                r_text: str | None = None
+                r_json: dict | None = None
+                try:
+                    r = llm.prompt(
+                        prompt=prompt,
+                        stream=False,
+                        temperature=self.temperature,
+                    )
+                    r._force()
+                    r_json = r.json()
+                    r_text = r.text()
+                    t1 = time.monotonic()
+                    dt = t1 - t_0
+                    model_timeout = False
+                except TAITimeout:
+                    t1 = time.monotonic()
+                    dt = t1 - t_0
+                    model_timeout = True
+
+                return r, r_text, r_json, model_timeout, t_0, t1, dt
+
+            future_llm = llm_pool.submit(call_model, prompt)
+            r, r_text, r_json, model_timeout, t0, t1, dt = future_llm.result()
+
+            eval_data["model_timeout"] = model_timeout
+            eval_data["llm_execution_time"] = {"t0": t0, "t1": t1, "execution_time": dt}
+
+            if model_timeout:
+                serialize_eval_data(eval_id, eval_dir, eval_data)
+                return
+
+            assert r is not None
+            assert r_text is not None
+
+            if r.response_json is not None:
+                eval_data["response_json"] = r.response_json
+
+            eval_data["raw_output"] = str(r_text)
+            (eval_dir / "raw_llm_output.txt").write_text(r_text)
+
+            print(f"[{eval_id}] Extracting code from output...")
             try:
-                r = llm.prompt(
-                    prompt=prompt,
-                    stream=False,
-                    temperature=self.temperature,
-                )
-                r._force()
-                r_json = r.json()
-                r_text = r.text()
-                t1 = time.monotonic()
-                dt = t1 - t_0
-                model_timeout = False
-            except TAITimeout:
-                t1 = time.monotonic()
-                dt = t1 - t_0
-                model_timeout = True
+                generated_code = extract_code_xml_from_llm_outout(r_text)
+                assert len(generated_code) == 1
+                generated_code_file_name = list(generated_code.keys())[0]
+                assert generated_code_file_name.endswith(".cpp")
+                eval_data["generated_code"] = generated_code
+                eval_data["can_parse_output"] = True
+            except Exception:
+                print(f"[{eval_id}] Error extracting code from LLM output")
+                eval_data["can_parse_output"] = False
+                serialize_eval_data(eval_id, eval_dir, eval_data)
+                return
 
-            return r, r_text, r_json, model_timeout, t_0, t1, dt
+            # make a design_generated dir
+            design_generated_dir = eval_dir / "design_generated"
+            design_generated_dir.mkdir()
 
-        future_llm = llm_pool.submit(call_model, prompt)
-        r, r_text, r_json, model_timeout, t0, t1, dt = future_llm.result()
+            # copy the design files
+            shutil.copy(design_header, design_generated_dir)
+            shutil.copy(design_tb, design_generated_dir)
+            shutil.copy(design_description, design_generated_dir)
 
-        eval_data["model_timeout"] = model_timeout
-        eval_data["llm_execution_time"] = {"t0": t0, "t1": t1, "execution_time": dt}
+            # write the generated code to a file
+            for file_name, code in generated_code.items():
+                (design_generated_dir / f"{file_name}").write_text(code)
 
-        if model_timeout:
-            serialize_eval_data(eval_id, eval_dir, eval_data)
-            return
+            build_dir = eval_dir / "build"
+            build_dir.mkdir(parents=True, exist_ok=True)
 
-        assert r is not None
-        assert r_text is not None
+            build_dir_source_files = sorted(
+                list(design_generated_dir.glob("*.cpp"))
+                + list(design_generated_dir.glob("*.h"))
+            )
+            build_dir_not_source_files = sorted(
+                list(set(design_generated_dir.glob("*")) - set(build_dir_source_files))
+            )
 
-        if r.response_json is not None:
-            eval_data["response_json"] = r.response_json
+            pool_csim = pools.pool_csim
 
-        eval_data["raw_output"] = str(r_text)
-        (eval_dir / "raw_llm_output.txt").write_text(r_text)
+            print(f"[{eval_id}] Compiling and running the LLM version of the design...")
 
-        print(f"[{eval_id}] Extracting code from output...")
-        try:
-            generated_code = extract_code_xml_from_llm_outout(r_text)
-            assert len(generated_code) == 1
-            generated_code_file_name = list(generated_code.keys())[0]
-            assert generated_code_file_name.endswith(".cpp")
-            eval_data["generated_code"] = generated_code
-            eval_data["can_parse_output"] = True
-        except Exception:
-            print(f"[{eval_id}] Error extracting code from LLM output")
-            eval_data["can_parse_output"] = False
-            serialize_eval_data(eval_id, eval_dir, eval_data)
-            return
+            future_tool_cpp = pool_csim.submit(
+                self.cpp_compiler_tool.run,
+                build_dir,
+                build_dir_source_files,
+                build_dir_not_source_files,
+                eval_id,
+            )
 
-        # make a design_generated dir
-        design_generated_dir = eval_dir / "design_generated"
-        design_generated_dir.mkdir()
+            c_compile_out, c_run_out = future_tool_cpp.result()
 
-        # copy the design files
-        shutil.copy(design_header, design_generated_dir)
-        shutil.copy(design_tb, design_generated_dir)
-        shutil.copy(design_description, design_generated_dir)
-
-        # write the generated code to a file
-        for file_name, code in generated_code.items():
-            (design_generated_dir / f"{file_name}").write_text(code)
-
-        build_dir = eval_dir / "build"
-        build_dir.mkdir(parents=True, exist_ok=True)
-
-        build_dir_source_files = sorted(
-            list(design_generated_dir.glob("*.cpp"))
-            + list(design_generated_dir.glob("*.h"))
-        )
-        build_dir_not_source_files = sorted(
-            list(set(design_generated_dir.glob("*")) - set(build_dir_source_files))
-        )
-
-        pool_csim = pools.pool_csim
-
-        print(f"[{eval_id}] Compiling and running the LLM version of the design...")
-
-        future_tool_cpp = pool_csim.submit(
-            self.cpp_compiler_tool.run,
-            build_dir,
-            build_dir_source_files,
-            build_dir_not_source_files,
-            eval_id,
-        )
-
-        c_compile_out, c_run_out = future_tool_cpp.result()
-
-        eval_data["c_compile_out"] = {}
-        eval_data["c_compile_out"]["data_execution"] = {
-            "return_code": c_compile_out.data_execution.return_code,
-            "stdout": c_compile_out.data_execution.stdout,
-            "stderr": c_compile_out.data_execution.stderr,
-            "t0": c_compile_out.data_execution.t0,
-            "t1": c_compile_out.data_execution.t1,
-            "execution_time": c_compile_out.data_execution.execution_time,
-            "timeout": c_compile_out.data_execution.timeout,
-        }
-
-        print(
-            f"[{eval_id}] Testbench compile return code: {c_compile_out.data_execution.return_code}"
-        )
-
-        if c_run_out:
-            eval_data["c_run_out"] = {}
-            eval_data["c_run_out"]["data_execution"] = {
-                "return_code": c_run_out.data_execution.return_code,
-                "stdout": c_run_out.data_execution.stdout,
-                "stderr": c_run_out.data_execution.stderr,
-                "t0": c_run_out.data_execution.t0,
-                "t1": c_run_out.data_execution.t1,
-                "execution_time": c_run_out.data_execution.execution_time,
-                "timeout": c_run_out.data_execution.timeout,
+            eval_data["c_compile_out"] = {}
+            eval_data["c_compile_out"]["data_execution"] = {
+                "return_code": c_compile_out.data_execution.return_code,
+                "stdout": c_compile_out.data_execution.stdout,
+                "stderr": c_compile_out.data_execution.stderr,
+                "t0": c_compile_out.data_execution.t0,
+                "t1": c_compile_out.data_execution.t1,
+                "execution_time": c_compile_out.data_execution.execution_time,
+                "timeout": c_compile_out.data_execution.timeout,
             }
 
             print(
-                f"[{eval_id}] Testbench return code: {c_run_out.data_execution.return_code}"
+                f"[{eval_id}] Testbench compile return code: {c_compile_out.data_execution.return_code}"
             )
 
-        pool_synth = pools.pool_synth
+            if c_run_out:
+                eval_data["c_run_out"] = {}
+                eval_data["c_run_out"]["data_execution"] = {
+                    "return_code": c_run_out.data_execution.return_code,
+                    "stdout": c_run_out.data_execution.stdout,
+                    "stderr": c_run_out.data_execution.stderr,
+                    "t0": c_run_out.data_execution.t0,
+                    "t1": c_run_out.data_execution.t1,
+                    "execution_time": c_run_out.data_execution.execution_time,
+                    "timeout": c_run_out.data_execution.timeout,
+                }
 
-        print(f"[{eval_id}] Synthesizing the LLM version of the design...")
-        top_function_name = benchmark_case.top_fn
+                print(
+                    f"[{eval_id}] Testbench return code: {c_run_out.data_execution.return_code}"
+                )
 
-        future_tool_hls = pool_synth.submit(
-            self.vitis_hls_tool.run,
-            build_dir,
-            build_dir_source_files,
-            build_name=eval_id,
-            hls_top_function=top_function_name,
-        )
-        vitis_hls_tool_output = future_tool_hls.result()
+            pool_synth = pools.pool_synth
 
-        eval_data["vitis_hls_tool_out"] = {}
-        eval_data["vitis_hls_tool_out"]["data_execution"] = {
-            "return_code": vitis_hls_tool_output.data_execution.return_code,
-            "stdout": vitis_hls_tool_output.data_execution.stdout,
-            "stderr": vitis_hls_tool_output.data_execution.stderr,
-            "t0": vitis_hls_tool_output.data_execution.t0,
-            "t1": vitis_hls_tool_output.data_execution.t1,
-            "execution_time": vitis_hls_tool_output.data_execution.execution_time,
-            "timeout": vitis_hls_tool_output.data_execution.timeout,
-        }
-        print(
-            f"[{eval_id}] Vitis HLS return code: {vitis_hls_tool_output.data_execution.return_code}"
-        )
+            print(f"[{eval_id}] Synthesizing the LLM version of the design...")
+            top_function_name = benchmark_case.top_fn
 
-        serialize_eval_data(eval_id, eval_dir, eval_data)
+            future_tool_hls = pool_synth.submit(
+                self.vitis_hls_tool.run,
+                build_dir,
+                build_dir_source_files,
+                build_name=eval_id,
+                hls_top_function=top_function_name,
+            )
+            vitis_hls_tool_output = future_tool_hls.result()
+
+            eval_data["vitis_hls_tool_out"] = {}
+            eval_data["vitis_hls_tool_out"]["data_execution"] = {
+                "return_code": vitis_hls_tool_output.data_execution.return_code,
+                "stdout": vitis_hls_tool_output.data_execution.stdout,
+                "stderr": vitis_hls_tool_output.data_execution.stderr,
+                "t0": vitis_hls_tool_output.data_execution.t0,
+                "t1": vitis_hls_tool_output.data_execution.t1,
+                "execution_time": vitis_hls_tool_output.data_execution.execution_time,
+                "timeout": vitis_hls_tool_output.data_execution.timeout,
+            }
+            eval_data["vitis_hls_tool_out"]["data_tool"] = {}
+            if vitis_hls_tool_output.data_tool:
+                for k, v in vitis_hls_tool_output.data_tool.items():
+                    eval_data["vitis_hls_tool_out"]["data_tool"][k] = v
+            print(
+                f"[{eval_id}] Vitis HLS return code: {vitis_hls_tool_output.data_execution.return_code}"
+            )
+
+            serialize_eval_data(eval_id, eval_dir, eval_data)
+
+        all_eval_data = {}
+        for sample_idx in range(self.n_samples):
+            sample_eval_data_fp = (
+                eval_dir_top / f"sample__{sample_idx}" / "single_eval_data.json"
+            )
+            sample_eval_data = json.loads(sample_eval_data_fp.read_text())
+            all_eval_data[sample_idx] = sample_eval_data
+        all_eval_data_fp = eval_dir_top / "all_eval_data.json"
+        all_eval_data_fp.write_text(json.dumps(all_eval_data, indent=4))
 
 
 class HLSEditingZeroShotEvaluator(Evaluator):

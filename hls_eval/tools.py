@@ -10,6 +10,7 @@ from pathlib import Path
 import psutil
 
 from hls_eval.data import H_EXTENSIONS
+from hls_eval.vhls_report import DesignHLSSynthData
 
 
 def auto_find_vitis_hls_dir() -> Path | None:
@@ -209,11 +210,11 @@ class VitisHLSSynthTool:
                 data_tool=None,
             )
 
-        # solution_dir = unique_build_dir / f"{build_name}_proj/solution1"
-        # report_dir: Path = solution_dir / "syn" / "report"
-        # csynth_rpt_fp = report_dir / "csynth.xml"
+        solution_dir = unique_build_dir / f"{build_name}__proj/solution__synth"
+        report_dir: Path = solution_dir / "syn" / "report"
+        csynth_rpt_fp = report_dir / "csynth.xml"
 
-        # synthesis_data = DesignHLSSynthData.parse_from_synth_report_file(csynth_rpt_fp)
+        synthesis_data = DesignHLSSynthData.parse_from_synth_report_file(csynth_rpt_fp)
 
         assert p.stdout is not None
         assert p.stderr is not None
@@ -231,128 +232,8 @@ class VitisHLSSynthTool:
                 execution_time=dt,
                 timeout=False,
             ),
-            # data_tool=synthesis_data,
-            data_tool=None,
+            data_tool=synthesis_data.to_dict(),
         )
-
-
-class CPPCompilerTool:
-    def __init__(self, vitis_hls_path: Path) -> None:
-        self.vitis_hls_path = vitis_hls_path
-
-    def run(
-        self,
-        build_dir: Path,
-        source_files: list[Path],
-        aux_files: list[Path] = [],
-        build_name: str | None = None,
-        build_name_prefix: str = "c_compiler_tool__",
-    ) -> tuple[ToolDataOutput, ToolDataOutput | None]:
-        if build_name is None:
-            build_name = f"{build_name_prefix}{uuid.uuid4().hex}"
-        else:
-            build_name = f"{build_name_prefix}{build_name}"
-
-        unique_build_dir = build_dir / build_name
-        if unique_build_dir.exists():
-            shutil.rmtree(unique_build_dir)
-        unique_build_dir.mkdir(parents=True, exist_ok=True)
-
-        for fp in source_files + aux_files:
-            shutil.copy(fp, unique_build_dir)
-
-        library_paths = []
-        library_paths.append(self.vitis_hls_path / "lib" / "lnx64.o")
-        library_paths.append(self.vitis_hls_path / "lnx64" / "lib" / "csim")
-
-        env_for_vitis_hls_clang = os.environ.copy()
-        if "LD_LIBRARY_PATH" in env_for_vitis_hls_clang:
-            for lib_path in library_paths:
-                env_for_vitis_hls_clang["LD_LIBRARY_PATH"] += f":{lib_path}"
-        else:
-            env_for_vitis_hls_clang["LD_LIBRARY_PATH"] = ":".join(
-                [str(p) for p in library_paths]
-            )
-
-        CC = self.vitis_hls_path / "lnx64/tools/clang-3.9-csynth/bin/clang++"
-        CFLAGS = [
-            "-std=c++14",
-            "-O3",
-            "-g",
-            "-fPIC",
-            "-fPIE",
-            "-lm",
-            "-Wl,--sysroot=/",
-            f"-I{self.vitis_hls_path}/include",
-            f"-I{self.vitis_hls_path}/include/etc",
-            f"-I{self.vitis_hls_path}/include/utils",
-        ]
-
-        out_bin_fp = unique_build_dir / "out"
-
-        source_files_no_headers = [
-            fp for fp in source_files if fp.suffix not in H_EXTENSIONS
-        ]
-
-        p_call = []
-        p_call.append(str(CC.resolve()))
-        p_call.extend([str(fp.resolve()) for fp in source_files_no_headers])
-        p_call.append("-o")
-        p_call.append(str(out_bin_fp.resolve()))
-        p_call.extend(CFLAGS)
-
-        t_0 = time.monotonic()
-        p = subprocess.run(
-            p_call,
-            capture_output=True,
-            text=True,
-            env=env_for_vitis_hls_clang,
-            bufsize=io.DEFAULT_BUFFER_SIZE * 1024,
-        )
-        t_1 = time.monotonic()
-
-        dt = t_1 - t_0
-
-        compile_output = ToolDataOutput(
-            data_execution=ExecutionData(
-                return_code=p.returncode,
-                stdout=p.stdout,
-                stderr=p.stderr,
-                t0=t_0,
-                t1=t_1,
-                execution_time=dt,
-                timeout=False,
-            ),
-            data_tool=None,
-        )
-
-        if p.returncode != 0:
-            return compile_output, None
-
-        t_0 = time.monotonic()
-        p = subprocess.run(
-            [out_bin_fp],
-            capture_output=True,
-            text=True,
-        )
-        t_1 = time.monotonic()
-
-        dt = t_1 - t_0
-
-        execute_output = ToolDataOutput(
-            data_execution=ExecutionData(
-                return_code=p.returncode,
-                stdout=p.stdout,
-                stderr=p.stderr,
-                execution_time=dt,
-                t0=t_0,
-                t1=t_1,
-                timeout=False,
-            ),
-            data_tool=None,
-        )
-
-        return compile_output, execute_output
 
 
 class VitisHLSCSimTool:
@@ -525,3 +406,122 @@ class VitisHLSCSimTool:
         )
 
         return compile_data, run_data
+
+
+class CPPCompilerTool:
+    def __init__(self, vitis_hls_path: Path) -> None:
+        self.vitis_hls_path = vitis_hls_path
+
+    def run(
+        self,
+        build_dir: Path,
+        source_files: list[Path],
+        aux_files: list[Path] = [],
+        build_name: str | None = None,
+        build_name_prefix: str = "c_compiler_tool__",
+    ) -> tuple[ToolDataOutput, ToolDataOutput | None]:
+        if build_name is None:
+            build_name = f"{build_name_prefix}{uuid.uuid4().hex}"
+        else:
+            build_name = f"{build_name_prefix}{build_name}"
+
+        unique_build_dir = build_dir / build_name
+        if unique_build_dir.exists():
+            shutil.rmtree(unique_build_dir)
+        unique_build_dir.mkdir(parents=True, exist_ok=True)
+
+        for fp in source_files + aux_files:
+            shutil.copy(fp, unique_build_dir)
+
+        library_paths = []
+        library_paths.append(self.vitis_hls_path / "lib" / "lnx64.o")
+        library_paths.append(self.vitis_hls_path / "lnx64" / "lib" / "csim")
+
+        env_for_vitis_hls_clang = os.environ.copy()
+        if "LD_LIBRARY_PATH" in env_for_vitis_hls_clang:
+            for lib_path in library_paths:
+                env_for_vitis_hls_clang["LD_LIBRARY_PATH"] += f":{lib_path}"
+        else:
+            env_for_vitis_hls_clang["LD_LIBRARY_PATH"] = ":".join(
+                [str(p) for p in library_paths]
+            )
+
+        CC = self.vitis_hls_path / "lnx64/tools/clang-3.9-csynth/bin/clang++"
+        CFLAGS = [
+            "-std=c++14",
+            "-O3",
+            "-g",
+            "-fPIC",
+            "-fPIE",
+            "-lm",
+            "-Wl,--sysroot=/",
+            f"-I{self.vitis_hls_path}/include",
+            f"-I{self.vitis_hls_path}/include/etc",
+            f"-I{self.vitis_hls_path}/include/utils",
+        ]
+
+        out_bin_fp = unique_build_dir / "out"
+
+        source_files_no_headers = [
+            fp for fp in source_files if fp.suffix not in H_EXTENSIONS
+        ]
+
+        p_call = []
+        p_call.append(str(CC.resolve()))
+        p_call.extend([str(fp.resolve()) for fp in source_files_no_headers])
+        p_call.append("-o")
+        p_call.append(str(out_bin_fp.resolve()))
+        p_call.extend(CFLAGS)
+
+        t_0 = time.monotonic()
+        p = subprocess.run(
+            p_call,
+            capture_output=True,
+            text=True,
+            env=env_for_vitis_hls_clang,
+            bufsize=io.DEFAULT_BUFFER_SIZE * 1024,
+        )
+        t_1 = time.monotonic()
+
+        dt = t_1 - t_0
+
+        compile_output = ToolDataOutput(
+            data_execution=ExecutionData(
+                return_code=p.returncode,
+                stdout=p.stdout,
+                stderr=p.stderr,
+                t0=t_0,
+                t1=t_1,
+                execution_time=dt,
+                timeout=False,
+            ),
+            data_tool=None,
+        )
+
+        if p.returncode != 0:
+            return compile_output, None
+
+        t_0 = time.monotonic()
+        p = subprocess.run(
+            [out_bin_fp],
+            capture_output=True,
+            text=True,
+        )
+        t_1 = time.monotonic()
+
+        dt = t_1 - t_0
+
+        execute_output = ToolDataOutput(
+            data_execution=ExecutionData(
+                return_code=p.returncode,
+                stdout=p.stdout,
+                stderr=p.stderr,
+                execution_time=dt,
+                t0=t_0,
+                t1=t_1,
+                timeout=False,
+            ),
+            data_tool=None,
+        )
+
+        return compile_output, execute_output

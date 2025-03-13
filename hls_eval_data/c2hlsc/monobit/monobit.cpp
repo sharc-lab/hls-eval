@@ -1,6 +1,6 @@
 #include "monobit.h"
 
-void Frequency(int *result) {
+void Frequency(int *result, int epsilon[N]) {
     int i, sum;
 
     sum = 0;

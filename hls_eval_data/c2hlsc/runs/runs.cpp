@@ -1,6 +1,6 @@
 #include "runs.h"
 
-void Runs(int *res_S, int *res_V) {
+void Runs(int *res_S, int *res_V, int epsilon[N]) {
     int S, V, k;
 
     S = 0;

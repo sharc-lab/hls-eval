@@ -2,12 +2,13 @@
 
 int main() {
     int i;
+    int epsilon_test[N];
     for (i = 0; i < N; i++) {
-        epsilon[i] = i * 73 % 7 == 0;
+        epsilon_test[i] = i * 73 % 7 == 0;
     }
     int res_sup;
     int res_inf;
-    CumulativeSums(&res_sup, &res_inf);
+    CumulativeSums(&res_sup, &res_inf, epsilon_test);
 
     printf("sup = %d - inf = %d\n", res_sup, res_inf);
 }

@@ -1,7 +1,7 @@
 
 #include "overlapping.h"
 
-void Overlapping(double *result) {
+void Overlapping(double *result, int epsilon[N]) {
     int i, j, k, match;
     double W_obs, chi2, eta, sum;
     int K = 5;

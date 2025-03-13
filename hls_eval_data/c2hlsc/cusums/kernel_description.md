@@ -1,30 +1,24 @@
 Kernel Description:
-The CumulativeSums kernel is designed to calculate the maximum and minimum cumulative sums of a given array of binary values, represented by the epsilon array. The cumulative sum is calculated by iterating through the epsilon array and incrementing or decrementing a running sum S based on the value of the current element. If the current element is 1 (true), the sum S is incremented; otherwise, it is decremented. The maximum and minimum cumulative sums are updated accordingly during the iteration. The kernel uses a simple iterative approach to calculate the cumulative sums, avoiding unnecessary complexity. The algorithm can be represented by the following equations:
-- $S_{k+1} = S_k + 1$ if $\epsilon_k = 1$
-- $S_{k+1} = S_k - 1$ if $\epsilon_k = 0$
-- $sup_{k+1} = max(sup_k, S_{k+1})$
-- $inf_{k+1} = min(inf_k, S_{k+1})$
-where $S_k$ is the cumulative sum at the k-th iteration, $sup_k$ is the maximum cumulative sum up to the k-th iteration, and $inf_k$ is the minimum cumulative sum up to the k-th iteration.
-
-The kernel has a time complexity of O(N), where N is the size of the epsilon array, and a space complexity of O(1), excluding the input and output arrays. The kernel assumes that the epsilon array is initialized before calling the CumulativeSums function.
+The `CumulativeSums` kernel is designed to compute the cumulative maximum and minimum values of a sequence of integers derived from a binary input array `epsilon`. The algorithm iterates through the `epsilon` array, updating a cumulative sum `S` based on the values of `epsilon`. If `epsilon[k]` is 1, `S` is incremented; if `epsilon[k]` is 0, `S` is decremented. The kernel tracks the maximum value (`sup`) and minimum value (`inf`) that `S` attains during the iteration. The results are stored in the output pointers `res_sup` and `res_inf`, respectively. The kernel is optimized for high-level synthesis, focusing on efficient dataflow and minimal resource usage.
 
 ---
 
 Top-Level Function: `CumulativeSums`
 
 Complete Function Signature of the Top-Level Function:
-`void CumulativeSums(int *res_sup, int *res_inf);`
+`void CumulativeSums(int *res_sup, int *res_inf, int epsilon[N]);`
 
 Inputs:
-- `res_sup`: a pointer to an integer that will store the maximum cumulative sum
-- `res_inf`: a pointer to an integer that will store the minimum cumulative sum
+- `res_sup`: A pointer to an integer where the maximum cumulative sum will be stored. The data type is `int`.
+- `res_inf`: A pointer to an integer where the minimum cumulative sum will be stored. The data type is `int`.
+- `epsilon`: An array of integers of size `N` (20000) containing binary values (0s and 1s). The data type is `int[N]`.
 
 Outputs:
-- `res_sup`: the maximum cumulative sum
-- `res_inf`: the minimum cumulative sum
+- `res_sup`: The maximum cumulative sum value is stored at the memory location pointed to by `res_sup`.
+- `res_inf`: The minimum cumulative sum value is stored at the memory location pointed to by `res_inf`.
 
 Important Data Structures and Data Types:
-- `epsilon`: an array of integers representing the binary values used to calculate the cumulative sums. The array has a fixed size of N, where N is defined as 20000.
+- `epsilon`: An array of integers of size `N` (20000) containing binary values (0s and 1s). The data type is `int[N]`.
 
 Sub-Components:
 - None

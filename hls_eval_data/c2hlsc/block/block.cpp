@@ -1,6 +1,6 @@
 #include "block.h"
 
-void BlockFrequency(double *result) {
+void BlockFrequency(double *result, int epsilon[M * N]) {
     int i, j, blockSum;
     double sum, pi, v, chi_squared;
 
