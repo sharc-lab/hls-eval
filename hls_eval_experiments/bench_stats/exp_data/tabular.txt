@@ -8,6 +8,6 @@
 \textbf{CHStone} & 20 & 70 & - \\
 \textbf{C2HLSC} & 12 & 47 & - \\
 \midrule
-\textbf{Total} & 85 & - & - \\
+\textbf{Total} & 94 & - & - \\
 \bottomrule
 \end{tabular}

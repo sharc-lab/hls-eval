@@ -84,3 +84,12 @@ present,c2hlsc,81,43
 runs,c2hlsc,16,5
 shift_rows,c2hlsc,26,13
 sub_bytes,c2hlsc,11,39
+fgnn_linear,flowgnn,33,13
+fgnn_linear_output_stationary,flowgnn,34,14
+fgnn_linear_input_stationary,flowgnn,40,14
+compute_neighbor_tables,gnnbuilder,33,12
+gather_node_neighbors,gnnbuilder,16,9
+global_add_pool,gnnbuilder,19,7
+parallel_merge_sort,pp4fpga,48,4
+block_mm,pp4fpga,30,19
+pp4fpga_cordic,pp4fpga,29,30

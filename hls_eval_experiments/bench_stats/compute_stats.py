@@ -4,11 +4,10 @@ from pathlib import Path
 from pprint import pp
 
 import pandas as pd
-from joblib import Parallel, delayed
-
 from hls_eval.data import BenchmarkCase, find_benchmark_case_dirs
 from hls_eval.tools import VitisHLSSynthTool, auto_find_vitis_hls_dir
 from hls_eval.utils import unwrap
+from joblib import Parallel, delayed
 
 DIR_CURRENT = Path(__file__).resolve().parent
 DIR_ROOT = DIR_CURRENT.parent.parent
@@ -26,6 +25,9 @@ bench_sources = set(
         "rosetta",
         "chstone",
         "c2hlsc",
+        "pp4fpga",
+        "flowgnn",
+        "gnnbuilder",
     ]
 )
 
@@ -130,7 +132,7 @@ if __name__ == "__main__":
     with open(EXP_DATA_DIR / "tabular.txt", "w") as f:
         f.write(tabular_txt)
 
-    exit()
+    # exit()
 
     def measure_synth(bc: BenchmarkCase) -> float:
         with tempfile.TemporaryDirectory() as tmp_dir:
