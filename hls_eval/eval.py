@@ -13,7 +13,7 @@ from joblib import Parallel, delayed
 from llm import Response
 
 from hls_eval.data import BenchmarkCase
-from hls_eval.llms import Model, TAITimeout, normalize_model_name
+from hls_eval.llms import Model, TAIPromptTooLong, TAITimeout, normalize_model_name
 from hls_eval.prompting import approx_num_tokens, extract_code_xml_from_llm_output
 from hls_eval.prompts import build_prompt_edit_zero_shot, build_prompt_gen_zero_shot
 from hls_eval.rate_limit import RemoteLLMRateLimit
@@ -229,7 +229,14 @@ class HLSGenerationZeroShotEvaluator(Evaluator):
             def call_model(
                 prompt,
             ) -> tuple[
-                Response | None, str | None, dict | None, bool, float, float, float
+                Response | None,
+                str | None,
+                dict | None,
+                bool,
+                bool,
+                float,
+                float,
+                float,
             ]:
                 print(f"[{eval_id}] Calling model...")
                 print(f"[{eval_id}] Waiting for {n_tokens_guess} tokens")
@@ -238,6 +245,8 @@ class HLSGenerationZeroShotEvaluator(Evaluator):
                 r: Response | None = None
                 r_text: str | None = None
                 r_json: dict | None = None
+                model_timeout = False
+                prompt_too_long = False
                 try:
                     r = llm.prompt(
                         prompt=prompt,
@@ -250,22 +259,33 @@ class HLSGenerationZeroShotEvaluator(Evaluator):
                     t1 = time.monotonic()
                     dt = t1 - t_0
                     model_timeout = False
-                except TAITimeout:
+                    prompt_too_long = False
+                # except TAITimeout:
+                except (TAITimeout, TAIPromptTooLong) as e:
                     t1 = time.monotonic()
                     dt = t1 - t_0
-                    model_timeout = True
+                    # set flags based on e
+                    if isinstance(e, TAITimeout):
+                        model_timeout = True
+                        prompt_too_long = False
+                    if isinstance(e, TAIPromptTooLong):
+                        model_timeout = False
+                        prompt_too_long = True
 
-                return r, r_text, r_json, model_timeout, t_0, t1, dt
+                return r, r_text, r_json, model_timeout, prompt_too_long, t_0, t1, dt
 
             future_llm = llm_pool.submit(call_model, prompt)
-            r, r_text, r_json, model_timeout, t0, t1, dt = future_llm.result()
+            r, r_text, r_json, model_timeout, prompt_too_long, t0, t1, dt = (
+                future_llm.result()
+            )
 
             eval_data["model_timeout"] = model_timeout
+            eval_data["prompt_too_long"] = prompt_too_long
             eval_data["llm_execution_time"] = {"t0": t0, "t1": t1, "execution_time": dt}
 
-            if model_timeout:
+            if model_timeout or prompt_too_long:
                 serialize_eval_data(eval_id, eval_dir, eval_data)
-                return
+                continue
 
             assert r is not None
             assert r_text is not None
@@ -288,7 +308,7 @@ class HLSGenerationZeroShotEvaluator(Evaluator):
                 print(f"[{eval_id}] Error extracting code from LLM output")
                 eval_data["can_parse_output"] = False
                 serialize_eval_data(eval_id, eval_dir, eval_data)
-                return
+                continue
 
             # make a design_generated dir
             design_generated_dir = eval_dir / "design_generated"
@@ -490,7 +510,14 @@ class HLSEditingZeroShotEvaluator(Evaluator):
             def call_model(
                 prompt,
             ) -> tuple[
-                Response | None, str | None, dict | None, bool, float, float, float
+                Response | None,
+                str | None,
+                dict | None,
+                bool,
+                bool,
+                float,
+                float,
+                float,
             ]:
                 print(f"[{eval_id}] Calling model...")
                 print(f"[{eval_id}] Waiting for {n_tokens_guess} tokens")
@@ -499,6 +526,8 @@ class HLSEditingZeroShotEvaluator(Evaluator):
                 r: Response | None = None
                 r_text: str | None = None
                 r_json: dict | None = None
+                model_timeout = False
+                prompt_too_long = False
                 try:
                     r = llm.prompt(
                         prompt=prompt,
@@ -511,22 +540,33 @@ class HLSEditingZeroShotEvaluator(Evaluator):
                     t1 = time.monotonic()
                     dt = t1 - t_0
                     model_timeout = False
-                except TAITimeout:
+                    prompt_too_long = False
+                # except TAITimeout:
+                except (TAITimeout, TAIPromptTooLong) as e:
                     t1 = time.monotonic()
                     dt = t1 - t_0
-                    model_timeout = True
+                    # model_timeout = True
+                    if isinstance(e, TAITimeout):
+                        model_timeout = True
+                        prompt_too_long = False
+                    if isinstance(e, TAIPromptTooLong):
+                        model_timeout = False
+                        prompt_too_long = True
 
-                return r, r_text, r_json, model_timeout, t_0, t1, dt
+                return r, r_text, r_json, model_timeout, prompt_too_long, t_0, t1, dt
 
             future_llm = llm_pool.submit(call_model, prompt)
-            r, r_text, r_json, model_timeout, t0, t1, dt = future_llm.result()
+            r, r_text, r_json, model_timeout, prompt_too_long, t0, t1, dt = (
+                future_llm.result()
+            )
 
             eval_data["model_timeout"] = model_timeout
+            eval_data["prompt_too_long"] = prompt_too_long
             eval_data["llm_execution_time"] = {"t0": t0, "t1": t1, "execution_time": dt}
 
-            if model_timeout:
+            if model_timeout or prompt_too_long:
                 serialize_eval_data(eval_id, eval_dir, eval_data)
-                return
+                continue
 
             assert r is not None
             assert r_text is not None
@@ -555,7 +595,7 @@ class HLSEditingZeroShotEvaluator(Evaluator):
                 print(f"[{eval_id}] Error extracting code from LLM output")
                 eval_data["can_parse_output"] = False
                 serialize_eval_data(eval_id, eval_dir, eval_data)
-                return
+                continue
 
             # make a design_generated dir
             design_generated_dir: Path = eval_dir / "design_generated"

@@ -124,16 +124,19 @@ If there are no loops in code, leave the code unchanged.
 prompt_fpx = dedent(
     """
 ## Editing Task - Arbitrary Precision and Fixed-Point Types
-Your task is to modify the given user's code to convert the usage of int, uint, float and double precision types to arbitrary precision types, `ap_int`, `ap_uint`, `ap_fixed`, provided by Vitis HLS.
+Your task is to modify the given user's code to convert the usage of int and uint types to arbitrary precision HLS types, `ap_int`, `ap_uint`, as well as convert float and double types to fixed-point HLS types, `ap_fixed`, provided by Vitis HLS.
+
+- int and uint types should be converted to the appropriate arbitrary precision types, `ap_int` and `ap_uint`.
+- float and double types should be converted to the appropriate fixed-point types, `ap_fixed`.
 
 The integer types are defined as follows:
     - `ap_int<W>`: Signed integer type with `W` bits
     - `ap_uint<W>`: Unsigned integer type with `W` bits
-In order to use fixed point types, the user needs to include the "ap_int.h" header file.
+In order to use ap_(u)int types, the user needs to include the "ap_int.h" header file.
 The individual bits in the ap_(u)int types can be indexed using the [] operator.
-You can also set and clear bits at specific indexes in the ap_(u)int types using the set and clear methods:
-    - void ap_(u)int::set (unsigned i)
-    - void ap_(u)int::clear (unsigned i)
+    You can also set and clear bits at specific indexes in the ap_(u)int types using the set and clear methods:
+        - void ap_(u)int::set (unsigned i)
+        - void ap_(u)int::clear (unsigned i)
 
 The fixed point type is defined as follows:
     `ap_fixed<W, I>`
@@ -143,11 +146,10 @@ where:
 In order to use fixed point types, the user needs to include the "ap_fixed.h" header file.
 The fixed point type can handle most C++ arithmetic operations (addition, subtraction, multiplication, division, etc.) and can be used in most C++ expressions.
 
-
 If the user is also doing `cmath` operations on the original datatype numbers, these operations should be modified to use the HLS math library.
-The HLS math library has the namespace `hls::*` and can be included with the following "hls_math.h" file.
+The HLS math library has the namespace `hls::*` and can be included with the following "hls_math.h" file. It supports most of the same math operators under the std::* namespace.
 
-Typedefs are encouraged to make the code more readable.
+Typedefs for these new types are encouraged to make the code more readable.
 Ideally, `typedef` statements should be placed in a header file so they can be reached by all source files.
 
 The resulting code should maintain the same functionality as the original code but should convert all variants of int, uint, float, and double types to the appropriate arbitrary precision types.

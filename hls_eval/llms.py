@@ -234,6 +234,9 @@ class Model:
 class TAITimeout(Exception): ...
 
 
+class TAIPromptTooLong(Exception): ...
+
+
 class TogetherAI(llm.Model):
     needs_key = "togetherai"
     key_env_var = "TOGETHER_API_KEY"
@@ -323,8 +326,10 @@ class TogetherAI(llm.Model):
         status_code = r.status_code
         if status_code == 524:
             raise TAITimeout("Model took too long to respond on TogetherAI's side")
+        if status_code == 422:
+            raise TAIPromptTooLong("Prompt too long for model max prompt size")
 
-        codes_to_retry = {520, 502, 503}
+        codes_to_retry = {520, 502, 503, 500}
 
         if status_code in codes_to_retry:
             print(f"Error on inital request: {status_code}")
@@ -340,7 +345,7 @@ class TogetherAI(llm.Model):
                     raise TAITimeout(
                         "Model took too long to respond on TogetherAI's side"
                     )
-                if status_code != 520:
+                if status_code not in codes_to_retry:
                     break
                 i += 1
 
