@@ -79,7 +79,7 @@ print(df_pass_rates_synth_only)
 
 # for each model make a line plot where x is k and y is pass rate
 
-fig, ax = plt.subplots(figsize=(6, 4))
+fig, ax = plt.subplots(figsize=(5, 4))
 
 ax.grid(which="both", axis="both", linestyle="--", alpha=0.5)
 ax.set_axisbelow(True)
@@ -99,9 +99,9 @@ for model_name in df_pass_rates_synth_only["model_name"].unique():
         color=model_color_map[model_name],
     )
 
-ax.set_xlabel("k")
-ax.set_ylabel("Pass rate")
-ax.set_title("Inference Scaling of HLS Editing Task: Dataflow Refactoring")
+ax.set_xlabel("$k$ - Num. Samples")
+ax.set_ylabel("Pass Rate - HLS Synthesis Stage")
+ax.set_title("Inference Scaling of HLS Editing Task:\nDataflow Refactoring")
 ax.legend(loc="upper center", ncol=2, fontsize="small")
 
 ax.set_yticks(np.arange(0, 1.1, 0.1))
@@ -111,7 +111,6 @@ ax.set_yticklabels(
 
 ax.set_ylim(0, 1.05)
 
-ax.set_ylabel("Pass Rate - HLS Synthesis Stage")
 
 ax.set_xlim(1, 40)
 ax.set_xscale("log")
