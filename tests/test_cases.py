@@ -19,13 +19,16 @@ LOGGER.setLevel(logging.DEBUG)
 
 ALL_BENCHMARK_CASES = find_benchmark_case_dirs(DIR_HLS_EVAL_DATA)
 
-tag_to_keep = "c2hlsc"
+
+tag_to_keep = "flowgnn"
 if tag_to_keep:
     ALL_BENCHMARK_CASES = [
         d for d in ALL_BENCHMARK_CASES if tag_to_keep in BenchmarkCase(d).tags_all
     ]
 else:
     ALL_BENCHMARK_CASES = list(ALL_BENCHMARK_CASES)
+
+print(ALL_BENCHMARK_CASES)
 
 
 @pytest.mark.parametrize(

@@ -1,7 +1,7 @@
 [project]
 name = "hls-eval"
 version = "0.1.0"
-description = "Add your description here"
+description = "Benchmarking and evaluation of LLMs for HLS design"
 readme = "README.md"
 requires-python = "==3.12.*"
 dependencies = [
@@ -20,4 +20,5 @@ dev = ["mypy>=1.15.0", "pytest>=8.3.4", "pytest-xdist>=3.6.1", "ruff>=0.9.6"]
 
 [tool.pytest.ini_options]
 log_cli = true
+testpaths = ["tests"]
 log_level = "DEBUG"
