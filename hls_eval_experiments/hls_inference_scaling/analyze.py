@@ -99,8 +99,8 @@ for model_name in df_pass_rates_synth_only["model_name"].unique():
         color=model_color_map[model_name],
     )
 
-ax.set_xlabel("$k$ - Num. Samples")
-ax.set_ylabel("Pass Rate - HLS Synthesis Stage")
+ax.set_xlabel("Number of Samples ($k$)")
+ax.set_ylabel("Pass Rate at HLS Synthesis Stage")
 ax.set_title("Inference Scaling of HLS Editing Task:\nDataflow Refactoring")
 ax.legend(loc="upper center", ncol=2, fontsize="small")
 

@@ -78,6 +78,6 @@ fig.savefig(DIR_FIGURES / "pass_rates.png", dpi=300)
 
 
 fig = plot_pass_rates_line(
-    df_pass_rates, "Pass Rate of Zero-Shot Editing by Model: Dataflow Refactoring"
+    df_pass_rates, "Pass Rate of Zero-Shot Editing by Model:\nDataflow Refactoring"
 )
 fig.savefig(DIR_FIGURES / "pass_rates_line.png", dpi=300)
