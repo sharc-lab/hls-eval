@@ -1,0 +1,3 @@
+Total kernel_loc: 4048
+Total synthesis time: 3710.082844313234
+Total synthesis time (in minutes): 61.834714071887234
