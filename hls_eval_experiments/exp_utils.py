@@ -239,6 +239,26 @@ def build_pass_table(df_pass_rates: pd.DataFrame):
         values="pass_rate",
     )
 
+    # sort metrics colums multi index in a specific order
+    order_map = {
+        "Can Parse": 0,
+        "Can Compile": 1,
+        "Can Pass Testbench": 2,
+        "Can Synthesize": 3,
+    }
+    df_pass_rates = df_pass_rates.sort_index(axis=1, key=lambda x: x.map(order_map))
+
+    # sort the models rows in a specifc order of models
+    order_map = {
+        "DeepSeek V3": 0,
+        "Qwen2.5 Coder 32B": 1,
+        "Llama 3 70B": 2,
+        "Llama 3 8B": 3,
+    }
+    df_pass_rates = df_pass_rates.sort_values(
+        by="model_name", key=lambda x: x.map(order_map)
+    )
+
     df_pass_rates = df_pass_rates.fillna("")
     # df_pass_rates = df_pass_rates.rename_axis(None, axis=1)
     # df_pass_rates = df_pass_rates.rename_axis(None, axis=0)
@@ -293,7 +313,8 @@ def build_pass_table(df_pass_rates: pd.DataFrame):
         ):
             lines.insert(
                 i,
-                r"\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7} \cmidrule(lr){8-9}",
+                # r"\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7} \cmidrule(lr){8-9}",
+                r"\midrule",
             )
             break
     latex_txt = "\n".join(lines)
@@ -379,7 +400,7 @@ def plot_pass_rates_bar(df_pass_rates, ks=[1, 5]):
     return fig
 
 
-def plot_pass_rates_line(df_pass_rates, title: str, ks=[1, 5]):
+def plot_pass_rates_line(df_pass_rates, title: str, ks=[1, 5], leg_ncols: int = 2):
     models = df_pass_rates["model_name"].unique()
     n_models = len(models)
     # colors = matplotlib.cm.tab20(range(20))
@@ -389,6 +410,9 @@ def plot_pass_rates_line(df_pass_rates, title: str, ks=[1, 5]):
     model_to_color = {model: model_color_map[model] for model in models}
 
     fig, ax = plt.subplots(1, 1, figsize=(6, 3.5))
+
+    ax.grid(axis="y", linestyle="--", alpha=0.8, zorder=-10)
+    ax.set_axisbelow(True)
 
     coord_to_stage = {
         0: "pass_parse",
@@ -426,8 +450,10 @@ def plot_pass_rates_line(df_pass_rates, title: str, ks=[1, 5]):
             markersize=4,
             color=color,
             linestyle=linestyle,
-            label=f"{model_name_map[model]}, pass@{k}",
+            label=f"{model_name_map[model]} - pass@{k}",
         )
+
+    ax.axhline(y=1, color="black", linestyle="--", alpha=1.0, zorder=1, linewidth=1)
 
     # add virtiline dashed gray lines at each stage
     for i in range(4):
@@ -448,9 +474,13 @@ def plot_pass_rates_line(df_pass_rates, title: str, ks=[1, 5]):
     ax.set_yticklabels(
         [f"{x:.0%}" for x in np.arange(0, 1.1, 0.1)]
     )  # format as percent in 10% increments
-    ax.legend(loc="lower left", ncol=2, fontsize=8)
-    ax.grid(axis="y", linestyle="--", alpha=0.8, zorder=-10)
-    ax.set_axisbelow(True)
+
+    ax.set_ylim(0, 1.05)
+
+    ax.set_ylabel("Pass Rate")
+
+    ax.legend(loc="lower left", ncol=leg_ncols, fontsize=7.5, handlelength=3)
+
     # ax.set_title(label="Pass Rate of Zero-Shot Editing by Model: Loop Tiling")
     ax.set_title(title)
 

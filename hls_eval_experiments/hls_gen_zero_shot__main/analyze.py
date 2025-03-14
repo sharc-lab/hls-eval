@@ -82,6 +82,39 @@ fig.savefig(DIR_FIGURES / "pass_rates.png", dpi=300)
 
 
 fig = plot_pass_rates_line(
-    df_pass_rates, "Pass Rate of Zero-Shot Generation by Model: Kernel Implementation"
+    df_pass_rates, "Pass Rate of Zero-Shot Kernel Generation by Model"
 )
 fig.savefig(DIR_FIGURES / "pass_rates_line.png", dpi=300)
+
+data_sources = ["polybench", "machsuite", "chstone", "rosetta", "c2hlsc"]
+
+source_name_map = {
+    "polybench": "Polybench",
+    "machsuite": "MachSuite",
+    "chstone": "CHStone",
+    "rosetta": "Rosetta",
+    "c2hlsc": "C2HLSC",
+}
+
+
+df_by_source = {}
+for source in data_sources:
+    df_sub = df[df["benchmark_case_tags"].apply(lambda x: source in x)]
+    df_by_source[source] = df_sub
+
+df_pass_rates_by_source = {}
+for source in data_sources:
+    df_sub = df_by_source[source]
+    df_pass_rates_by_source[source] = compute_pass_rates(df_sub)
+
+for source in data_sources:
+    # make a figure for each source
+    fig = plot_pass_rates_line(
+        df_pass_rates_by_source[source],
+        f"Pass Rate of Zero-Shot Kernel Generation by Model - {source_name_map[source]}",
+        leg_ncols=1,
+    )
+    dir_fig_source = DIR_FIGURES / "split_by_source"
+    if not dir_fig_source.exists():
+        dir_fig_source.mkdir()
+    fig.savefig(dir_fig_source / f"pass_rates_line__{source}.png", dpi=300)
