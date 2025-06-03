@@ -9,11 +9,7 @@ VITIS_HLS_DIST_PATH  := $(shell dirname $(shell dirname $(VITIS_HLS_BIN)))
 LIB_PATH_1           := $(VITIS_HLS_DIST_PATH)/lib/lnx64.o
 LIB_PATH_2           := $(VITIS_HLS_DIST_PATH)/lnx64/lib/csim
 
-        # / "lnx64"
-        # / "tools"
-        # / "clang-3.9-csynth"
-        # / "bin"
-        # / "clang-format"
+
 CLANG_FORMAT_PATH := $(VITIS_HLS_DIST_PATH)/lnx64/tools/clang-3.9-csynth/bin/clang-format
 ifeq ("$(wildcard $(CLANG_FORMAT_PATH))","")
   $(error "Error: Could not find clang-format at $(CLANG_FORMAT_PATH)")

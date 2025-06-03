@@ -1,10 +1,11 @@
 # os.environ["VLLM_USE_V1"] = "1"
 import time
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Union
 
 import llm
 import requests
+from llm_openrouter import OpenRouterChat
 from pydantic import Field
 
 # from vllm import (
@@ -226,7 +227,7 @@ from pydantic import Field
 @dataclass
 class Model:
     name: str
-    llm: llm.Model
+    llm: Union[llm.Model, OpenRouterChat, "TogetherAI"]
     settings: dict[str, bool | int | str | float] = field(default_factory=dict)
     other: dict[str, Any] = field(default_factory=dict)
 
@@ -383,6 +384,27 @@ def build_model_remote_tai(
     return Model(name=model_name, llm=model, settings=settings)
 
 
+def build_model_remote_openrouter(
+    model_name: str,
+    api_key: str | None = None,
+    provider: dict[str, str] | None = None,
+    **kwargs,
+) -> Model:
+    model = OpenRouterChat(
+        model_id=f"openrouter/{model_name}",
+        key=api_key,
+        model_name=model_name,
+        api_base="https://openrouter.ai/api/v1",
+        headers={"HTTP-Referer": "https://llm.datasette.io/", "X-Title": "LLM"},
+    )
+    settings = {}
+    if "settings" in kwargs:
+        settings.update(kwargs["settings"])
+    if provider is not None:
+        settings["provider"] = provider
+    return Model(name=model_name, llm=model, settings=settings)
+
+
 class vLLMModel(llm.Model):
     # needs_key = "togetherai"
     # key_env_var = "TOGETHER_API_KEY"
@@ -420,8 +442,8 @@ class vLLMModel(llm.Model):
         self.model_id_hf = model_id_hf
 
         # TODO: implement rest of local inference
-        # slef.vllm_llm = LLM(model_id_hf)
-        raise NotImplementedError
+        # self.vllm_llm = LLM(model_id_hf)
+        # raise NotImplementedError
 
     def execute(
         self,

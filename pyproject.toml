@@ -3,19 +3,22 @@ name = "hls-eval"
 version = "0.1.0"
 description = "Benchmarking and evaluation of LLMs for HLS design"
 readme = "README.md"
-requires-python = "==3.12.*"
+requires-python = ">=3.12"
 dependencies = [
-    "joblib>=1.4.2",
+    "joblib>=1.5.1",
+    "llm>=0.26",
+    "llm-openrouter>=0.4.1",
     "llm-together>=0.4",
-    "matplotlib>=3.10.0",
-    "numpy>=1.26.4",
+    "matplotlib>=3.10.3",
+    "numpy>=2.2.6",
     "pandas>=2.2.3",
     "psutil>=7.0.0",
+    "python-dotenv>=1.1.0",
     "seaborn>=0.13.2",
-    "vllm>=0.7.2",
 ]
 
 [dependency-groups]
+local_inference = ["vllm"]
 dev = ["mypy>=1.15.0", "pytest>=8.3.4", "pytest-xdist>=3.6.1", "ruff>=0.9.6"]
 
 [tool.pytest.ini_options]

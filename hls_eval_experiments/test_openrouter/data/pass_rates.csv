@@ -1,0 +1,9 @@
+model_name,metric_name,k,pass_rate
+google/gemini-2.0-flash-lite-001,pass_compile,1,0.6071428571428571
+google/gemini-2.0-flash-lite-001,pass_compile,5,0.7142857142857143
+google/gemini-2.0-flash-lite-001,pass_parse,1,1.0
+google/gemini-2.0-flash-lite-001,pass_parse,5,1.0
+google/gemini-2.0-flash-lite-001,pass_synth,1,0.6071428571428571
+google/gemini-2.0-flash-lite-001,pass_synth,5,0.7142857142857143
+google/gemini-2.0-flash-lite-001,pass_tb,1,0.5714285714285714
+google/gemini-2.0-flash-lite-001,pass_tb,5,0.6785714285714286

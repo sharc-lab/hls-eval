@@ -27,6 +27,7 @@ model_name_map = {
     "deepseek-ai/DeepSeek-V3": "DeepSeek V3",
     "meta-llama/Llama-3-70b-chat-hf": "Llama 3 70B",
     "meta-llama/Llama-3-8b-chat-hf": "Llama 3 8B",
+    "google/gemini-2.0-flash-lite-001": "Gemini 2.0 Flash Lite",
 }
 
 
@@ -35,6 +36,7 @@ model_color_map = {
     "deepseek-ai/DeepSeek-V3": "#ffd166",
     "meta-llama/Llama-3-70b-chat-hf": "#06d6a0",
     "meta-llama/Llama-3-8b-chat-hf": "#118ab2",
+    "google/gemini-2.0-flash-lite-001": "#65d16c",
 }
 
 
