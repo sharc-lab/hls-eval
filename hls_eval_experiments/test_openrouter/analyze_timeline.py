@@ -304,12 +304,12 @@ def build_timeline_plot(df_exec: pd.DataFrame, n_steps: int = 50) -> Figure:
 
         # add text box in upper irght corner with Pool name
         ax.text(
-            0.98,
-            pool_size[pool_type] - 0.2,
+            0.96,
+            pool_size[pool_type] - 0.8,
             # 0.8,
             f"{pool_labels[pool_type]} (n_jobs={pool_size[pool_type]})",
             horizontalalignment="right",
-            verticalalignment="center",
+            verticalalignment="top",
             # combined axes coordinates
             transform=blended_transform_factory(ax.transAxes, ax.transData),
             bbox=dict(facecolor="white", alpha=1.0, edgecolor="gray", linewidth=1.0),
@@ -335,7 +335,7 @@ def build_timeline_plot(df_exec: pd.DataFrame, n_steps: int = 50) -> Figure:
             ax.set_xticks([])
             ax.set_xticklabels([])
 
-        ax.set_ylim(0, pool_size[pool_type] + 1)
+        ax.set_ylim(0, pool_size[pool_type] + 2)
         ax.hlines(
             y=pool_size[pool_type],
             xmin=min_time,
@@ -343,7 +343,7 @@ def build_timeline_plot(df_exec: pd.DataFrame, n_steps: int = 50) -> Figure:
             color="red",
             linestyle="--",
         )
-        ax.set_yticks(np.arange(0, pool_size[pool_type] + 1, step=6))
+        ax.set_yticks(np.arange(0, pool_size[pool_type] + 1, step=8))
         # ax.set_yticklabels(
         #     [None]
         #     + [f"{x:.0f}" for x in np.arange(1, pool_size[pool_type] + 1, step=6)]
