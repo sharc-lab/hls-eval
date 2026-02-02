@@ -7,7 +7,7 @@ HLS-Eval is a benchmark and evaluation framework for LLMs on high-level synthesi
 Using uv:
 
 ```bash
-uv pip install git+https://github.com/sharc-lab/hls-eval.git
+uv add git+https://github.com/sharc-lab/hls-eval.git
 ```
 
 Using pip:
@@ -38,8 +38,5 @@ S. Abi-Karam and C. Hao, "HLS-Eval: A Benchmark and Framework for Evaluating LLM
   booktitle={2025 IEEE International Conference on LLM-Aided Design (ICLAD)}, 
   title={HLS-Eval: A Benchmark and Framework for Evaluating LLMs on High-Level Synthesis Design Tasks}, 
   year={2025},
-  volume={},
-  number={},
-  pages={219-226},
   doi={10.1109/ICLAD65226.2025.00021}}
 ```
