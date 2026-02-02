@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HLS-Eval Leaderboard</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <h1>HLS-Eval Leaderboard</h1>
+      <p class="subhead">Benchmark results across tasks and models.</p>
+    </header>
+
+    <main class="layout">
+      <section class="controls">
+        <div class="control">
+          <label for="task-select">Task</label>
+          <select id="task-select"></select>
+        </div>
+        <div class="control">
+          <label for="metric-select">Metric</label>
+          <select id="metric-select"></select>
+        </div>
+        <div class="control">
+          <label for="k-select">k</label>
+          <select id="k-select">
+            <option value="1">pass@1</option>
+            <option value="5">pass@5</option>
+          </select>
+        </div>
+      </section>
+
+      <section class="table-wrap">
+        <table id="leaderboard-table">
+          <thead>
+            <tr>
+              <th data-sort-key="model">Model</th>
+              <th data-sort-key="pass_parse">Can Parse</th>
+              <th data-sort-key="pass_compile">Can Compile</th>
+              <th data-sort-key="pass_tb">Can Pass TB</th>
+              <th data-sort-key="pass_synth">Can Synth</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div id="empty-state" class="empty-state" hidden>
+          No results for this selection.
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Static site reads JSON files from <code>leaderboard/data</code>.</p>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>

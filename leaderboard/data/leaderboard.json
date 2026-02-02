@@ -1,0 +1,182 @@
+{
+  "schema_version": "0.1.0",
+  "generated_at": "2026-02-02",
+  "source": {
+    "eval_runs": [
+      "hls_edit_zero_shot__fpx",
+      "hls_edit_zero_shot__dataflow"
+    ],
+    "note": "Dummy data structured like aggregated pass@k outputs. Replace with generated JSON."
+  },
+  "metrics": [
+    {"id": "pass_rate", "label": "Pass Rate (avg over benchmarks)"}
+  ],
+  "tasks": [
+    {
+      "id": "edit_fpx",
+      "label": "Zero-Shot Edit: Fixed-Point Translation",
+      "tags": ["edit", "fpx"]
+    },
+    {
+      "id": "edit_dataflow",
+      "label": "Zero-Shot Edit: Dataflow",
+      "tags": ["edit", "dataflow"]
+    }
+  ],
+  "models": [
+    {
+      "id": "deepseek_v3",
+      "label": "DeepSeek V3",
+      "provider": "together",
+      "model_name": "deepseek-ai/DeepSeek-V3"
+    },
+    {
+      "id": "qwen_2_5_coder_32b",
+      "label": "Qwen2.5 Coder 32B",
+      "provider": "together",
+      "model_name": "Qwen/Qwen2.5-Coder-32B-Instruct"
+    },
+    {
+      "id": "llama_3_70b",
+      "label": "Llama 3 70B",
+      "provider": "together",
+      "model_name": "meta-llama/Llama-3-70b-chat-hf"
+    }
+  ],
+  "results": [
+    {
+      "task_id": "edit_fpx",
+      "metrics": [
+        {
+          "metric_id": "pass_rate",
+          "k_values": [
+            {
+              "k": 1,
+              "runs": [
+                {
+                  "model_id": "deepseek_v3",
+                  "model_label": "DeepSeek V3",
+                  "score": 0.54,
+                  "breakdown": {
+                    "pass_parse": 0.88,
+                    "pass_compile": 0.62,
+                    "pass_tb": 0.42,
+                    "pass_synth": 0.23
+                  }
+                },
+                {
+                  "model_id": "qwen_2_5_coder_32b",
+                  "model_label": "Qwen2.5 Coder 32B",
+                  "score": 0.48,
+                  "breakdown": {
+                    "pass_parse": 0.82,
+                    "pass_compile": 0.55,
+                    "pass_tb": 0.35,
+                    "pass_synth": 0.20
+                  }
+                },
+                {
+                  "model_id": "llama_3_70b",
+                  "model_label": "Llama 3 70B",
+                  "score": 0.37,
+                  "breakdown": {
+                    "pass_parse": 0.74,
+                    "pass_compile": 0.41,
+                    "pass_tb": 0.22,
+                    "pass_synth": 0.10
+                  }
+                }
+              ]
+            },
+            {
+              "k": 5,
+              "runs": [
+                {
+                  "model_id": "deepseek_v3",
+                  "model_label": "DeepSeek V3",
+                  "score": 0.72,
+                  "breakdown": {
+                    "pass_parse": 0.95,
+                    "pass_compile": 0.81,
+                    "pass_tb": 0.61,
+                    "pass_synth": 0.39
+                  }
+                },
+                {
+                  "model_id": "qwen_2_5_coder_32b",
+                  "model_label": "Qwen2.5 Coder 32B",
+                  "score": 0.66,
+                  "breakdown": {
+                    "pass_parse": 0.91,
+                    "pass_compile": 0.77,
+                    "pass_tb": 0.53,
+                    "pass_synth": 0.33
+                  }
+                },
+                {
+                  "model_id": "llama_3_70b",
+                  "model_label": "Llama 3 70B",
+                  "score": 0.52,
+                  "breakdown": {
+                    "pass_parse": 0.86,
+                    "pass_compile": 0.63,
+                    "pass_tb": 0.40,
+                    "pass_synth": 0.21
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "edit_dataflow",
+      "metrics": [
+        {
+          "metric_id": "pass_rate",
+          "k_values": [
+            {
+              "k": 1,
+              "runs": [
+                {
+                  "model_id": "deepseek_v3",
+                  "model_label": "DeepSeek V3",
+                  "score": 0.61,
+                  "breakdown": {
+                    "pass_parse": 0.90,
+                    "pass_compile": 0.70,
+                    "pass_tb": 0.50,
+                    "pass_synth": 0.31
+                  }
+                },
+                {
+                  "model_id": "qwen_2_5_coder_32b",
+                  "model_label": "Qwen2.5 Coder 32B",
+                  "score": 0.52,
+                  "breakdown": {
+                    "pass_parse": 0.86,
+                    "pass_compile": 0.63,
+                    "pass_tb": 0.41,
+                    "pass_synth": 0.25
+                  }
+                },
+                {
+                  "model_id": "llama_3_70b",
+                  "model_label": "Llama 3 70B",
+                  "score": 0.42,
+                  "breakdown": {
+                    "pass_parse": 0.78,
+                    "pass_compile": 0.48,
+                    "pass_tb": 0.30,
+                    "pass_synth": 0.15
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

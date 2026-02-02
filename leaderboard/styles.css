@@ -1,0 +1,138 @@
+:root {
+  --bg: #f7f4ef;
+  --card: #ffffff;
+  --ink: #1b1f2a;
+  --muted: #5b6476;
+  --accent: #d65a31;
+  --accent-2: #154d73;
+  --border: #d9d4cc;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+  color: var(--ink);
+  background: radial-gradient(circle at top right, #fdf3e8, #f7f4ef 55%, #ede8df);
+  min-height: 100vh;
+}
+
+.hero {
+  padding: 3.5rem 6vw 2.5rem;
+}
+
+h1 {
+  font-size: clamp(2.4rem, 5vw, 3.8rem);
+  margin: 0 0 0.6rem;
+}
+
+.subhead {
+  color: var(--muted);
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+
+.layout {
+  padding: 0 6vw 4rem;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0 2rem;
+}
+
+.control {
+  background: var(--card);
+  padding: 0.9rem 1.1rem;
+  border: 1px solid var(--border);
+}
+
+label {
+  display: block;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
+}
+
+select {
+  width: 100%;
+  padding: 0.55rem;
+  border: 1px solid var(--border);
+  font-size: 0.95rem;
+  background: #fff;
+}
+
+.table-wrap {
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 1rem 1.2rem 1.5rem;
+  overflow-x: hidden;
+}
+
+#leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  text-align: left;
+  padding: 0.8rem 0.7rem;
+  border-bottom: 1px solid #ede9e3;
+  font-size: 0.95rem;
+}
+
+th {
+  color: var(--accent-2);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+th[data-sort="active"]::after {
+  content: attr(data-sort-direction);
+  margin-left: 0.4rem;
+  font-size: 0.7rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--muted);
+}
+
+th[data-sort="active"][data-sort-direction="asc"]::after {
+  content: "▲";
+}
+
+th[data-sort="active"][data-sort-direction="desc"]::after {
+  content: "▼";
+}
+
+tbody tr:hover {
+  background: #fff7ed;
+}
+
+
+.empty-state {
+  padding: 2rem 1rem 1rem;
+  text-align: center;
+  color: var(--muted);
+}
+
+.footer {
+  padding: 1.5rem 6vw 3rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 720px) {
+  .hero {
+    padding: 2.5rem 6vw 2rem;
+  }
+}
