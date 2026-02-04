@@ -6,7 +6,6 @@ import time
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from threading import BoundedSemaphore
 from typing import Any
 
 from joblib import Parallel, delayed
@@ -16,7 +15,7 @@ from hls_eval.data import BenchmarkCase
 from hls_eval.llms import Model, TAIPromptTooLong, TAITimeout, normalize_model_name
 from hls_eval.prompting import approx_num_tokens, extract_code_xml_from_llm_output
 from hls_eval.prompts import build_prompt_edit_zero_shot, build_prompt_gen_zero_shot
-from hls_eval.rate_limit import RemoteLLMRateLimit
+
 from hls_eval.tools import VitisHLSCSimTool, VitisHLSSynthTool
 
 
@@ -24,37 +23,43 @@ class EvalThreadPools:
     def __init__(
         self,
         n_jobs_pool_llm: int,
+        n_jobs_pool_agent: int,
         n_jobs_pool_csim: int,
         n_jobs_pool_synth: int,
         tokens_per_minute: int | None = None,
         requests_per_minute: int | None = None,
     ) -> None:
         self.n_jobs_pool_llm = n_jobs_pool_llm
+        self.n_jobs_pool_agent = n_jobs_pool_agent
         self.n_jobs_pool_csim = n_jobs_pool_csim
         self.n_jobs_pool_synth = n_jobs_pool_synth
 
         self.tokens_per_minute = tokens_per_minute
         self.requests_per_minute = requests_per_minute
 
-        if n_jobs_pool_llm <= 1:
-            raise ValueError("n_jobs_pool_llm must be greater than 1")
-        if n_jobs_pool_csim <= 1:
-            raise ValueError("n_jobs_pool_csim must be greater than 1")
-        if n_jobs_pool_synth <= 1:
-            raise ValueError("n_jobs_pool_synth must be greater than 1")
+        if n_jobs_pool_llm < 1:
+            raise ValueError("n_jobs_pool_llm must be greater than or equal to 1")
+        if n_jobs_pool_agent < 1:
+            raise ValueError("n_jobs_pool_agent must be greater than or equal to 1")
+        if n_jobs_pool_csim < 1:
+            raise ValueError("n_jobs_pool_csim must be greater than or equal to 1")
+        if n_jobs_pool_synth < 1:
+            raise ValueError("n_jobs_pool_synth must be greater than or equal to 1")
 
-        self.llm_sema = BoundedSemaphore(n_jobs_pool_llm)
+        # self.llm_sema = BoundedSemaphore(n_jobs_pool_llm)
 
-        self.llm_rate_limiter = RemoteLLMRateLimit(
-            tokens_per_minute, requests_per_minute
-        )
+        # self.llm_rate_limiter = RemoteLLMRateLimit(
+        #     tokens_per_minute, requests_per_minute
+        # )
 
         self.pool_llm = ThreadPoolExecutor(max_workers=n_jobs_pool_llm)
+        self.pool_agent = ThreadPoolExecutor(max_workers=n_jobs_pool_agent)
         self.pool_csim = ThreadPoolExecutor(max_workers=n_jobs_pool_csim)
         self.pool_synth = ThreadPoolExecutor(max_workers=n_jobs_pool_synth)
 
     def shutdown(self):
         self.pool_llm.shutdown(wait=True)
+        self.pool_agent.shutdown(wait=True)
         self.pool_csim.shutdown(wait=True)
         self.pool_synth.shutdown(wait=True)
 
@@ -70,6 +75,9 @@ class Evaluator(ABC):
         self.vitis_hls_tool = vitis_hls_tool_synth
         self.output_data_dir = output_data_dir
         self.logger = logging.getLogger(__name__)
+        self.logger.addHandler(logging.StreamHandler())
+        self.logger.setLevel(logging.INFO)
+        self.logger.propagate = True
 
     @abstractmethod
     def evaluate_design(
@@ -96,6 +104,7 @@ class Evaluator(ABC):
         models: list[Model],
         n_jobs: int = 1,
         n_jobs_pool_llm: int = 1,
+        n_jobs_pool_agent: int = 1,
         n_jobs_pool_csim: int = 1,
         n_jobs_pool_synth: int = 1,
         tokens_per_minute: int | None = None,
@@ -107,6 +116,7 @@ class Evaluator(ABC):
         )
         pools = EvalThreadPools(
             n_jobs_pool_llm,
+            n_jobs_pool_agent,
             n_jobs_pool_csim,
             n_jobs_pool_synth,
             tokens_per_minute,
@@ -123,6 +133,7 @@ class Evaluator(ABC):
         design_model_pairs: list[tuple[BenchmarkCase, Model]],
         n_jobs: int = 1,
         n_jobs_pool_llm: int = 1,
+        n_jobs_pool_agent: int = 1,
         n_jobs_pool_csim: int = 1,
         n_jobs_pool_synth: int = 1,
         tokens_per_minute: int | None = None,
@@ -131,6 +142,7 @@ class Evaluator(ABC):
     ):
         pools = EvalThreadPools(
             n_jobs_pool_llm,
+            n_jobs_pool_agent,
             n_jobs_pool_csim,
             n_jobs_pool_synth,
             tokens_per_minute,

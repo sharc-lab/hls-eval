@@ -1,4 +1,5 @@
 from pathlib import Path
+from string import Template
 from textwrap import dedent
 
 from hls_eval.prompting import build_input_code_prompt_xml
@@ -301,4 +302,67 @@ def build_prompt_edit_zero_shot(
     p += "## Task Output\n"
     p += "\n"
 
+    return p
+
+
+prompt_pre_agent = dedent(
+    """
+## Overview
+You are a helpful export hardware engineer and software developer who will assist the user with hardware design tasks for high-level synthesis.
+The task will center around high-level synthesis (HLS) code written in C++ for a hardware design. The HLS design is written to target the latest Vitis HLS tool from Xilinx, which maps C++ code to a Verilog implementation for FPGAs.
+"""
+).strip()
+
+prompt_gen_agent = dedent(
+    """
+## Task Description
+Given a natural language description of an HLS design, a pre-written C++ design header, and a pre-written C++ testbench, generate the C++ implementation of the HLS design that aligns with the natural language description of the design.
+
+It should be functionally equivalent to the natural language description, be consistent with the provided header file, and pass the testbench. The design should also be synthesizable by the HLS tool.
+
+Only generate the C++ code for the HLS design; do not modify the header file or the testbench.
+The implemented design therefore must be consistant with the header file and testbench. 
+
+Be sure to try and compile and run the testbench before submitting the final deliverable. You have access to a standard C++ compiler to compile and run the testbench.
+If there are any compilation errors or the testbench does not run correctly, attempt to fix the issue.
+
+The task is complete once the kernel is implemented and the testbench that calls the kernel runs correctly and returns the expected results.
+"""
+).strip()
+
+
+prompt_organization_agent = Template(dedent(
+    text="""
+## Organization
+You have access to the design project directory.
+
+This directory will contain the input design files at the root level:
+- `./${fn_design_description}`
+- `./${fn_design_h}`
+- `./${fn_design_tb}`
+
+You many not modify any of these input files including the design description file, header file, and testbench file.
+There may also be other miscellaneous files in the directory, but those are also input files that should not be modified.
+
+Your task is to implement the HLS design itself. This should be implemented in the `./${fn_design_kernel}` file.
+
+By the end of your task, this the kernel implemenation `./${fn_design_kernel}` must be in the root directory of the design project directory.
+
+You may generate other files in the process of implementing the HLS design (ex. the output bin of a the compiled testbench, etc.).
+
+Failure to follow this file organization for this task will result in a task failure.
+""").strip())
+
+
+def build_prompt_gen_agentic(
+    fn_design_description: str,
+    fn_design_h: str,
+    fn_design_tb: str,
+    fn_design_kernel: str,
+) -> str:
+    p = prompt_pre_agent
+    p += "\n\n"
+    p += prompt_gen_agent
+    p += "\n\n"
+    p += prompt_organization_agent.substitute(fn_design_description=fn_design_description, fn_design_h=fn_design_h, fn_design_tb=fn_design_tb, fn_design_kernel=fn_design_kernel)
     return p

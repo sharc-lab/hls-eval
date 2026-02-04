@@ -5,23 +5,28 @@ description = "Benchmarking and evaluation of LLMs for HLS design"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "joblib>=1.5.1",
-    "llm>=0.26",
-    "llm-openrouter>=0.4.1",
+    "joblib>=1.5.3",
+    "llm>=0.28",
+    "llm-openrouter>=0.5",
     "llm-together>=0.4",
-    "matplotlib>=3.10.3",
-    "numpy>=2.2.6",
-    "pandas>=2.2.3",
-    "psutil>=7.0.0",
-    "python-dotenv>=1.1.0",
+    "matplotlib>=3.10.8",
+    "mini-swe-agent>=1.17.5",
+    "numpy>=2.4.2",
+    "pandas>=3.0.0",
+    "psutil>=7.2.2",
+    "python-dotenv>=1.2.1",
+    "pyyaml>=6.0.2",
     "seaborn>=0.13.2",
 ]
 
 [dependency-groups]
-local_inference = ["vllm"]
+# local_inference = ["vllm"]
 dev = ["mypy>=1.15.0", "pytest>=8.3.4", "pytest-xdist>=3.6.1", "ruff>=0.9.6"]
 
 [tool.pytest.ini_options]
 log_cli = true
 testpaths = ["tests"]
 log_level = "DEBUG"
+
+[tool.mypy]
+disable_error_code = ["import-untyped"]
