@@ -101,7 +101,7 @@ df_pass_rates_synth_only = df_pass_rates_all[
 # print(df_pass_rates_synth_only)
 
 
-fig, ax = plt.subplots(figsize=(5, 4))
+fig, ax = plt.subplots(figsize=(6, 3.5))
 
 ax.grid(which="both", axis="both", linestyle="--", alpha=0.5)
 ax.set_axisbelow(True)

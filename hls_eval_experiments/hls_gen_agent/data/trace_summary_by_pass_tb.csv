@@ -1,0 +1,7 @@
+,,total_tokens,total_tokens,total_tokens,total_tokens,n_steps,n_steps,n_steps,n_steps
+,,mean,median,std,count,mean,median,std,count
+model_name,pass_tb,,,,,,,,
+gpt-oss 120B,False,162119.0,70854.0,546688.5,193,15.3,13.0,11.9,193
+gpt-oss 120B,True,44029.3,32152.0,42370.4,657,10.2,9.0,3.5,657
+gpt-oss 20B,False,28894.4,15330.0,60191.5,707,9.0,7.0,6.9,707
+gpt-oss 20B,True,42932.1,30903.0,34830.0,143,12.6,11.0,6.5,143
