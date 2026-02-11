@@ -28,15 +28,19 @@ model_name_map = {
     "meta-llama/Llama-3-70b-chat-hf": "Llama 3 70B",
     "meta-llama/Llama-3-8b-chat-hf": "Llama 3 8B",
     "google/gemini-2.0-flash-lite-001": "Gemini 2.0 Flash Lite",
+    "openai/gpt-oss-120b": "gpt-oss 120B",
+    "openai/gpt-oss-20b": "gpt-oss 20B",
 }
 
 
 model_color_map = {
     "Qwen/Qwen2.5-Coder-32B-Instruct": "#ef476f",
     "deepseek-ai/DeepSeek-V3": "#ffd166",
-    "meta-llama/Llama-3-70b-chat-hf": "#06d6a0",
-    "meta-llama/Llama-3-8b-chat-hf": "#118ab2",
+    # "meta-llama/Llama-3-70b-chat-hf": "#06d6a0",
+    # "meta-llama/Llama-3-8b-chat-hf": "#118ab2",
     "google/gemini-2.0-flash-lite-001": "#65d16c",
+    "openai/gpt-oss-120b": "#118ab2",
+    "openai/gpt-oss-20b": "#06d6a0",
 }
 
 
@@ -180,18 +184,21 @@ def compute_pass_rates(df: pd.DataFrame, ks=[1, 5]):
         n_pass_compile = df_group["pass_compile"].sum()
         n_pass_tb = df_group["pass_tb"].sum()
         n_pass_synth = df_group["pass_synth"].sum()
+        n_pass_tb_and_synth = df_group["pass_tb_and_synth"].sum()
 
         for k in ks:
             pass_at_k_parse = pass_at_k(n_samples, n_pass_parse, k)
             pass_at_k_compile = pass_at_k(n_samples, n_pass_compile, k)
             pass_at_k_tb = pass_at_k(n_samples, n_pass_tb, k)
             pass_at_k_synth = pass_at_k(n_samples, n_pass_synth, k)
+            pass_at_k_tb_and_synth = pass_at_k(n_samples, n_pass_tb_and_synth, k)
 
             pass_at_k_vals = {
                 "pass_parse": pass_at_k_parse,
                 "pass_compile": pass_at_k_compile,
                 "pass_tb": pass_at_k_tb,
                 "pass_synth": pass_at_k_synth,
+                "pass_tb_and_synth": pass_at_k_tb_and_synth,
             }
 
             for pass_at_k_key in pass_at_k_vals:
@@ -427,6 +434,7 @@ def plot_pass_rates_line(df_pass_rates, title: str, ks=[1, 5], leg_ncols: int = 
     combos = list(itertools.product(models, ks))
 
     for model, k in combos:
+        print(f"Processing model: {model}, k: {k}")
         df_filtered = df_pass_rates[
             (df_pass_rates["model_name"] == model) & (df_pass_rates["k"] == k)
         ]

@@ -2,12 +2,12 @@ import json
 import logging
 import os
 import shutil
-from pathlib import Path
 import time
+from pathlib import Path
 from typing import Any
 
-from llm_openrouter import OpenRouterChat
 import yaml
+from llm_openrouter import OpenRouterChat
 
 from hls_eval.agent_trace_render import render_trace_to_html
 from hls_eval.prompts import build_prompt_gen_agentic
@@ -15,20 +15,18 @@ from hls_eval.prompts import build_prompt_gen_agentic
 os.environ["MSWEA_SILENT_STARTUP"] = "1"
 from minisweagent.agents.default import DefaultAgent
 from minisweagent.environments.docker import DockerEnvironment
-
 from minisweagent.models.openrouter_model import OpenRouterModel
 
-
-from hls_eval.eval import Evaluator, EvalThreadPools, serialize_eval_data
 from hls_eval.data import BenchmarkCase
+from hls_eval.eval import EvalThreadPools, Evaluator, serialize_eval_data
 from hls_eval.llms import Model, normalize_model_name
 from hls_eval.tools import VitisHLSCSimTool, VitisHLSSynthTool
-
 
 DIR_CURRENT = Path(__file__).parent
 
 fp_config_agent = DIR_CURRENT / "swe_mini_agent_configs" / "main.yaml"
 config_loaded_agent = yaml.safe_load(fp_config_agent.read_text())
+
 
 class HLSGenerationAgentEvaluator(Evaluator):
     def __init__(
@@ -124,7 +122,9 @@ class HLSGenerationAgentEvaluator(Evaluator):
                 ],
                 **config_loaded_agent.get("environment", {}),
             )
-        
+
+            os.environ["MSWEA_COST_TRACKING"] = "ignore_errors"
+
             if isinstance(model.llm, OpenRouterChat):
                 copy_model_name = model.llm.model_name
 
@@ -142,18 +142,20 @@ class HLSGenerationAgentEvaluator(Evaluator):
                 model_for_agent = OpenRouterModel(
                     model_name=copy_model_name,
                     model_kwargs=model_kwargs,
+                    cost_tracking="ignore_errors",
                 )
             else:
-                raise NotImplementedError(f"Model {model_name} is not an OpenRouter model, only OpenRouter models are supported for agent evals right now.")
+                raise NotImplementedError(
+                    f"Model {model_name} is not an OpenRouter model, only OpenRouter models are supported for agent evals right now."
+                )
 
-            
             agent = DefaultAgent(
                 model=model_for_agent,
                 env=env,
                 **config_loaded_agent.get("agent", {}),
             )
 
-            def run_agent_attempt():            
+            def run_agent_attempt():
                 agent_submitted = False
                 agent_limit_exceeded = False
 
@@ -170,7 +172,9 @@ class HLSGenerationAgentEvaluator(Evaluator):
                     agent_submitted = False
                     agent_limit_exceeded = True
                 else:
-                    raise ValueError(f"Unknown agent result condition:\n{result_condition_name}\n{result_condition_description}")
+                    raise ValueError(
+                        f"Unknown agent result condition:\n{result_condition_name}\n{result_condition_description}"
+                    )
 
                 dt = t1 - t0
                 return agent_submitted, agent_limit_exceeded, t0, t1, dt
@@ -179,7 +183,7 @@ class HLSGenerationAgentEvaluator(Evaluator):
 
             future_agent = pool_agent.submit(run_agent_attempt)
             agent_submitted, agent_limit_exceeded, t0, t1, dt = future_agent.result()
-            
+
             eval_data["agent_execution_time"] = {
                 "t0": t0,
                 "t1": t1,
@@ -187,10 +191,10 @@ class HLSGenerationAgentEvaluator(Evaluator):
             }
             eval_data["agent_submitted"] = agent_submitted
             eval_data["agent_limit_exceeded"] = agent_limit_exceeded
-            
+
             agent_trace = agent.messages
             eval_data["agent_trace"] = agent_trace
-            
+
             trace_json = json.dumps(agent_trace, indent=4)
             fp_trace_json = eval_dir / "trace.json"
             fp_trace_json.write_text(trace_json)
@@ -212,19 +216,21 @@ class HLSGenerationAgentEvaluator(Evaluator):
                 can_find_kernel_file = False
             else:
                 can_find_kernel_file = True
-            
+
             fp_testbench_in_agent_run_dir = agent_run_dir / design_tb.name
             # check to see if the contents is the same as the one in the design dir
             if not fp_testbench_in_agent_run_dir.exists():
                 has_modifed_testbench = True
             else:
-                txt_testbench_in_agent_run_dir = fp_testbench_in_agent_run_dir.read_text()
+                txt_testbench_in_agent_run_dir = (
+                    fp_testbench_in_agent_run_dir.read_text()
+                )
                 txt_testbench_in_design_dir = design_tb.read_text()
                 if txt_testbench_in_agent_run_dir != txt_testbench_in_design_dir:
                     has_modifed_testbench = True
                 else:
                     has_modifed_testbench = False
-            
+
             fp_header_in_agent_run_dir = agent_run_dir / design_header.name
             if not fp_header_in_agent_run_dir.exists():
                 has_modified_header = True
@@ -235,8 +241,7 @@ class HLSGenerationAgentEvaluator(Evaluator):
                     has_modified_header = True
                 else:
                     has_modified_header = False
-                
-            
+
             assert can_find_kernel_file is not None
             assert has_modifed_testbench is not None
             assert has_modified_header is not None
@@ -245,12 +250,16 @@ class HLSGenerationAgentEvaluator(Evaluator):
             eval_data["has_modifed_testbench"] = has_modifed_testbench
             eval_data["has_modified_header"] = has_modified_header
 
-            can_parse_output = can_find_kernel_file is True and has_modifed_testbench is False and has_modified_header is False
+            can_parse_output = (
+                can_find_kernel_file is True
+                and has_modifed_testbench is False
+                and has_modified_header is False
+            )
             eval_data["can_parse_output"] = can_parse_output
             if can_parse_output is False:
                 serialize_eval_data(eval_id, eval_dir, eval_data)
                 continue
-                
+
             # make a design_generated dir
             design_generated_dir = eval_dir / "design_generated"
             design_generated_dir.mkdir()

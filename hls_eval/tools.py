@@ -121,7 +121,7 @@ class VitisHLSSynthTool:
         hls_top_function: str | None = None,
         hls_flow_target: str = "vivado",
         hls_unsafe_math: bool = True,
-        timeout: float = 60.0 * 4,
+        timeout: float = 60.0 * 6,
     ) -> ToolDataOutput:
         if build_name is None:
             build_name = f"{build_name_prefix}{uuid.uuid4().hex}"

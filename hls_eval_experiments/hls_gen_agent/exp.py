@@ -1,4 +1,5 @@
 import logging
+import time
 from pathlib import Path
 
 from dotenv import dotenv_values
@@ -33,18 +34,20 @@ if __name__ == "__main__":
         BenchmarkCase(d, name=d.name) for d in all_benchmark_case_dirs
     ]
 
-    sets_to_test = set(["polybench"])
+    sets_to_test = set(["polybench", "machsuite", "chstone", "rosetta", "c2hlsc"])
 
     all_benchmark_cases = [
         bc
         for bc in all_benchmark_cases
         if len(set(bc.tags_all).intersection(sets_to_test)) > 0
     ]
-    
-    all_benchmark_cases = sorted(all_benchmark_cases, key=lambda x: x.name)
-    
 
-    model_names_to_test = ["openai/gpt-oss-120b"]
+    all_benchmark_cases = sorted(all_benchmark_cases, key=lambda x: x.name)
+
+    model_names_to_test = [
+        "openai/gpt-oss-20b",
+        "openai/gpt-oss-120b",
+    ]
     models = [
         build_model_remote_openrouter(model_name, api_key=API_KEY_OPENROUTER)
         for model_name in model_names_to_test
@@ -55,24 +58,22 @@ if __name__ == "__main__":
 
     vitis_hls_dir = unwrap(auto_find_vitis_hls_dir(), "Vitis HLS bin not auto found")
 
-
     evaluator = HLSGenerationAgentEvaluator(
         vitis_hls_tool_csim=VitisHLSCSimTool(vitis_hls_dir),
         vitis_hls_tool_synth=VitisHLSSynthTool(vitis_hls_dir),
         output_data_dir=DIR_CURRENT_OUTPUT_DATA,
-        n_samples=5,
+        n_samples=10,
     )
 
-    benchmark_cases_filtered = all_benchmark_cases[:1]
-    models_filtered = models[:1]
+    benchmark_cases_filtered = all_benchmark_cases
+    models_filtered = models
 
     evaluator.evaluate_designs(
         benchmark_cases=benchmark_cases_filtered,
         models=models_filtered,
-        n_jobs=64,
-        n_jobs_pool_llm=64,
-        n_jobs_pool_agent=64,
-        n_jobs_pool_csim=64,
-        n_jobs_pool_synth=64,
+        n_jobs=72,
+        n_jobs_pool_llm=72,
+        n_jobs_pool_agent=72,
+        n_jobs_pool_csim=72,
+        n_jobs_pool_synth=72,
     )
-
