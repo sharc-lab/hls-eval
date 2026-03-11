@@ -89,6 +89,7 @@ class HLSGenerationAgentEvaluator(Evaluator):
             design_tb = benchmark_case.tb_file
             design_description = benchmark_case.kernel_description_fp
             design_kernel = benchmark_case.kernel_fp
+            design_tb_data_files = benchmark_case.tb_data_files
 
             # make an agent run dir and copy the design files to it
             agent_run_dir = eval_dir / "agent_run_dir"
@@ -97,6 +98,8 @@ class HLSGenerationAgentEvaluator(Evaluator):
             shutil.copy(design_description, agent_run_dir)
             shutil.copy(design_header, agent_run_dir)
             shutil.copy(design_tb, agent_run_dir)
+            for tb_data_file in design_tb_data_files:
+                shutil.copy(tb_data_file, agent_run_dir)
 
             prompt = build_prompt_gen_agentic(
                 fn_design_description=design_description.name,
@@ -268,6 +271,8 @@ class HLSGenerationAgentEvaluator(Evaluator):
             shutil.copy(design_header, design_generated_dir)
             shutil.copy(design_tb, design_generated_dir)
             shutil.copy(design_description, design_generated_dir)
+            for tb_data_file in design_tb_data_files:
+                shutil.copy(tb_data_file, design_generated_dir)
 
             # copy the kernel file to the design_generated dir
             shutil.copy(fp_kernel_in_agent_run_dir, design_generated_dir)

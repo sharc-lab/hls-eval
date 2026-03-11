@@ -155,6 +155,18 @@ class BenchmarkCase:
     def tags_in_config(self) -> list[str]:
         return self.toml_data.get("tags", [])
 
+    @property
+    def tb_data_files(self) -> list[Path]:
+        files = []
+        for tb_data_file in self.toml_data.get("tb_data", []):
+            fp = self.design_dir / tb_data_file
+            if not fp.exists():
+                raise FileNotFoundError(f"TB data file {fp} does not exist")
+            if fp.is_dir():
+                raise IsADirectoryError(f"TB data file {fp} is a directory")
+            files.append(fp)
+        return files
+
     def copy_to(self, dest: Path) -> "BenchmarkCase":
         shutil.copytree(
             self.design_dir,
