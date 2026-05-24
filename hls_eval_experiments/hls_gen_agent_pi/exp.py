@@ -1,11 +1,10 @@
 import logging
-import time
 from pathlib import Path
 
 from dotenv import dotenv_values
 
 from hls_eval.data import BenchmarkCase, find_benchmark_case_dirs
-from hls_eval.eval_agent import HLSGenerationAgentEvaluator
+from hls_eval.eval_agent_pi.eval_agent_pi import HLSGenerationAgentEvaluatorPi
 from hls_eval.llms import build_model_remote_openrouter
 from hls_eval.tools import VitisHLSCSimTool, VitisHLSSynthTool, auto_find_vitis_hls_dir
 from hls_eval.utils import check_key, unwrap
@@ -27,14 +26,14 @@ LOGGER.setLevel(logging.DEBUG)
 
 API_KEY_OPENROUTER = check_key(dotenv_values(".env")["OPENROUTER_API_KEY"])
 
-
 if __name__ == "__main__":
     all_benchmark_case_dirs = find_benchmark_case_dirs(DIR_HLS_EVAL_DATA)
     all_benchmark_cases = [
         BenchmarkCase(d, name=d.name) for d in all_benchmark_case_dirs
     ]
 
-    sets_to_test = set(["polybench", "machsuite", "chstone", "rosetta", "c2hlsc"])
+    # sets_to_test = set(["polybench", "machsuite", "chstone", "rosetta", "c2hlsc"])
+    sets_to_test = set(["polybench"])
 
     all_benchmark_cases = [
         bc
@@ -45,8 +44,8 @@ if __name__ == "__main__":
     all_benchmark_cases = sorted(all_benchmark_cases, key=lambda x: x.name)
 
     model_names_to_test = [
-        "openai/gpt-oss-20b",
-        "openai/gpt-oss-120b",
+        # "openai/gpt-oss-120b",
+        "deepseek/deepseek-v4-flash"
     ]
     models = [
         build_model_remote_openrouter(model_name, api_key=API_KEY_OPENROUTER)
@@ -58,7 +57,7 @@ if __name__ == "__main__":
 
     vitis_hls_dir = unwrap(auto_find_vitis_hls_dir(), "Vitis HLS bin not auto found")
 
-    evaluator = HLSGenerationAgentEvaluator(
+    evaluator = HLSGenerationAgentEvaluatorPi(
         vitis_hls_tool_csim=VitisHLSCSimTool(vitis_hls_dir),
         vitis_hls_tool_synth=VitisHLSSynthTool(vitis_hls_dir),
         output_data_dir=DIR_CURRENT_OUTPUT_DATA,

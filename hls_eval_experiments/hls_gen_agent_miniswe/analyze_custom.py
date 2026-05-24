@@ -23,7 +23,7 @@ from hls_eval_experiments.exp_utils import (
 )
 
 DIR_CURRENT = Path(__file__).resolve().parent
-DIR_INPUT_DATA = DIR_CURRENT / "output_data_v1"
+DIR_INPUT_DATA = DIR_CURRENT / "output_data_v2"
 
 DIR_FIGURES = DIR_CURRENT / "figures"
 if not DIR_FIGURES.exists():

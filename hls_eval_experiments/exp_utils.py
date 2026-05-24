@@ -25,6 +25,7 @@ metric_name_map = {
 model_name_map = {
     "Qwen/Qwen2.5-Coder-32B-Instruct": "Qwen2.5 Coder 32B",
     "deepseek-ai/DeepSeek-V3": "DeepSeek V3",
+    "deepseek/deepseek-v4-flash": "DeepSeek V4 Flash",
     "meta-llama/Llama-3-70b-chat-hf": "Llama 3 70B",
     "meta-llama/Llama-3-8b-chat-hf": "Llama 3 8B",
     "google/gemini-2.0-flash-lite-001": "Gemini 2.0 Flash Lite",
@@ -36,6 +37,7 @@ model_name_map = {
 model_color_map = {
     "Qwen/Qwen2.5-Coder-32B-Instruct": "#ef476f",
     "deepseek-ai/DeepSeek-V3": "#ffd166",
+    "deepseek/deepseek-v4-flash": "#ffd166",
     # "meta-llama/Llama-3-70b-chat-hf": "#06d6a0",
     # "meta-llama/Llama-3-8b-chat-hf": "#118ab2",
     "google/gemini-2.0-flash-lite-001": "#65d16c",
@@ -236,7 +238,14 @@ def compute_pass_rates(df: pd.DataFrame, ks=[1, 5]):
 
 def build_pass_table(df_pass_rates: pd.DataFrame):
     df_pass_rates = df_pass_rates.copy()
-    df_pass_rates["model_name"] = df_pass_rates["model_name"].map(model_name_map)
+    df_pass_rates = df_pass_rates[
+        df_pass_rates["metric_name"].isin(metric_name_map)
+    ].copy()
+    original_model_names = df_pass_rates["model_name"]
+    df_pass_rates["model_name"] = original_model_names.map(model_name_map)
+    df_pass_rates["model_name"] = df_pass_rates["model_name"].fillna(
+        original_model_names
+    )
     df_pass_rates["metric_name"] = df_pass_rates["metric_name"].map(metric_name_map)
 
     df_pass_rates = df_pass_rates.pivot_table(
@@ -260,9 +269,10 @@ def build_pass_table(df_pass_rates: pd.DataFrame):
     # sort the models rows in a specifc order of models
     order_map = {
         "DeepSeek V3": 0,
-        "Qwen2.5 Coder 32B": 1,
-        "Llama 3 70B": 2,
-        "Llama 3 8B": 3,
+        "DeepSeek V4 Flash": 1,
+        "Qwen2.5 Coder 32B": 2,
+        "Llama 3 70B": 3,
+        "Llama 3 8B": 4,
     }
     df_pass_rates = df_pass_rates.sort_values(
         by="model_name", key=lambda x: x.map(order_map)

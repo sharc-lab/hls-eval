@@ -1,0 +1,11 @@
+model_name,metric_name,k,pass_rate
+deepseek/deepseek-v4-flash,pass_compile,1,1.0
+deepseek/deepseek-v4-flash,pass_compile,10,1.0
+deepseek/deepseek-v4-flash,pass_parse,1,1.0
+deepseek/deepseek-v4-flash,pass_parse,10,1.0
+deepseek/deepseek-v4-flash,pass_synth,1,0.9928571428571429
+deepseek/deepseek-v4-flash,pass_synth,10,1.0
+deepseek/deepseek-v4-flash,pass_tb,1,1.0
+deepseek/deepseek-v4-flash,pass_tb,10,1.0
+deepseek/deepseek-v4-flash,pass_tb_and_synth,1,0.9928571428571429
+deepseek/deepseek-v4-flash,pass_tb_and_synth,10,1.0

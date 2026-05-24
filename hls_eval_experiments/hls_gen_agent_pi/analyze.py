@@ -21,7 +21,7 @@ from hls_eval_experiments.exp_utils import (
 )
 
 DIR_CURRENT = Path(__file__).resolve().parent
-DIR_INPUT_DATA = DIR_CURRENT / "output_data_v1"
+DIR_INPUT_DATA = DIR_CURRENT / "output_data"
 
 DIR_FIGURES = DIR_CURRENT / "figures"
 if not DIR_FIGURES.exists():
@@ -46,7 +46,6 @@ for eval_case_run_dir in DIR_INPUT_DATA.iterdir():
     eval_data_fp = eval_case_run_dir / "all_eval_data.json"
     all_eval_json_paths.append(eval_data_fp)
 
-
 df = build_df_from_all_eval_json_files(all_eval_json_paths)
 df.to_csv(DIR_DATA / "all_eval_data.csv", index=False)
 
@@ -69,7 +68,7 @@ df_pass = df[
 df_pass["pass_tb_and_synth"] = df_pass["pass_tb"] & df_pass["pass_synth"]
 
 
-df_pass_rates = compute_pass_rates(df_pass, ks=[1, 5, 10, 20])
+df_pass_rates = compute_pass_rates(df_pass, ks=[1, 10])
 df_pass_rates.to_csv(DIR_DATA / "pass_rates.csv", index=False)
 
 
@@ -96,12 +95,13 @@ df_pass_rates_all = compute_pass_rates(df_pass, ks)
 df_pass_rates_all.to_csv(DIR_DATA / "pass_rates_all.csv", index=False)
 
 df_pass_rates_synth_only = df_pass_rates_all[
-    df_pass_rates_all["metric_name"] == "pass_synth"
+    df_pass_rates_all["metric_name"] == "pass_tb_and_synth"
 ].copy()
 # print(df_pass_rates_synth_only)
 
 
-fig, ax = plt.subplots(figsize=(6, 3.5))
+# fig, ax = plt.subplots(figsize=(6, 3.5))
+fig, ax = plt.subplots(figsize=(4.5, 4))
 
 ax.grid(which="both", axis="both", linestyle="--", alpha=0.5)
 ax.set_axisbelow(True)

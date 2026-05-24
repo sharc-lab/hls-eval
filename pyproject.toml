@@ -5,6 +5,7 @@ description = "Benchmarking and evaluation of LLMs for HLS design"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "docker>=7.1.0",
     "joblib>=1.5.3",
     "llm>=0.28",
     "llm-openrouter>=0.5",

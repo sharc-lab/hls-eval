@@ -93,6 +93,7 @@ def build_trace_df(all_eval_json_paths: list[Path]) -> pd.DataFrame:
                     "eval_index": int(eval_index),
                     "pass_tb": pass_tb,
                     "pass_synth": pass_synth,
+                    "pass_tb_and_synth": pass_tb and pass_synth,
                     "n_steps": n_steps,
                     "total_prompt_tokens": total_prompt_tokens,
                     "total_completion_tokens": total_completion_tokens,
@@ -287,6 +288,111 @@ plot_kde_combined(
     pass_col="pass_synth",
     title="Agent Trace Distributions — Grouped by Pass vs Fail Synthesis",
     out_path=DIR_FIGURES / "kde_combined_by_pass_synth.png",
+)
+
+plot_kde_combined(
+    df_traces,
+    pass_col="pass_tb_and_synth",
+    title="Agent Trace Distributions — Grouped by Pass vs Fail Testbench and Synthesis",
+    out_path=DIR_FIGURES / "kde_combined_by_pass_tb_and_synth.png",
+)
+
+
+def plot_kde_combined_single_model(
+    df: pd.DataFrame,
+    model_name: str,
+    pass_col: str,
+    title: str,
+    out_path: Path,
+):
+    """Single-column 2-row grid for one model: row 0 = total tokens (log), row 1 = n_steps (log)."""
+    df_m = df[df["model_name"] == model_name]
+    if df_m.empty:
+        print(f"Skipping single-model plot: no data for {model_name}")
+        return
+
+    row_specs = [
+        dict(metric="total_tokens", xlabel="Total tokens", log_scale=True, min_x=1),
+        dict(metric="n_steps", xlabel="Number of agent steps", log_scale=True, min_x=1),
+    ]
+
+    pass_colors = {True: "#2ecc71", False: "#e74c3c"}
+    pass_label_map = {
+        "pass_tb": {True: "Pass TB", False: "Fail TB"},
+        "pass_synth": {True: "Pass Synth", False: "Fail Synth"},
+    }
+    pass_labels = pass_label_map.get(pass_col, {True: "Pass", False: "Fail"})
+
+    fig, axes = plt.subplots(2, 1, figsize=(5, 5), sharey=False)
+
+    for row, spec in enumerate(row_specs):
+        metric = spec["metric"]
+        xlabel = spec["xlabel"]
+        log_scale = spec["log_scale"]
+        min_x = spec["min_x"]
+
+        ax = axes[row]
+        ax.grid(which="both", axis="both", linestyle="--", alpha=0.5)
+        ax.set_axisbelow(True)
+
+        for passed, grp in df_m.groupby(pass_col):
+            vals = grp[metric].dropna()
+            color = pass_colors[passed]
+            label = f"{pass_labels[passed]} (n={len(vals)})"
+
+            clip_kwarg = (
+                np.log10(min_x) if (log_scale and min_x is not None) else min_x
+            )
+
+            sns.kdeplot(
+                vals,
+                ax=ax,
+                fill=True,
+                alpha=0.35,
+                color=color,
+                label=label,
+                log_scale=log_scale,
+                clip=(clip_kwarg, None),
+            )
+
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel("Density")
+        ax.legend(fontsize=8)
+        if metric == "n_steps":
+            ax.set_xlim(left=1)
+
+    display_name = model_name_map.get(model_name, model_name)
+    fig.suptitle(f"{title} / {display_name}", fontsize=13, y=0.98)
+    fig.tight_layout()
+    fig.savefig(out_path, bbox_inches="tight", dpi=150)
+    plt.close(fig)
+    print(f"Saved: {out_path}")
+
+
+MODEL_120B = "openai/gpt-oss-120b"
+
+plot_kde_combined_single_model(
+    df_traces,
+    model_name=MODEL_120B,
+    pass_col="pass_tb",
+    title="Agent Trace Distributions\nGrouped by Pass vs Fail Testbench",
+    out_path=DIR_FIGURES / "kde_combined_120b_by_pass_tb.png",
+)
+
+plot_kde_combined_single_model(
+    df_traces,
+    model_name=MODEL_120B,
+    pass_col="pass_synth",
+    title="Agent Trace Distributions\nGrouped by Pass vs Fail Synthesis",
+    out_path=DIR_FIGURES / "kde_combined_120b_by_pass_synth.png",
+)
+
+plot_kde_combined_single_model(
+    df_traces,
+    model_name=MODEL_120B,
+    pass_col="pass_tb_and_synth",
+    title="Agent Trace Distributions\nGrouped by Pass vs Fail",
+    out_path=DIR_FIGURES / "kde_combined_120b_by_pass_tb_and_synth.png",
 )
 
 
