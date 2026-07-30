@@ -1,5 +1,6 @@
 import io
 import os
+import re
 import shutil
 import subprocess
 import time
@@ -11,6 +12,16 @@ import psutil
 
 from hls_eval.data import H_EXTENSIONS
 from hls_eval.vhls_report import DesignHLSSynthData
+
+
+def _compiler_defines_to_cflags(compiler_defines: list[str]) -> str:
+    cflags = []
+    for define in compiler_defines:
+        normalized_define = define.removeprefix("-D")
+        if not re.fullmatch(r"[A-Za-z_]\w*(?:=[^{}\n\r]*)?", normalized_define):
+            raise ValueError(f"Invalid compiler define: {define!r}")
+        cflags.append(f"-D{normalized_define}")
+    return " ".join(cflags)
 
 
 def auto_find_vitis_hls_dir() -> Path | None:
@@ -121,6 +132,8 @@ class VitisHLSSynthTool:
         hls_top_function: str | None = None,
         hls_flow_target: str = "vivado",
         hls_unsafe_math: bool = True,
+        hls_disable_auto_optimizations: bool = False,
+        hls_compiler_defines: list[str] | None = None,
         timeout: float = 60.0 * 6,
     ) -> ToolDataOutput:
         if build_name is None:
@@ -140,13 +153,21 @@ class VitisHLSSynthTool:
 
         tcl_script = ""
         tcl_script += f"open_project {build_name}__proj\n"
+        compiler_cflags = _compiler_defines_to_cflags(hls_compiler_defines or [])
         for fp in source_files:
-            tcl_script += f"add_files {fp}\n"
+            if compiler_cflags:
+                tcl_script += f"add_files -cflags {{{compiler_cflags}}} {fp}\n"
+            else:
+                tcl_script += f"add_files {fp}\n"
         tcl_script += f"open_solution solution__synth -flow_target {hls_flow_target}\n"
         if hls_top_function is not None:
             tcl_script += f"set_top {hls_top_function}\n"
         tcl_script += f"set_part {hls_fpga_part}\n"
         tcl_script += f"create_clock -period {hls_clock_period_ns} -name clk_default\n"
+        if hls_disable_auto_optimizations:
+            tcl_script += "config_compile -pipeline_loops 0\n"
+            tcl_script += "config_unroll -tripcount_threshold 0\n"
+            tcl_script += "config_array_partition -throughput_driven off\n"
         if hls_unsafe_math:
             tcl_script += "config_compile -unsafe_math_optimizations\n"
         tcl_script += "csynth_design\n"
