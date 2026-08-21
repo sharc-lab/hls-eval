@@ -13,6 +13,7 @@ from matplotlib.ticker import LogLocator
 DIR_CURRENT = Path(__file__).resolve().parent
 DEFAULT_OUTPUT_DATA_DIR = DIR_CURRENT / "output_data"
 DEFAULT_PLOT_PATH = DIR_CURRENT / "kernel_latency_mae.png"
+DEFAULT_VERTICAL_PLOT_PATH = DIR_CURRENT / "kernel_latency_mae_vertical.png"
 DEFAULT_RATIO_PLOT_PATH = DIR_CURRENT / "kernel_latency_ratios.png"
 
 MODELS_TO_PLOT = ["deepseek/deepseek-v4-flash", "openai/gpt-oss-120b"]
@@ -55,7 +56,7 @@ def load_kernel_maes(
     return sorted(
         kernel_maes,
         key=lambda result: (
-            not result[1],
+            bool(result[1]),
             result[1][0] if result[1] else math.inf,
         ),
     )
@@ -81,8 +82,8 @@ def plot_kernel_maes(
     group_height = 0.82
     bar_height = group_height / max_samples
 
-    figure_height = max(6.0, 0.38 * len(kernel_maes)) * 0.7
-    figure, axis = plt.subplots(figsize=(8, figure_height))
+    figure_height = max(6.0, 0.38 * len(kernel_maes)) * 0.5
+    figure, axis = plt.subplots(figsize=(10, figure_height))
 
     for rank in range(max_samples):
         positions = []
@@ -109,7 +110,7 @@ def plot_kernel_maes(
             linewidth=0.5,
         )
 
-    axis.set_title(f"HLS Kernel Latency Estimation Error\n{model_name}")
+    axis.set_title(f"HLS Kernel vs. LLM Model Latency Error - {model_name}")
     axis.set_xscale("log")
 
     all_errors = [
@@ -130,14 +131,12 @@ def plot_kernel_maes(
         axis.set_xlim(1.0, 10.0)
     axis.xaxis.set_major_locator(LogLocator(base=10))
 
-    axis.set_xlabel("Absolute error per sample (clock cycles, log scale)")
-    axis.set_ylabel("Kernel (valid estimates / total samples)")
+    axis.set_xlabel("LLM Modeled Latency Absolute Error (Clock Cycles, Log Scale)")
+    # axis.set_ylabel("Kernel (valid estimates / total samples)")
     axis.set_yticks(kernel_positions)
     axis.set_yticklabels(kernel_labels)
     axis.set_ylim(-0.75, len(kernel_positions) - 0.25)
-    for kernel_position, (_, absolute_errors, _) in zip(
-        kernel_positions, kernel_maes
-    ):
+    for kernel_position, (_, absolute_errors, _) in zip(kernel_positions, kernel_maes):
         if not absolute_errors:
             axis.text(
                 0.015,
@@ -151,6 +150,100 @@ def plot_kernel_maes(
                 va="center",
             )
     axis.grid(axis="x", which="both", linestyle="--", alpha=0.35)
+    axis.set_axisbelow(True)
+
+    figure.tight_layout()
+    figure.savefig(plot_path, dpi=300, bbox_inches="tight")
+    plt.close(figure)
+
+
+def plot_kernel_maes_vertical(
+    kernel_maes: list[tuple[str, list[float], int]],
+    plot_path: Path,
+    model_name: str,
+) -> None:
+    if not kernel_maes:
+        raise ValueError("No valid kernel results were found")
+
+    kernel_labels = [
+        f"{kernel} ({len(absolute_errors)}/{total_samples})"
+        for kernel, absolute_errors, total_samples in kernel_maes
+    ]
+    max_samples = max(
+        1,
+        max(len(absolute_errors) for _, absolute_errors, _ in kernel_maes),
+    )
+    kernel_positions = list(range(len(kernel_maes)))
+    group_width = 0.82
+    bar_width = group_width / max_samples
+
+    figure_width = max(10.0, 0.38 * len(kernel_maes)) * 0.8
+    figure, axis = plt.subplots(figsize=(figure_width, 3.5))
+
+    for rank in range(max_samples):
+        positions = []
+        errors = []
+        for kernel_position, (_, absolute_errors, _) in zip(
+            kernel_positions, kernel_maes
+        ):
+            if rank >= len(absolute_errors):
+                continue
+            positions.append(
+                kernel_position
+                - bar_width * len(absolute_errors) / 2
+                + bar_width * (rank + 0.5)
+            )
+            errors.append(absolute_errors[rank])
+
+        axis.bar(
+            positions,
+            [max(error, 1.0) - 1.0 for error in errors],
+            bottom=1.0,
+            width=bar_width,
+            facecolor=(0.122, 0.467, 0.706, 0.3),
+            edgecolor="tab:blue",
+            linewidth=0.5,
+        )
+
+    axis.set_title(f"HLS Kernel vs. LLM Model Latency Error - {model_name}")
+    axis.set_yscale("log")
+
+    all_errors = [
+        error
+        for _, absolute_errors, _ in kernel_maes
+        for error in absolute_errors
+        if error > 0
+    ]
+    if all_errors:
+        lowest_error = min(all_errors)
+        highest_error = max(all_errors)
+        lower_magnitude = 10 ** math.floor(math.log10(lowest_error))
+        upper_magnitude = 10 ** math.floor(math.log10(highest_error))
+        y_limit_lower = math.floor(lowest_error / lower_magnitude) * lower_magnitude
+        y_limit_upper = math.ceil(highest_error / upper_magnitude) * upper_magnitude
+        axis.set_ylim(y_limit_lower, y_limit_upper)
+    else:
+        axis.set_ylim(1.0, 10.0)
+    axis.yaxis.set_major_locator(LogLocator(base=10))
+
+    axis.set_ylabel("LLM Modeled Latency Absolute Error\n(Clock Cycles)")
+    axis.set_xticks(kernel_positions)
+    axis.set_xticklabels(kernel_labels, rotation=35, ha="right")
+    axis.set_xlim(-0.75, len(kernel_positions) - 0.25)
+    for kernel_position, (_, absolute_errors, _) in zip(kernel_positions, kernel_maes):
+        if not absolute_errors:
+            axis.text(
+                kernel_position,
+                0.015,
+                "X",
+                transform=axis.get_xaxis_transform(),
+                color="red",
+                fontsize=13,
+                fontweight="bold",
+                ha="center",
+                va="bottom",
+            )
+    axis.grid(axis="y", which="both", linestyle="--", alpha=0.35)
     axis.set_axisbelow(True)
 
     figure.tight_layout()
@@ -221,8 +314,8 @@ def plot_kernel_sample_ratios(
     group_width = 0.82
     bar_width = group_width / max_samples
 
-    figure_width = max(10.0, 0.38 * len(kernel_ratios)) * 0.6
-    figure, axis = plt.subplots(figsize=(figure_width, 5))
+    figure_width = max(10.0, 0.38 * len(kernel_ratios)) * 0.8
+    figure, axis = plt.subplots(figsize=(figure_width, 4))
 
     for rank in range(max_samples):
         positions = []
@@ -271,9 +364,7 @@ def plot_kernel_sample_ratios(
         kernel_positions[0] - group_spacing * 0.65,
         kernel_positions[-1] + group_spacing * 0.65,
     )
-    for kernel_position, (_, sample_ratios) in zip(
-        kernel_positions, kernel_ratios
-    ):
+    for kernel_position, (_, sample_ratios) in zip(kernel_positions, kernel_ratios):
         if not sample_ratios:
             axis.text(
                 kernel_position,
@@ -286,10 +377,8 @@ def plot_kernel_sample_ratios(
                 ha="center",
                 va="bottom",
             )
-    axis.set_title(
-        f"Predicted Latency Relative to Synthesized Latency\n{model_name}"
-    )
-    axis.set_ylabel("Predicted latency / true latency ratio (log₂ scale)")
+    axis.set_title(f"LLM Modeled Latency Relative to True Latency - {model_name}")
+    axis.set_ylabel("LLM Modeled Latency / True Latency Ratio")
     axis.grid(axis="y", which="both", linestyle="--", alpha=0.5)
     axis.set_axisbelow(True)
 
@@ -323,7 +412,13 @@ def main() -> None:
         "--output",
         type=Path,
         default=DEFAULT_PLOT_PATH,
-        help="Path for the generated PNG plot",
+        help="Path for the generated horizontal-bar MAE PNG plot",
+    )
+    parser.add_argument(
+        "--vertical-output",
+        type=Path,
+        default=DEFAULT_VERTICAL_PLOT_PATH,
+        help="Path for the generated vertical-bar MAE PNG plot",
     )
     parser.add_argument(
         "--ratio-output",
@@ -339,6 +434,10 @@ def main() -> None:
         if kernel_maes:
             plot_kernel_maes(kernel_maes, mae_plot_path, model_name)
             print(f"Saved {model_name} plot to {mae_plot_path}")
+
+            vertical_mae_plot_path = model_plot_path(args.vertical_output, model_name)
+            plot_kernel_maes_vertical(kernel_maes, vertical_mae_plot_path, model_name)
+            print(f"Saved {model_name} vertical plot to {vertical_mae_plot_path}")
         else:
             print(f"Skipping {model_name} MAE plot: no valid model results")
 
