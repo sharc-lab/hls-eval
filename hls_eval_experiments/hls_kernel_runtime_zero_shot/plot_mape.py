@@ -11,10 +11,12 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import LogLocator
 
 DIR_CURRENT = Path(__file__).resolve().parent
+DIR_FIGURES = DIR_CURRENT / "figures"
+
 DEFAULT_OUTPUT_DATA_DIR = DIR_CURRENT / "output_data"
-DEFAULT_PLOT_PATH = DIR_CURRENT / "kernel_latency_mae.png"
-DEFAULT_VERTICAL_PLOT_PATH = DIR_CURRENT / "kernel_latency_mae_vertical.png"
-DEFAULT_RATIO_PLOT_PATH = DIR_CURRENT / "kernel_latency_ratios.png"
+DEFAULT_PLOT_PATH = DIR_FIGURES / "kernel_latency_mae.png"
+DEFAULT_VERTICAL_PLOT_PATH = DIR_FIGURES / "kernel_latency_mae_vertical.png"
+DEFAULT_RATIO_PLOT_PATH = DIR_FIGURES / "kernel_latency_ratios.png"
 
 MODELS_TO_PLOT = ["deepseek/deepseek-v4-flash", "openai/gpt-oss-120b"]
 
@@ -427,6 +429,10 @@ def main() -> None:
         help="Path for the generated per-sample latency ratio PNG plot",
     )
     args = parser.parse_args()
+
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.vertical_output.parent.mkdir(parents=True, exist_ok=True)
+    args.ratio_output.parent.mkdir(parents=True, exist_ok=True)
 
     for model_name in MODELS_TO_PLOT:
         mae_plot_path = model_plot_path(args.output, model_name)
