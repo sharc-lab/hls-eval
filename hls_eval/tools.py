@@ -429,6 +429,176 @@ class VitisHLSCSimTool:
         return compile_data, run_data
 
 
+class VitisHLSCoSimTool:
+    def __init__(self, vitis_hls_path: Path) -> None:
+        self.vitis_hls_path = vitis_hls_path
+
+    def run(
+        self,
+        build_dir: Path,
+        source_files: list[Path],
+        aux_files: list[Path] = [],
+        build_name: str | None = None,
+        build_name_prefix: str = "vitis_hls_synth_tool__",
+        hls_fpga_part: str = "xczu9eg-ffvb1156-2-e",
+        hls_clock_period_ns: float = 5,
+        hls_top_function: str | None = None,
+        hls_flow_target: str = "vivado",
+        hls_unsafe_math: bool = True,
+        hls_disable_auto_optimizations: bool = False,
+        hls_compiler_defines: list[str] | None = None,
+        timeout: float = 60.0 * 6,
+    ) -> ToolDataOutput:
+        if build_name is None:
+            build_name = f"{build_name_prefix}{uuid.uuid4().hex}"
+        else:
+            build_name = f"{build_name_prefix}{build_name}"
+
+        unique_build_dir = build_dir / build_name
+        if unique_build_dir.exists():
+            shutil.rmtree(unique_build_dir)
+        unique_build_dir.mkdir(parents=True, exist_ok=True)
+
+        for fp in source_files + aux_files:
+            shutil.copy(fp, unique_build_dir)
+
+        tcl_script_fp: Path = unique_build_dir / "run_hls.tcl"
+
+        tcl_script = ""
+        tcl_script += f"open_project {build_name}__proj\n"
+        compiler_cflags = _compiler_defines_to_cflags(hls_compiler_defines or [])
+        for fp in source_files:
+            if compiler_cflags:
+                tcl_script += f"add_files -cflags {{{compiler_cflags}}} {fp}\n"
+            else:
+                tcl_script += f"add_files {fp}\n"
+        for fp in aux_files:
+            tcl_script += f"add_files -tb {fp}\n"
+        tcl_script += f"open_solution solution__synth -flow_target {hls_flow_target}\n"
+        if hls_top_function is not None:
+            tcl_script += f"set_top {hls_top_function}\n"
+        tcl_script += f"set_part {hls_fpga_part}\n"
+        tcl_script += f"create_clock -period {hls_clock_period_ns} -name clk_default\n"
+        if hls_disable_auto_optimizations:
+            tcl_script += "config_compile -pipeline_loops 0\n"
+            tcl_script += "config_unroll -tripcount_threshold 0\n"
+            tcl_script += "config_array_partition -throughput_driven off\n"
+        if hls_unsafe_math:
+            tcl_script += "config_compile -unsafe_math_optimizations\n"
+        tcl_script += "csynth_design\n"
+        tcl_script += "cosim_design\n"
+        tcl_script += "exit\n"
+
+        tcl_script_fp.write_text(tcl_script)
+
+        vitis_hls_bin = self.vitis_hls_path / "bin/vitis_hls"
+
+        t_0 = time.monotonic()
+        p = subprocess.Popen(
+            [vitis_hls_bin.resolve(), "-f", tcl_script_fp.resolve()],
+            cwd=unique_build_dir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            bufsize=io.DEFAULT_BUFFER_SIZE * 1024,
+            text=True,
+        )
+        try:
+            p.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            process_id = psutil.Process(pid=p.pid)
+            children = process_id.children(recursive=True)
+            for child in children:
+                child.terminate()
+            p.terminate()
+
+            return ToolDataOutput(
+                data_execution=ExecutionData(
+                    return_code=-1,
+                    stdout="",
+                    stderr="",
+                    t0=t_0,
+                    t1=time.monotonic(),
+                    execution_time=timeout,
+                    timeout=True,
+                ),
+                data_tool=None,
+            )
+
+        t_1 = time.monotonic()
+        dt: float = t_1 - t_0
+
+        if p.returncode != 0:
+            assert p.stdout is not None
+            assert p.stderr is not None
+            # assert isinstance(p.stdout, str)
+            # assert isinstance(p.stderr, str)
+            stdout = p.stdout.read()
+            stderr = p.stderr.read()
+            return ToolDataOutput(
+                data_execution=ExecutionData(
+                    return_code=p.returncode,
+                    stdout=stdout,
+                    stderr=stderr,
+                    t0=t_0,
+                    t1=t_1,
+                    execution_time=dt,
+                    timeout=False,
+                ),
+                data_tool=None,
+            )
+
+        solution_dir = unique_build_dir / f"{build_name}__proj/solution__synth"
+        report_dir: Path = solution_dir / "syn" / "report"
+        csynth_rpt_fp = report_dir / "csynth.xml"
+        synthesis_data = DesignHLSSynthData.parse_from_synth_report_file(csynth_rpt_fp)
+
+        cosim_report_dir = solution_dir / "sim" / "report" / "verilog"
+        lat_rpt_fp = cosim_report_dir / "lat.rpt"
+
+        def parse_cosim_report(txt: str) -> dict[str, int]:
+            data = {}
+            for line in txt.splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                if not line.startswith("$"):
+                    continue
+                if "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                key = key.strip().removeprefix("$").lower()
+                value = value.strip().strip('"')
+                value_int = int(value)
+                data[key] = value_int
+            return data
+
+        cosim_data = parse_cosim_report(lat_rpt_fp.read_text())
+
+        data_tool_combined = {
+            "data_synthesis": synthesis_data.to_dict(),
+            "data_cosim": cosim_data,
+        }
+
+        assert p.stdout is not None
+        assert p.stderr is not None
+
+        stdout = p.stdout.read()
+        stderr = p.stderr.read()
+
+        return ToolDataOutput(
+            data_execution=ExecutionData(
+                return_code=p.returncode,
+                stdout=stdout,
+                stderr=stderr,
+                t0=t_0,
+                t1=t_1,
+                execution_time=dt,
+                timeout=False,
+            ),
+            data_tool=data_tool_combined,
+        )
+
+
 class CPPCompilerTool:
     def __init__(self, vitis_hls_path: Path) -> None:
         self.vitis_hls_path = vitis_hls_path
