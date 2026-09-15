@@ -1,0 +1,27 @@
+{
+    "brams": [
+        {"name": "BRAM_1", "dims": [16, 64]},
+        {"name": "BRAM_2", "dims": [64, 32]},
+        {"name": "BRAM_3", "dims": [16, 32]},
+        {"name": "BRAM_4", "dims": [16, 32]}
+    ],
+    "drams": [
+        {"name": "DRAM_1", "dims": [16, 64], "bundle": "mem1"},
+        {"name": "DRAM_2", "dims": [64, 32], "bundle": "mem1"},
+        {"name": "DRAM_3", "dims": [16, 32], "bundle": "mem1"},
+        {"name": "DRAM_4", "dims": [16, 32], "bundle": "mem2"}
+    ],
+    "ops": {
+        "load_1": {"func_name": "load", "dims": [16, 64], "args": ["DRAM_1", "BRAM_1"]},
+        "load_2": {"func_name": "load", "dims": [64, 32], "args": ["DRAM_2", "BRAM_2"]},
+        "load_3": {"func_name": "load", "dims": [16, 32], "args": ["DRAM_3", "BRAM_3"]},
+        "gemm_1": {
+            "func_name": "gemm",
+            "dims": [16, 64, 32],
+            "func_info": [["i", "j", "k"], [8, 16, 16], false, false],
+            "args": ["BRAM_1", "BRAM_2", "BRAM_3", "BRAM_4"]
+        },
+        "store_1": {"func_name": "store", "dims": [16, 32], "args": ["BRAM_4", "DRAM_4"]}
+    },
+    "output_dram_names": ["DRAM_4"]
+}

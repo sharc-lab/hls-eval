@@ -1,0 +1,68 @@
+{
+    "brams": [
+        {"name": "BRAM_image_input", "dims": [16, 28, 28]},
+        {"name": "BRAM_conv_weight", "dims": [16, 16, 1, 1]},
+        {"name": "BRAM_conv_bias", "dims": [16]},
+        {"name": "BRAM_batch_norm_weights", "dims": [4, 16]},
+        {"name": "BRAM_buffer_1", "dims": [16, 30, 30]},
+        {"name": "BRAM_buffer_2", "dims": [16, 30, 30]}
+    ],
+    "drams": [
+        {"name": "DRAM_image_input", "dims": [16, 28, 28], "bundle": "mem1"},
+        {"name": "DRAM_conv_weight", "dims": [16, 16, 1, 1], "bundle": "mem1"},
+        {"name": "DRAM_conv_bias", "dims": [16], "bundle": "mem1"},
+        {"name": "DRAM_batch_norm_weights", "dims": [4, 16], "bundle": "mem1"},
+        {"name": "DRAM_image_output", "dims": [16, 30, 30], "bundle": "mem2"}
+    ],
+    "ops": {
+        "load_1": {
+        "func_name": "load",
+        "dims": [16, 28, 28],
+        "args": ["DRAM_image_input", "BRAM_image_input"]
+    },
+        "load_2": {
+        "func_name": "load",
+        "dims": [16, 16, 1, 1],
+        "args": ["DRAM_conv_weight", "BRAM_conv_weight"]
+    },
+        "load_3": {
+        "func_name": "load",
+        "dims": [16],
+        "args": ["DRAM_conv_bias", "BRAM_conv_bias"]
+    },
+        "load_4": {
+        "func_name": "load",
+        "dims": [4, 16],
+        "args": ["DRAM_batch_norm_weights", "BRAM_batch_norm_weights"]
+    },
+        "conv_1": {
+        "func_name": "conv",
+        "dims": [16, 16, 28, 28, 30, 30, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        "func_info": ["conv_template.cpp", "conv2d", true],
+        "args": ["BRAM_image_input", "BRAM_conv_weight", "BRAM_conv_bias", "BRAM_buffer_1"]
+    },
+        "batchnorm_1": {
+        "func_name": "batchnorm",
+        "dims": [16, 30, 30],
+        "func_info": ["batch_norm_template.cpp", 1e-05],
+        "args": ["BRAM_buffer_1", "BRAM_batch_norm_weights", "BRAM_buffer_2"]
+    },
+        "activation_1": {
+        "func_name": "activation",
+        "dims": [16, 30, 30],
+        "func_info": ["activations_template.cpp", "relu"],
+        "args": ["BRAM_buffer_2", "BRAM_buffer_1"]
+    },
+        "store": {
+        "func_name": "store",
+        "dims": [16, 30, 30],
+        "args": ["BRAM_buffer_1", "DRAM_image_output"]
+    }
+    },
+    "output_dram_names": ["DRAM_image_output"],
+    "FPGA_name": "xczu9eg-ffvb1156-2-e",
+    "clock_period": 10,
+    "task": ["csim", "csynth", "cosim", "export_ip"],
+    "data_type": "ap_fixed<16,5>",
+    "top_func_name": "top"
+}

@@ -1,0 +1,994 @@
+{
+  "attention_op_p1": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 13.79,
+    "compile_returncode": 0,
+    "run_seconds": 0.26,
+    "run_returncode": -8,
+    "outputs": {},
+    "status": "arithmetic_error",
+    "signal": "SIGFPE",
+    "diagnostic": "Process terminated by SIGFPE\n\n[Thread debugging using libthread_db enabled]\nUsing host libthread_db library \"/lib64/libthread_db.so.1\".\n\nProgram received signal SIGFPE, Arithmetic exception.\n0x0000000000406f92 in ap_fixed_base<16, 5, true, (ap_q_mode)5, (ap_o_mode)3, 0>::RType<16, 5, true>::div ap_fixed_base<16, 5, true, (ap_q_mode)5, (ap_o_mode)3, 0>::operator/<16, 5, true, (ap_q_mode)5, (ap_o_mode)3, 0>(ap_fixed_base<16, 5, true, (ap_q_mode)5, (ap_o_mode)3, 0> const&) const ()\n#0  0x0000000000406f92 in ap_fixed_base<16, 5, true, (ap_q_mode)5, (ap_o_mode)3, 0>::RType<16, 5, true>::div ap_fixed_base<16, 5, true, (ap_q_mode)5, (ap_o_mode)3, 0>::operator/<16, 5, true, (ap_q_mode)5, (ap_o_mode)3, 0>(ap_fixed_base<16, 5, true, (ap_q_mode)5, (ap_o_mode)3, 0> const&) const ()\n#1  0x0000000000406176 in grouped_multihead_attention_8_256_16_16_ap_fixed_16_5_(ap_fixed<16, 5, (ap_q_mode)5, (ap_o_mode)3, 0> (*) [256], ap_fixed<16, 5, (ap_q_mode)5, (ap_o_mode)3, 0> (*) [256], ap_fixed<16, 5, (ap_q_mode)5, (ap_o_mode)3, 0> (*) [256], ap_fixed<16, 5, (ap_q_mode)5, (ap_o_mode)3, 0> (*) [256], ap_fixed<16, 5, (ap_q_mode)5, (ap_o_mode)3, 0> (*) [256], int) ()\n#2  0x0000000000406d64 in top(ap_fixed<16, 5, (ap_q_mode)5, (ap_o_mode)3, 0> (*) [256], ap_fixed<16, 5, (ap_q_mode)5, (ap_o_mode)3, 0> (*) [256], ap_fixed<16, 5, (ap_q_mode)5, (ap_o_mode)3, 0> (*) [256], ap_fixed<16, 5, (ap_q_mode)5, (ap_o_mode)3, 0> (*) [256], ap_fixed<16, 5, (ap_q_mode)5, (ap_o_mode)3, 0> (*) [256]) ()\n#3  0x000000000040dc75 in main ()\n"
+  },
+  "attention_op_p2": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 13.79,
+    "compile_returncode": 0,
+    "run_seconds": 0.11,
+    "run_returncode": 1,
+    "outputs": {
+      "DRAM_output": {
+        "status": "fail",
+        "mismatches": 503,
+        "count": 512,
+        "max_abs_error": 0.00302603636111
+      }
+    },
+    "status": "mismatch"
+  },
+  "attention_op_p3": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 13.78,
+    "compile_returncode": 0,
+    "run_seconds": 0.11,
+    "run_returncode": 1,
+    "outputs": {
+      "DRAM_output": {
+        "status": "fail",
+        "mismatches": 507,
+        "count": 512,
+        "max_abs_error": 0.00305154704988
+      }
+    },
+    "status": "mismatch"
+  },
+  "config_CIN16_HIN28_WIN28_COUT16_K1_IPF1_KPF11_KPF21_BPF1_OPF1_UFCIN1_UFCOU1_ap_fixed_16_5_": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 6.02,
+    "compile_returncode": 0,
+    "run_seconds": 0.11,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 14400,
+        "max_abs_error": 7.42181933633e-07
+      }
+    },
+    "status": "pass"
+  },
+  "conv_A": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 3.82,
+    "compile_returncode": 0,
+    "run_seconds": 0.11,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 12544,
+        "max_abs_error": 0.0
+      }
+    },
+    "status": "pass"
+  },
+  "conv_B": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 3.82,
+    "compile_returncode": 0,
+    "run_seconds": 0.12,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 6272,
+        "max_abs_error": 0.0
+      }
+    },
+    "status": "pass"
+  },
+  "conv_C": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 3.82,
+    "compile_returncode": 0,
+    "run_seconds": 0.16,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 25088,
+        "max_abs_error": 0.0
+      }
+    },
+    "status": "pass"
+  },
+  "conv_D": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 3.87,
+    "compile_returncode": 0,
+    "run_seconds": 0.16,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 25088,
+        "max_abs_error": 0.0
+      }
+    },
+    "status": "pass"
+  },
+  "conv_E": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 3.82,
+    "compile_returncode": 0,
+    "run_seconds": 0.11,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 3136,
+        "max_abs_error": 0.0
+      }
+    },
+    "status": "pass"
+  },
+  "conv_F": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 3.82,
+    "compile_returncode": 0,
+    "run_seconds": 0.17,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 12544,
+        "max_abs_error": 0.0
+      }
+    },
+    "status": "pass"
+  },
+  "conv_G": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 3.82,
+    "compile_returncode": 0,
+    "run_seconds": 0.11,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 9216,
+        "max_abs_error": 0.0
+      }
+    },
+    "status": "pass"
+  },
+  "conv_H": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 3.82,
+    "compile_returncode": 0,
+    "run_seconds": 0.11,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 3136,
+        "max_abs_error": 0.0
+      }
+    },
+    "status": "pass"
+  },
+  "conv_I": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 3.82,
+    "compile_returncode": 0,
+    "run_seconds": 0.16,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 10816,
+        "max_abs_error": 0.0
+      }
+    },
+    "status": "pass"
+  },
+  "conv_template": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 6.02,
+    "compile_returncode": 0,
+    "run_seconds": 0.17,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 12544,
+        "max_abs_error": 1.0644451417e-06
+      }
+    },
+    "status": "pass"
+  },
+  "diff_dims_p1": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 3.82,
+    "compile_returncode": 0,
+    "run_seconds": 0.16,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_4": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 12288,
+        "max_abs_error": 0.0
+      }
+    },
+    "status": "pass"
+  },
+  "diff_dims_p2": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 3.82,
+    "compile_returncode": 0,
+    "run_seconds": 0.11,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_4": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 8192,
+        "max_abs_error": 0.0
+      }
+    },
+    "status": "pass"
+  },
+  "diff_dims_p3": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 3.82,
+    "compile_returncode": 0,
+    "run_seconds": 0.16,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_4": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 49152,
+        "max_abs_error": 0.0
+      }
+    },
+    "status": "pass"
+  },
+  "diff_orders_p1": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 3.82,
+    "compile_returncode": 0,
+    "run_seconds": 0.11,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_4": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 4096,
+        "max_abs_error": 0.0
+      }
+    },
+    "status": "pass"
+  },
+  "diff_orders_p2": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 3.82,
+    "compile_returncode": 0,
+    "run_seconds": 0.11,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_4": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 1024,
+        "max_abs_error": 0.0
+      }
+    },
+    "status": "pass"
+  },
+  "diff_orders_p3": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 3.82,
+    "compile_returncode": 0,
+    "run_seconds": 0.11,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_4": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 8192,
+        "max_abs_error": 0.0
+      }
+    },
+    "status": "pass"
+  },
+  "gpt_transformer_p1": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 16.3,
+    "compile_returncode": 0,
+    "run_seconds": 0.11,
+    "run_returncode": 1,
+    "outputs": {
+      "DRAM_output": {
+        "status": "fail",
+        "mismatches": 256,
+        "count": 256,
+        "max_abs_error": 1.32361931731
+      }
+    },
+    "status": "mismatch"
+  },
+  "llama_transformer_p2": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 15.59,
+    "compile_returncode": 0,
+    "run_seconds": 0.21,
+    "run_returncode": -8,
+    "outputs": {},
+    "status": "arithmetic_error",
+    "signal": "SIGFPE",
+    "diagnostic": "Process terminated by SIGFPE\n\n[Thread debugging using libthread_db enabled]\nUsing host libthread_db library \"/lib64/libthread_db.so.1\".\n\nProgram received signal SIGFPE, Arithmetic exception.\n0x0000000000407598 in ap_fixed_base<16, 5, true, (ap_q_mode)5, (ap_o_mode)3, 0>::RType<16, 5, true>::div ap_fixed_base<16, 5, true, (ap_q_mode)5, (ap_o_mode)3, 0>::operator/<16, 5, true, (ap_q_mode)5, (ap_o_mode)3, 0>(ap_fixed_base<16, 5, true, (ap_q_mode)5, (ap_o_mode)3, 0> const&) const ()\n#0  0x0000000000407598 in ap_fixed_base<16, 5, true, (ap_q_mode)5, (ap_o_mode)3, 0>::RType<16, 5, true>::div ap_fixed_base<16, 5, true, (ap_q_mode)5, (ap_o_mode)3, 0>::operator/<16, 5, true, (ap_q_mode)5, (ap_o_mode)3, 0>(ap_fixed_base<16, 5, true, (ap_q_mode)5, (ap_o_mode)3, 0> const&) const ()\n#1  0x00000000004061ca in rms_norm_8_32_ap_fixed_16_5_(ap_fixed<16, 5, (ap_q_mode)5, (ap_o_mode)3, 0> (*) [32], ap_fixed<16, 5, (ap_q_mode)5, (ap_o_mode)3, 0>*, ap_fixed<16, 5, (ap_q_mode)5, (ap_o_mode)3, 0> (*) [32]) ()\n#2  0x00000000004071e8 in top(ap_fixed<16, 5, (ap_q_mode)5, (ap_o_mode)3, 0> (*) [32], ap_fixed<16, 5, (ap_q_mode)5, (ap_o_mode)3, 0> (*) [32], ap_fixed<16, 5, (ap_q_mode)5, (ap_o_mode)3, 0> (*) [32], ap_fixed<16, 5, (ap_q_mode)5, (ap_o_mode)3, 0> (*) [32], ap_fixed<16, 5, (ap_q_mode)5, (ap_o_mode)3, 0> (*) [32], ap_fixed<16, 5, (ap_q_mode)5, (ap_o_mode)3, 0> (*) [32], ap_fixed<16, 5, (ap_q_mode)5, (ap_o_mode)3, 0> (*) [128], ap_fixed<16, 5, (ap_q_mode)5, (ap_o_mode)3, 0> (*) [32], ap_fixed<16, 5, (ap_q_mode)5, (ap_o_mode)3, 0> (*) [32]) ()\n#3  0x0000000000413130 in main ()\n"
+  },
+  "mlp": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 12.63,
+    "compile_returncode": 0,
+    "run_seconds": 0.11,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_6": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 4096,
+        "max_abs_error": 0.000667679504521
+      }
+    },
+    "status": "pass"
+  },
+  "mult_op_p1": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 3.82,
+    "compile_returncode": 0,
+    "run_seconds": 0.11,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_4": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 512,
+        "max_abs_error": 0.0
+      }
+    },
+    "status": "pass"
+  },
+  "mult_op_p2": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 3.82,
+    "compile_returncode": 0,
+    "run_seconds": 0.11,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_4": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 16,
+        "max_abs_error": 0.0
+      }
+    },
+    "status": "pass"
+  },
+  "mult_op_p3": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 3.82,
+    "compile_returncode": 0,
+    "run_seconds": 0.12,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_4": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 1,
+        "max_abs_error": 0.0
+      }
+    },
+    "status": "pass"
+  },
+  "resnet18_block1": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 6.02,
+    "compile_returncode": 0,
+    "run_seconds": 0.92,
+    "run_returncode": 1,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "fail",
+        "mismatches": 33545,
+        "count": 200704,
+        "max_abs_error": 0.00277715972839
+      }
+    },
+    "status": "mismatch"
+  },
+  "resnet18_block2": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 5.97,
+    "compile_returncode": 0,
+    "run_seconds": 0.66,
+    "run_returncode": 1,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "fail",
+        "mismatches": 15340,
+        "count": 100352,
+        "max_abs_error": 0.00274664733824
+      }
+    },
+    "status": "mismatch"
+  },
+  "resnet18_block2_downsample": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 6.02,
+    "compile_returncode": 0,
+    "run_seconds": 0.46,
+    "run_returncode": 1,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "fail",
+        "mismatches": 4168,
+        "count": 100352,
+        "max_abs_error": 0.00262452941877
+      }
+    },
+    "status": "mismatch"
+  },
+  "resnet18_block3": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 6.03,
+    "compile_returncode": 0,
+    "run_seconds": 0.62,
+    "run_returncode": 1,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "fail",
+        "mismatches": 8357,
+        "count": 50176,
+        "max_abs_error": 0.00283810150191
+      }
+    },
+    "status": "mismatch"
+  },
+  "resnet18_block3_downsample": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 6.02,
+    "compile_returncode": 0,
+    "run_seconds": 0.56,
+    "run_returncode": 1,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "fail",
+        "mismatches": 7207,
+        "count": 50176,
+        "max_abs_error": 0.00250242614761
+      }
+    },
+    "status": "mismatch"
+  },
+  "resnet18_block4": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 5.97,
+    "compile_returncode": 0,
+    "run_seconds": 0.82,
+    "run_returncode": 1,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "fail",
+        "mismatches": 2859,
+        "count": 25088,
+        "max_abs_error": 0.00262452941889
+      }
+    },
+    "status": "mismatch"
+  },
+  "resnet18_block4_downsample": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 6.02,
+    "compile_returncode": 0,
+    "run_seconds": 0.67,
+    "run_returncode": 1,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "fail",
+        "mismatches": 3158,
+        "count": 25088,
+        "max_abs_error": 0.00268552490244
+      }
+    },
+    "status": "mismatch"
+  },
+  "resnet50_block1": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 6.08,
+    "compile_returncode": 0,
+    "run_seconds": 1.82,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 802816,
+        "max_abs_error": 0.000818229303547
+      }
+    },
+    "status": "pass"
+  },
+  "resnet50_block2": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 6.07,
+    "compile_returncode": 0,
+    "run_seconds": 1.12,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 401408,
+        "max_abs_error": 0.000871609850322
+      }
+    },
+    "status": "pass"
+  },
+  "resnet50_block2_downsample": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 6.12,
+    "compile_returncode": 0,
+    "run_seconds": 1.62,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 401408,
+        "max_abs_error": 0.000872578006064
+      }
+    },
+    "status": "pass"
+  },
+  "resnet50_block3": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 6.08,
+    "compile_returncode": 0,
+    "run_seconds": 0.82,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 200704,
+        "max_abs_error": 0.00085825494808
+      }
+    },
+    "status": "pass"
+  },
+  "resnet50_block3_downsample": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 6.13,
+    "compile_returncode": 0,
+    "run_seconds": 1.22,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 200704,
+        "max_abs_error": 0.000797248478124
+      }
+    },
+    "status": "pass"
+  },
+  "resnet50_block4": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 6.08,
+    "compile_returncode": 0,
+    "run_seconds": 0.87,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 100352,
+        "max_abs_error": 0.000835394878583
+      }
+    },
+    "status": "pass"
+  },
+  "resnet50_block4_downsample": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 6.12,
+    "compile_returncode": 0,
+    "run_seconds": 1.47,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 100352,
+        "max_abs_error": 0.000816316795566
+      }
+    },
+    "status": "pass"
+  },
+  "testing_impl": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 3.82,
+    "compile_returncode": 0,
+    "run_seconds": 0.11,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_4": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 512,
+        "max_abs_error": 0.0
+      },
+      "DRAM_12": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 1,
+        "max_abs_error": 0.0
+      }
+    },
+    "status": "pass"
+  },
+  "testing_unroll": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 3.82,
+    "compile_returncode": 0,
+    "run_seconds": 0.11,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_4": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 512,
+        "max_abs_error": 0.0
+      },
+      "DRAM_12": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 1,
+        "max_abs_error": 0.0
+      }
+    },
+    "status": "pass"
+  },
+  "tiled_attn_p1": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 13.59,
+    "compile_returncode": 0,
+    "run_seconds": 0.21,
+    "run_returncode": -8,
+    "outputs": {},
+    "status": "arithmetic_error",
+    "signal": "SIGFPE",
+    "diagnostic": "Process terminated by SIGFPE\n"
+  },
+  "tiled_attn_p2": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 13.54,
+    "compile_returncode": 0,
+    "run_seconds": 0.21,
+    "run_returncode": -8,
+    "outputs": {},
+    "status": "arithmetic_error",
+    "signal": "SIGFPE",
+    "diagnostic": "Process terminated by SIGFPE\n"
+  },
+  "vec_mtx_p1": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 3.82,
+    "compile_returncode": 0,
+    "run_seconds": 0.11,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_4": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 16,
+        "max_abs_error": 0.0
+      }
+    },
+    "status": "pass"
+  },
+  "vec_mtx_p2": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 3.77,
+    "compile_returncode": 0,
+    "run_seconds": 0.11,
+    "run_returncode": 0,
+    "outputs": {
+      "DRAM_4": {
+        "status": "pass",
+        "mismatches": 0,
+        "count": 16,
+        "max_abs_error": 0.0
+      }
+    },
+    "status": "pass"
+  },
+  "vgg19_block1": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 3.97,
+    "compile_returncode": 0,
+    "run_seconds": 4.67,
+    "run_returncode": 1,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "fail",
+        "mismatches": 174641,
+        "count": 401408,
+        "max_abs_error": 0.0037841796875
+      }
+    },
+    "status": "mismatch"
+  },
+  "vgg19_block2": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 3.97,
+    "compile_returncode": 0,
+    "run_seconds": 10.03,
+    "run_returncode": 1,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "fail",
+        "mismatches": 45534,
+        "count": 200704,
+        "max_abs_error": 0.00689744949341
+      }
+    },
+    "status": "mismatch"
+  },
+  "vgg19_block3": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 3.92,
+    "compile_returncode": 0,
+    "run_seconds": 12.98,
+    "run_returncode": 1,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "fail",
+        "mismatches": 22031,
+        "count": 100352,
+        "max_abs_error": 0.00603580474854
+      }
+    },
+    "status": "mismatch"
+  },
+  "vgg19_block4": {
+    "functional_coverage_complete": true,
+    "golden_arithmetic": "float64",
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "atol": 0.001,
+    "rtol": 0,
+    "compile_seconds": 3.92,
+    "compile_returncode": 0,
+    "run_seconds": 4.07,
+    "run_returncode": 1,
+    "outputs": {
+      "DRAM_image_output": {
+        "status": "fail",
+        "mismatches": 5112,
+        "count": 25088,
+        "max_abs_error": 0.00842094421387
+      }
+    },
+    "status": "mismatch"
+  }
+}

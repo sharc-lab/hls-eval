@@ -1,0 +1,28 @@
+{
+    "brams": [
+        {"name": "BRAM_attn_input", "dims": [8, 64]},
+        {"name": "BRAM_weights_q", "dims": [64, 64]},
+        {"name": "BRAM_weights_k", "dims": [64, 64]},
+        {"name": "BRAM_weights_v", "dims": [64, 64]},
+        {"name": "BRAM_1", "dims": [8, 64]}
+    ],
+    "drams": [
+        {"name": "DRAM_attn_input", "dims": [8, 64], "bundle": "mem1"},
+        {"name": "DRAM_weights_q", "dims": [64, 64], "bundle": "mem1"},
+        {"name": "DRAM_weights_k", "dims": [64, 64], "bundle": "mem1"},
+        {"name": "DRAM_weights_v", "dims": [64, 64], "bundle": "mem1"},
+        {"name": "DRAM_output", "dims": [8, 64], "bundle": "mem2"}
+    ],
+    "ops": {
+        "load_1": {"func_name": "load", "dims": [8, 64], "args": ["DRAM_attn_input", "BRAM_attn_input"]},
+        "load_2": {"func_name": "load", "dims": [64, 64], "args": ["DRAM_weights_q", "BRAM_weights_q"]},
+        "load_3": {"func_name": "load", "dims": [64, 64], "args": ["DRAM_weights_k", "BRAM_weights_k"]},
+        "load_4": {"func_name": "load", "dims": [64, 64], "args": ["DRAM_weights_v", "BRAM_weights_v"]},
+        
+        "mha": {"func_name": "mha", "dims": [8, 64, 16, 4], "func_info": ["grouped_mha_rope_template.cpp", false], "args": ["BRAM_attn_input", "BRAM_weights_q", "BRAM_weights_k", "BRAM_weights_v", "BRAM_1", "8"]},
+
+        "store": {"func_name": "store", "dims": [8, 64], "args": ["BRAM_1", "DRAM_output"]}
+
+    },
+    "output_dram_names": ["DRAM_output"]
+}

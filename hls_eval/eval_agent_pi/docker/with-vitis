@@ -1,0 +1,18 @@
+#!/bin/bash
+set -e
+
+# Docker exec does not inherit environment changes made by an entrypoint.
+# Wrap the actual agent command so all its child processes inherit this PATH.
+# Set the component roots explicitly instead of sourcing settings64.sh, whose
+# absolute paths may refer to the host's original installation location.
+for component in "${XILINX_VIVADO:-}" "${XILINX_VITIS:-}" "${XILINX_HLS:-}"; do
+    if [ -n "$component" ]; then
+        if [ ! -d "$component/bin" ]; then
+            printf 'Mounted vendor tool directory is missing: %s/bin\n' "$component" >&2
+            exit 1
+        fi
+        export PATH="$component/bin:$PATH"
+    fi
+done
+
+exec "$@"

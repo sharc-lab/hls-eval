@@ -1,0 +1,572 @@
+{
+  "attention_op_p1": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_output": {
+        "count": 2048,
+        "nonzero": 2048,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "attention_op_p2": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_output": {
+        "count": 512,
+        "nonzero": 512,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "attention_op_p3": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_output": {
+        "count": 512,
+        "nonzero": 512,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "config_CIN16_HIN28_WIN28_COUT16_K1_IPF1_KPF11_KPF21_BPF1_OPF1_UFCIN1_UFCOU1_ap_fixed_16_5_": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 14400,
+        "nonzero": 8315,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "conv_A": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 12544,
+        "nonzero": 12496,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "conv_B": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 6272,
+        "nonzero": 6247,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "conv_C": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 25088,
+        "nonzero": 24992,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "conv_D": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 25088,
+        "nonzero": 24983,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "conv_E": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 3136,
+        "nonzero": 3122,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "conv_F": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 12544,
+        "nonzero": 12498,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "conv_G": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 9216,
+        "nonzero": 9192,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "conv_H": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 3136,
+        "nonzero": 3124,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "conv_I": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 10816,
+        "nonzero": 10785,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "conv_template": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 12544,
+        "nonzero": 6441,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "diff_dims_p1": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_4": {
+        "count": 12288,
+        "nonzero": 12275,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "diff_dims_p2": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_4": {
+        "count": 8192,
+        "nonzero": 8182,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "diff_dims_p3": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_4": {
+        "count": 49152,
+        "nonzero": 49088,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "diff_orders_p1": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_4": {
+        "count": 4096,
+        "nonzero": 4088,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "diff_orders_p2": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_4": {
+        "count": 1024,
+        "nonzero": 1022,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "diff_orders_p3": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_4": {
+        "count": 8192,
+        "nonzero": 8184,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "gpt_transformer_p1": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_output": {
+        "count": 256,
+        "nonzero": 256,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "llama_transformer_p2": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_output": {
+        "count": 256,
+        "nonzero": 256,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "mlp": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_6": {
+        "count": 4096,
+        "nonzero": 4096,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "mult_op_p1": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_4": {
+        "count": 512,
+        "nonzero": 512,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "mult_op_p2": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_4": {
+        "count": 16,
+        "nonzero": 16,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "mult_op_p3": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_4": {
+        "count": 1,
+        "nonzero": 1,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "resnet18_block1": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 200704,
+        "nonzero": 98667,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "resnet18_block2": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 100352,
+        "nonzero": 50679,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "resnet18_block2_downsample": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 100352,
+        "nonzero": 45455,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "resnet18_block3": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 50176,
+        "nonzero": 24728,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "resnet18_block3_downsample": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 50176,
+        "nonzero": 24342,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "resnet18_block4": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 25088,
+        "nonzero": 12589,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "resnet18_block4_downsample": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 25088,
+        "nonzero": 13272,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "resnet50_block1": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 802816,
+        "nonzero": 393274,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "resnet50_block2": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 401408,
+        "nonzero": 198818,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "resnet50_block2_downsample": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 401408,
+        "nonzero": 203566,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "resnet50_block3": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 200704,
+        "nonzero": 97299,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "resnet50_block3_downsample": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 200704,
+        "nonzero": 99464,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": [
+      "Match final residual-add, activation, and store channels to the declared full output shape [1024, 14, 14]; upstream only processed half the channels."
+    ]
+  },
+  "resnet50_block4": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 100352,
+        "nonzero": 48599,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "resnet50_block4_downsample": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 100352,
+        "nonzero": 48604,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": [
+      "Match final residual-add, activation, and store channels to the declared full output shape [2048, 7, 7]; upstream only processed half the channels."
+    ]
+  },
+  "testing_impl": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_4": {
+        "count": 512,
+        "nonzero": 512,
+        "max_model_error": 0.0
+      },
+      "DRAM_12": {
+        "count": 1,
+        "nonzero": 1,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": [
+      "Wire DRAM_12 to dot(DRAM_5[:16], DRAM_10[:16]) + DRAM_11[0] using existing ports; add missing loads, compute/store where absent."
+    ]
+  },
+  "testing_unroll": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_4": {
+        "count": 512,
+        "nonzero": 510,
+        "max_model_error": 0.0
+      },
+      "DRAM_12": {
+        "count": 1,
+        "nonzero": 1,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": [
+      "Wire DRAM_12 to dot(DRAM_5[:16], DRAM_10[:16]) + DRAM_11[0] using existing ports; add missing loads, compute/store where absent."
+    ]
+  },
+  "tiled_attn_p1": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_output": {
+        "count": 2048,
+        "nonzero": 2048,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "tiled_attn_p2": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_output": {
+        "count": 512,
+        "nonzero": 512,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "vec_mtx_p1": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_4": {
+        "count": 16,
+        "nonzero": 16,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "vec_mtx_p2": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_4": {
+        "count": 16,
+        "nonzero": 16,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": [
+      "Load all 64 vector elements required by the 64x16 vector-matrix product; upstream loaded only 16."
+    ]
+  },
+  "vgg19_block1": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 401408,
+        "nonzero": 343886,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "vgg19_block2": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 200704,
+        "nonzero": 165238,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "vgg19_block3": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 100352,
+        "nonzero": 81513,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  },
+  "vgg19_block4": {
+    "status": "pass",
+    "outputs": {
+      "DRAM_image_output": {
+        "count": 25088,
+        "nonzero": 20515,
+        "max_model_error": 0.0
+      }
+    },
+    "config_adjustments": []
+  }
+}

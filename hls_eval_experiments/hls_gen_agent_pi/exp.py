@@ -62,6 +62,7 @@ if __name__ == "__main__":
         vitis_hls_tool_synth=VitisHLSSynthTool(vitis_hls_dir),
         output_data_dir=DIR_CURRENT_OUTPUT_DATA,
         n_samples=10,
+        vitis_dir=vitis_hls_dir,
     )
 
     benchmark_cases_filtered = all_benchmark_cases

@@ -263,6 +263,7 @@ class VitisHLSCSimTool:
         hls_flow_target: str = "vivado",
         warn_all: bool = False,
         timeout: float = 60.0 * 2,
+        hls_compiler_defines: list[str] | None = None,
     ) -> tuple[ToolDataOutput, ToolDataOutput | None]:
         if build_name is None:
             build_name = f"{build_name_prefix}{uuid.uuid4().hex}"
@@ -281,12 +282,12 @@ class VitisHLSCSimTool:
 
         tcl_script = ""
         tcl_script += f"open_project {build_name}__proj\n"
+        compiler_cflags = _compiler_defines_to_cflags(hls_compiler_defines or [])
+        if warn_all:
+            compiler_cflags = f"{compiler_cflags} -Wall -Wextra -Wno-unused-function".strip()
         for fp in source_files:
-            # tcl_script += f"add_files -tb {fp}\n"
-            if warn_all:
-                tcl_script += (
-                    f'add_files -tb -cflags "-Wall -Wextra -Wno-unused-function" {fp}\n'
-                )
+            if compiler_cflags:
+                tcl_script += f"add_files -tb -cflags {{{compiler_cflags}}} {fp}\n"
             else:
                 tcl_script += f"add_files -tb {fp}\n"
         for fp in aux_files:

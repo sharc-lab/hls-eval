@@ -1,0 +1,47 @@
+{
+  "testing_impl": {
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "baseline": {
+      "returncode": 0,
+      "diagnostic": ""
+    },
+    "corrupted_golden": {
+      "returncode": 1,
+      "diagnostic": "DRAM_4[0]: actual=-0.0234375 expected=0.9765625 abs_error=1\n"
+    },
+    "missing_golden": {
+      "returncode": 2,
+      "diagnostic": "ERROR: Cannot open DRAM_4.golden.txt\n"
+    }
+  },
+  "conv_template": {
+    "kernel_arithmetic": "ap_fixed<16,5>",
+    "baseline": {
+      "returncode": 0,
+      "diagnostic": ""
+    },
+    "corrupted_golden": {
+      "returncode": 1,
+      "diagnostic": "DRAM_image_output[0]: actual=0 expected=1 abs_error=1\n"
+    },
+    "missing_golden": {
+      "returncode": 2,
+      "diagnostic": "ERROR: Cannot open DRAM_image_output.golden.txt\n"
+    }
+  },
+  "attention_op_p2": {
+    "kernel_arithmetic": "float32 control",
+    "baseline": {
+      "returncode": 0,
+      "diagnostic": ""
+    },
+    "corrupted_golden": {
+      "returncode": 1,
+      "diagnostic": "DRAM_output[0]: actual=0.011060660705 expected=1.01106065679 abs_error=0.999999996083\n"
+    },
+    "missing_golden": {
+      "returncode": 2,
+      "diagnostic": "ERROR: Cannot open DRAM_output.golden.txt\n"
+    }
+  }
+}

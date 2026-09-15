@@ -13,6 +13,7 @@ from llm_openrouter import OpenRouterChat
 
 from hls_eval.data import BenchmarkCase
 from hls_eval.eval import EvalThreadPools, Evaluator, serialize_eval_data
+from hls_eval.eval_agent_pi.vitis import VitisInstallation
 from hls_eval.llms import Model, normalize_model_name
 from hls_eval.prompts import build_prompt_gen_agentic
 from hls_eval.tools import VitisHLSCSimTool, VitisHLSSynthTool
@@ -72,7 +73,17 @@ def run_pi_agent(
     model_name: str,
     api_key: str,
     docker_image_name: str = DOCKER_IMAGE_NAME,
+    vitis_dir: str | Path | None = None,
+    vivado_dir: str | Path | None = None,
+    vitis_license_server: str | None = None,
 ) -> PiAgentRunResult:
+    if vitis_dir is None and (vivado_dir is not None or vitis_license_server is not None):
+        raise ValueError("vitis_dir is required when configuring Vivado or licensing")
+    vitis = (
+        VitisInstallation.from_path(vitis_dir, vivado_dir, vitis_license_server)
+        if vitis_dir is not None
+        else None
+    )
     setup_pi_config(agent_run_dir, model_name)
 
     # check that the docker image exists
@@ -89,16 +100,19 @@ def run_pi_agent(
             command="sleep 2h",
             detach=True,
             volumes={
+                **(vitis.volumes if vitis else {}),
                 str(agent_run_dir.resolve()): {
                     "bind": CONTAINER_WORKDIR,
                     "mode": "rw",
                 }
             },
+            environment=vitis.environment if vitis else {},
         )
 
         quoted_prompt = shlex.quote(prompt)
+        agent_command = "with-vitis pi" if vitis else "pi"
         exit_code, output_bytes = container.exec_run(
-            ["sh", "-lc", f"umask 000 && pi -p {quoted_prompt}"],
+            ["sh", "-lc", f"umask 000 && {agent_command} -p {quoted_prompt}"],
             environment={"OPENROUTER_API_KEY": api_key},
             workdir=CONTAINER_WORKDIR,
         )
@@ -162,10 +176,16 @@ class HLSGenerationAgentEvaluatorPi(Evaluator):
         n_samples: int = 1,
         temperature: float = 0.7,
         docker_image_name: str = DOCKER_IMAGE_NAME,
+        vitis_dir: str | Path | None = None,
+        vivado_dir: str | Path | None = None,
+        vitis_license_server: str | None = None,
     ) -> None:
         self.n_samples = n_samples
         self.temperature = temperature
         self.docker_image_name = docker_image_name
+        self.vitis_dir = vitis_dir
+        self.vivado_dir = vivado_dir
+        self.vitis_license_server = vitis_license_server
 
         super().__init__(vitis_hls_tool_csim, vitis_hls_tool_synth, output_data_dir)
 
@@ -260,6 +280,9 @@ class HLSGenerationAgentEvaluatorPi(Evaluator):
                     model_name=copy_model_name,
                     api_key=copy_api_key,
                     docker_image_name=self.docker_image_name,
+                    vitis_dir=self.vitis_dir,
+                    vivado_dir=self.vivado_dir,
+                    vitis_license_server=self.vitis_license_server,
                 )
                 t1 = time.monotonic()
                 dt = t1 - t0

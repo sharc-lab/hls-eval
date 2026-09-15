@@ -1,0 +1,69 @@
+{
+    "brams": [
+        {"name": "BRAM_image_input", "dims": [C_IN, H_IN, W_IN]},
+        {"name": "BRAM_conv_weight", "dims": [C_OUT, C_IN, K, K]},
+        {"name": "BRAM_conv_bias", "dims": [C_OUT]},
+        {"name": "BRAM_batch_norm_weights", "dims": [4, C_OUT]},
+        {"name": "BRAM_buffer_1", "dims": [C_OUT, H_OUT, W_OUT]},
+        {"name": "BRAM_buffer_2", "dims": [C_OUT, H_OUT, W_OUT]}
+    ],
+    "drams": [
+        {"name": "DRAM_image_input", "dims": [C_IN, H_IN, W_IN], "bundle": "mem1"},
+        {"name": "DRAM_conv_weight", "dims": [C_OUT, C_IN, K, K], "bundle": "mem1"},
+        {"name": "DRAM_conv_bias", "dims": [C_OUT], "bundle": "mem1"},
+        {"name": "DRAM_batch_norm_weights", "dims": [4, C_OUT], "bundle": "mem1"},
+        {"name": "DRAM_image_output", "dims": [C_OUT, H_OUT, W_OUT], "bundle": "mem2"}
+
+    ],
+    "ops": {
+        "load_1": {
+            "func_name": "load",
+            "dims": [C_IN, H_IN, W_IN],
+            "args": ["DRAM_image_input", "BRAM_image_input"]
+        },
+        "load_2": {
+            "func_name": "load",
+            "dims": [C_OUT, C_IN, K, K],
+            "args": ["DRAM_conv_weight", "BRAM_conv_weight"]
+        },
+        "load_3": {
+            "func_name": "load",
+            "dims": [C_OUT],
+            "args": ["DRAM_conv_bias", "BRAM_conv_bias"]
+        },
+        "load_4": {
+            "func_name": "load",
+            "dims": [4, C_OUT],
+            "args": ["DRAM_batch_norm_weights", "BRAM_batch_norm_weights"]
+        },
+        "conv_1": {
+            "func_name": "conv",
+            "dims": [C_IN, C_OUT, H_IN, W_IN, H_OUT, W_OUT, K, PAD, STRIDE, input_partition_factor, kernel_partition_factor1, kernel_partition_factor2, bias_partition_factor, output_partition_factor, unroll_factor_cin, unroll_factor_cout],  
+            "func_info": ["conv_template.cpp", "conv2d", true],
+            "args": ["BRAM_image_input", "BRAM_conv_weight", "BRAM_conv_bias", "BRAM_buffer_1"]
+        },
+        "batchnorm_1": {
+            "func_name": "batchnorm",
+            "dims": [C_OUT, H_OUT, W_OUT], 
+            "func_info": ["batch_norm_template.cpp", 1e-5],
+            "args": ["BRAM_buffer_1", "BRAM_batch_norm_weights", "BRAM_buffer_2"]
+        },
+        "activation_1": {
+            "func_name": "activation",
+            "dims": [C_OUT, H_OUT, W_OUT],  
+            "func_info": ["activations_template.cpp", "relu"],
+            "args": ["BRAM_buffer_2", "BRAM_buffer_1"]
+        },
+        "store": {
+            "func_name": "store",
+            "dims": [C_OUT, H_OUT, W_OUT],
+            "args": ["BRAM_buffer_1", "DRAM_image_output"]
+        }
+    },
+    "output_dram_names": ["DRAM_image_output"],
+    "FPGA_name": "xczu9eg-ffvb1156-2-e",
+    "clock_period": 10,
+    "task": ["csim", "csynth", "cosim", "export_ip"],
+    "data_type": "DATA_TYPE",
+    "top_func_name": "top"
+}

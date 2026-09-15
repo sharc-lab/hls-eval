@@ -1,0 +1,120 @@
+{
+    "brams": [
+      { "name": "BRAM_image_input", "dims": [256, 28, 28] },
+      { "name": "BRAM_conv_weight_1", "dims": [512, 256, 3, 3] },
+      { "name": "BRAM_conv_weight_2", "dims": [512, 512, 3, 3] },
+      { "name": "BRAM_conv_weight_3", "dims": [512, 512, 3, 3] },
+      { "name": "BRAM_conv_weight_4", "dims": [512, 512, 3, 3] },
+      { "name": "BRAM_buffer_1", "dims": [512, 28, 28] },
+      { "name": "BRAM_buffer_2", "dims": [512, 28, 28] },
+      { "name": "BRAM_buffer_3", "dims": [512, 14, 14] }
+    ],
+    "drams": [
+      { "name": "DRAM_image_input", "dims": [256, 28, 28], "bundle": "mem1" },
+      { "name": "DRAM_conv_weight_1", "dims": [512, 256, 3, 3], "bundle": "mem1" },
+      { "name": "DRAM_conv_weight_2", "dims": [512, 512, 3, 3], "bundle": "mem1" },
+      { "name": "DRAM_conv_weight_3", "dims": [512, 512, 3, 3], "bundle": "mem1" },
+      { "name": "DRAM_conv_weight_4", "dims": [512, 512, 3, 3], "bundle": "mem1" },
+      { "name": "DRAM_image_output", "dims": [512, 14, 14], "bundle": "mem2" }
+    ],
+    "ops": {
+      "load_1": {
+        "func_name": "load",
+        "dims": [256, 28, 28],
+        "args": ["DRAM_image_input", "BRAM_image_input"]
+      },
+      "load_2": {
+        "func_name": "load",
+        "dims": [512, 256, 3, 3],
+        "args": ["DRAM_conv_weight_1", "BRAM_conv_weight_1"]
+      },
+      "load_3": {
+        "func_name": "load",
+        "dims": [512, 512, 3, 3],
+        "args": ["DRAM_conv_weight_2", "BRAM_conv_weight_2"]
+      },
+      "load_4": {
+        "func_name": "load",
+        "dims": [512, 512, 3, 3],
+        "args": ["DRAM_conv_weight_3", "BRAM_conv_weight_3"]
+      },
+      "load_5": {
+        "func_name": "load",
+        "dims": [512, 512, 3, 3],
+        "args": ["DRAM_conv_weight_4", "BRAM_conv_weight_4"]
+      },
+      "conv_1": {
+        "func_name": "conv",
+        "dims": [256, 512, 28, 28, 28, 28, 3, 1, 1, 8, 64, 8, 64, 64, 8, 64],
+        "func_info": ["conv_template.cpp", "conv2d", false],
+        "args": ["BRAM_image_input", "BRAM_conv_weight_1", "BRAM_buffer_1"]
+      },
+      "activation_1": {
+        "func_name": "activation",
+        "dims": [512, 28, 28],
+        "func_info": ["activations_template.cpp", "relu"],
+        "args": ["BRAM_buffer_1", "BRAM_buffer_2"]
+      },
+      "conv_2": {
+        "func_name": "conv",
+        "dims": [512, 512, 28, 28, 28, 28, 3, 1, 1, 8, 64, 8, 64, 64, 8, 64],
+        "func_info": ["conv_template.cpp", "conv2d", false],
+        "args": ["BRAM_buffer_2", "BRAM_conv_weight_2", "BRAM_buffer_1"]
+      },
+      "activation_2": {
+        "func_name": "activation",
+        "dims": [512, 28, 28],
+        "func_info": ["activations_template.cpp", "relu"],
+        "args": ["BRAM_buffer_1", "BRAM_buffer_2"]
+      },
+      "conv_3": {
+        "func_name": "conv",
+        "dims": [512, 512, 28, 28, 28, 28, 3, 1, 1, 8, 64, 8, 64, 64, 8, 64],
+        "func_info": ["conv_template.cpp", "conv2d", false],
+        "args": ["BRAM_buffer_2", "BRAM_conv_weight_3", "BRAM_buffer_1"]
+      },
+      "activation_3": {
+        "func_name": "activation",
+        "dims": [512, 28, 28],
+        "func_info": ["activations_template.cpp", "relu"],
+        "args": ["BRAM_buffer_1", "BRAM_buffer_2"]
+      },
+      "conv_4": {
+        "func_name": "conv",
+        "dims": [512, 512, 28, 28, 28, 28, 3, 1, 1, 8, 64, 8, 64, 64, 8, 64],
+        "func_info": ["conv_template.cpp", "conv2d", false],
+        "args": ["BRAM_buffer_2", "BRAM_conv_weight_4", "BRAM_buffer_1"]
+      },
+      "activation_4": {
+        "func_name": "activation",
+        "dims": [512, 28, 28],
+        "func_info": ["activations_template.cpp", "relu"],
+        "args": ["BRAM_buffer_1", "BRAM_buffer_2"]
+      },
+      "maxpool": {
+        "func_name": "maxpool",
+        "dims": [512, 28, 28, 14, 14, 2, 2, 2, 2],
+        "func_info": ["maxpool_template.cpp", "maxpool"],
+        "args": ["BRAM_buffer_2", "BRAM_buffer_3"]
+      },
+      "store": {
+        "func_name": "store",
+        "dims": [512, 14, 14],
+        "args": ["BRAM_buffer_3", "DRAM_image_output"]
+      }
+    },
+    "output_dram_names": ["DRAM_image_output"],
+    "FPGA_name": "xczu9eg-ffvb1156-2-e",
+    "clock_period": 10,
+    "task": ["csim", "csynth", "cosim", "export_ip"],
+    "data_type": "ap_fixed<16, 5>",
+    "top_func_name": "top",
+    "output_files": {
+      "hls_project_path": "./vgg19_512_relu/",
+      "top_cpp": "./vgg19_512_relu/top.cpp",
+      "top_h": "./vgg19_512_relu/top.h",
+      "tb_top_cpp": "./vgg19_512_relu/tb_top.cpp",
+      "run_hls_tcl": "./vgg19_512_relu/run_hls.tcl"
+    }
+  }
+  
