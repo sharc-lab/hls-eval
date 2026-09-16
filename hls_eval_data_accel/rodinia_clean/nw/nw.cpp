@@ -91,8 +91,8 @@ void needwun(char SEQA[ALEN], char SEQB[BLEN],
 }
 
 extern "C" {
-void workload(char* SEQA, char* SEQB,
-             char* alignedA, char* alignedB, int num_jobs) {
+void workload(char SEQA[ALEN], char SEQB[BLEN],
+             char alignedA[ALEN+BLEN], char alignedB[ALEN+BLEN]) {
 #pragma HLS INTERFACE m_axi port=SEQA offset=slave bundle=gmem
 #pragma HLS INTERFACE m_axi port=SEQB offset=slave bundle=gmem
 #pragma HLS INTERFACE m_axi port=alignedA offset=slave bundle=gmem
@@ -101,15 +101,11 @@ void workload(char* SEQA, char* SEQB,
 #pragma HLS INTERFACE s_axilite port=SEQB bundle=control
 #pragma HLS INTERFACE s_axilite port=alignedA bundle=control
 #pragma HLS INTERFACE s_axilite port=alignedB bundle=control
-#pragma HLS INTERFACE s_axilite port=num_jobs bundle=control
 #pragma HLS INTERFACE s_axilite port=return bundle=control
 
 	int M[(ALEN+1)*(BLEN+1)];
 	char ptr[(ALEN+1)*(BLEN+1)];
-	int i;
-	for (i=0; i<num_jobs; i++) {
-	    needwun(SEQA + i*ALEN, SEQB + i*BLEN, alignedA + i*(ALEN+BLEN), alignedB + i*(ALEN+BLEN), M, ptr);
-	}
+	needwun(SEQA, SEQB, alignedA, alignedB, M, ptr);
 	return;
 }
 }

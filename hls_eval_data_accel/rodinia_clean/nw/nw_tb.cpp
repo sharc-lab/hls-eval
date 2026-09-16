@@ -1,8 +1,9 @@
 // Minimal software testbench: loads input.data (seqA, seqB), runs
 // workload() for a single job (the original harness just replicated the
-// same job 1024x for throughput profiling -- correctness only needs one),
-// and compares against check.data (bit-exact, matching the original
-// local_support.c's check_data()).
+// same job 1024x for throughput profiling -- correctness only needs one,
+// so workload() was refactored to always operate on exactly one job and
+// no longer takes a num_jobs parameter), and compares against check.data
+// (bit-exact, matching the original local_support.c's check_data()).
 #include <cstdio>
 #include <cstring>
 #include <fcntl.h>
@@ -11,7 +12,8 @@
 #include "nw.h"
 #include "support.h"
 
-extern "C" void workload(char *SEQA, char *SEQB, char *alignedA, char *alignedB, int num_jobs);
+extern "C" void workload(char SEQA[ALEN], char SEQB[BLEN],
+                          char alignedA[ALEN + BLEN], char alignedB[ALEN + BLEN]);
 
 int main() {
   static char seqA[ALEN] = {};
@@ -28,7 +30,7 @@ int main() {
   parse_string(find_section_start(p, 2), seqB, BLEN);
   free(p);
 
-  workload(seqA, seqB, alignedA, alignedB, 1);
+  workload(seqA, seqB, alignedA, alignedB);
 
   int fd2 = open("check.data", O_RDONLY);
   if (fd2 < 0) { perror("check.data"); return 1; }
