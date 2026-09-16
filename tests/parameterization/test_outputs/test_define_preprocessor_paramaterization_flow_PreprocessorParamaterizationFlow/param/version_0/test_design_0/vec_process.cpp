@@ -1,0 +1,14 @@
+#include <ap_fixed.h>
+
+typedef ap_fixed<16, 5> data_t;
+
+void vec_process(data_t A[16], data_t B[16], data_t C[16]) {
+
+    for (int i = 0; i < 16; i++) {
+
+        data_t result = A[i] + B[i];
+
+        C[i] = result;
+
+    }
+}

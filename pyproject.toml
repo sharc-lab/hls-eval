@@ -14,6 +14,7 @@ dependencies = [
     "mini-swe-agent>=1.17.5",
     "numpy>=2.4.2",
     "pandas>=3.0.0",
+    "pcpp>=1.30",
     "psutil>=7.2.2",
     "python-dotenv>=1.2.1",
     "pyyaml>=6.0.2",

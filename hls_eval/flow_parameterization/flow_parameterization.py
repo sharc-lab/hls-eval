@@ -1,10 +1,18 @@
-import json
-import shutil
-import subprocess
-import tempfile
-from pathlib import Path
+from __future__ import annotations
 
-from jinja2 import Template
+import json
+import re
+import subprocess
+import sys
+from contextlib import redirect_stderr, redirect_stdout
+from io import StringIO
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from uuid import uuid4
+
+from jinja2 import StrictUndefined, Template, Undefined
+from jinja2.sandbox import SandboxedEnvironment
+from pcpp import CmdPreprocessor
 
 # class DesignSpaceImplicit:
 
@@ -15,8 +23,12 @@ T_design_space_point = dict[T_design_space_key, T_design_space_value]
 
 
 class DesignSpaceExplicit:
-    def __init__(self):
-        self.design_space: list[T_design_space_point] = []
+    def __init__(self, design_space: list[T_design_space_point] | None = None):
+        if design_space is None:
+            self.design_space: list[T_design_space_point] = []
+        else:
+            self.design_space: list[T_design_space_point] = design_space
+            self.type_check_design_space()
 
     def render_to_json(self) -> str:
         self.type_check_design_space()
@@ -56,9 +68,12 @@ def convert_design_space_implicit_to_explicit(
 T_sources = dict[str, str]
 
 
+def _collapse_blank_lines(source: str) -> str:
+    return re.sub(r"(?m)^[ \t]*\r?\n(?:[ \t]*\r?\n)+", "\n", source)
+
+
 class PreprocessorParamaterizationFlow:
-    def __init__(self, bin_cpp: Path | str):
-        self.bin_cpp = Path(bin_cpp)
+    """Preprocess each design-space point with pcpp's command argument API."""
 
     def preprocess(
         self, sources: T_sources, design_space: DesignSpaceExplicit
@@ -68,56 +83,128 @@ class PreprocessorParamaterizationFlow:
         for point in design_space.design_space:
             new_sources = {}
 
-            defines_args: list[str] = []
+            defines: list[str] = []
             for key, val in point.items():
                 if isinstance(val, bool):
                     if val:
-                        defines_args.append(f"-D{key}")
+                        defines.extend(["-D", key])
                 else:
-                    defines_args.append(f"-D{key}={val}")
+                    defines.extend(["-D", f"{key}={val}"])
 
             for src_name, src_content in sources.items():
-                with (
-                    tempfile.NamedTemporaryFile(delete=False) as tmp_input_file,
-                    tempfile.NamedTemporaryFile(delete=False) as tmp_output_file,
-                ):
-                    fp_input = Path(tmp_input_file.name)
-                    fp_output = Path(tmp_output_file.name)
-
-                    tmp_input_file.write(src_content.encode())
-
-                    cmd = [
-                        "g++",
-                        "-E",  # preprocess only
-                        "-P",  # inhibit linemarkers (optional)
-                        "-x",
-                        "c++",
-                        str(fp_input.resolve()),
+                with TemporaryDirectory() as tmp_dir:
+                    input_file = Path(tmp_dir) / "input.cpp"
+                    output_file = Path(tmp_dir) / "output.cpp"
+                    input_file.write_text(src_content)
+                    fake_argv = [
+                        sys.argv[0],
                         "-o",
-                        str(fp_output.resolve()),
+                        str(output_file),
+                        "-I",
+                        str(Path(src_name).resolve().parent),
+                        "--passthru-includes",
+                        ".*",
+                        "--passthru-unfound-includes",
+                        "--line-directive=",
                     ]
-                    cmd[1:1] = defines_args
+                    fake_argv += defines
+                    fake_argv += [str(input_file)]
 
-                    try:
-                        subprocess.run(
-                            cmd,
-                            check=True,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                        )
-                        preprocessed_content = fp_output.read_text()
-                        new_sources[src_name] = preprocessed_content
-                    except subprocess.CalledProcessError:
-                        fp_input.unlink(missing_ok=True)
-                        fp_output.unlink(missing_ok=True)
+                    diagnostics = StringIO()
+                    with redirect_stdout(diagnostics), redirect_stderr(diagnostics):
+                        preprocessor = CmdPreprocessor(fake_argv)
+                    if preprocessor.return_code:
                         raise RuntimeError(
-                            f"Preprocessing failed for source {src_name} with defines {defines_args}"
+                            f"Preprocessing failed for source {src_name} with defines "
+                            f"{point}: {diagnostics.getvalue().strip()}"
                         )
+                    new_sources[src_name] = _collapse_blank_lines(output_file.read_text())
+            designs.append(new_sources)
+        return designs
+
+
+class PreprocessorClangParamaterizationFlow:
+    """Expand source macros and conditionals, preserving includes without reading them."""
+
+    # Skip comments and literals so apparent directives inside them stay untouched.
+    _include_pattern = re.compile(
+        r"//(?:\\\r?\n|[^\r\n])*|/\*[\s\S]*?\*/"
+        r'|R"(?P<delimiter>[^ ()\\\t\r\n]{0,16})\([\s\S]*?\)(?P=delimiter)"'
+        r'|"(?:\\[\s\S]|[^"\\\r\n])*"'
+        r"|'(?:\\[\s\S]|[^'\\\r\n])*'"
+        r"|(?P<include>^[ \t]*\#[ \t]*include\b(?:\\\r?\n|[^\r\n])*)",
+        re.MULTILINE,
+    )
+
+    def __init__(self, bin_clang: Path | str = "clang"):
+        self.bin_clang = str(bin_clang)
+
+    def preprocess(
+        self, sources: T_sources, design_space: DesignSpaceExplicit
+    ) -> list[T_sources]:
+        designs = []
+        for point in design_space.design_space:
+            defines: list[str] = []
+            for key, val in point.items():
+                if isinstance(val, bool):
+                    if val:
+                        defines.extend(["-D", key])
+                else:
+                    defines.extend(["-D", f"{key}={val}"])
+
+            new_sources = {}
+            for src_name, src_content in sources.items():
+                includes = []
+                marker = f"hls_eval_include_{uuid4().hex}"
+
+                def shield_include(match):
+                    if match.group("include") is None:
+                        return match.group()
+                    includes.append(match.group())
+                    return f"#pragma {marker} {len(includes) - 1}"
+
+                protected_source = self._include_pattern.sub(
+                    shield_include, src_content
+                )
+                cmd = [
+                    self.bin_clang,
+                    "-E",
+                    "-P",
+                    "-x",
+                    "c++",
+                    "-I",
+                    str(Path(src_name).resolve().parent),
+                    *defines,
+                    "-",
+                ]
+                try:
+                    result = subprocess.run(
+                        cmd,
+                        input=protected_source,
+                        capture_output=True,
+                        text=True,
+                        check=True,
+                    )
+                except subprocess.CalledProcessError as error:
+                    raise RuntimeError(
+                        f"Preprocessing failed for source {src_name} with defines "
+                        f"{point}: {error.stderr.strip()}"
+                    ) from error
+                preprocessed_source = re.sub(
+                    rf"(?m)^#pragma {marker} (\d+)[ \t]*$",
+                    lambda match: includes[int(match.group(1))],
+                    result.stdout,
+                )
+                new_sources[src_name] = _collapse_blank_lines(preprocessed_source)
             designs.append(new_sources)
         return designs
 
 
 class JinjaParamaterizationFlow:
+    def __init__(self, *, strict_undefined: bool = False, sandboxed: bool = False):
+        self.strict_undefined = strict_undefined
+        self.sandboxed = sandboxed
+
     def preprocess(
         self, sources: T_sources, design_space: DesignSpaceExplicit
     ) -> list[T_sources]:
@@ -127,9 +214,14 @@ class JinjaParamaterizationFlow:
             new_sources = {}
 
             for src_name, src_content in sources.items():
-                t: Template = Template(src_content)
+                undefined = StrictUndefined if self.strict_undefined else Undefined
+                t: Template
+                if self.sandboxed:
+                    t = SandboxedEnvironment(undefined=undefined).from_string(src_content)
+                else:
+                    t = Template(src_content, undefined=undefined)
                 rendered_content = t.render(**point)
-                new_sources[src_name] = rendered_content
+                new_sources[src_name] = _collapse_blank_lines(rendered_content)
 
             designs.append(new_sources)
 
