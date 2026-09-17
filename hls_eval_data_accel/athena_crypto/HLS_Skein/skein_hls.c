@@ -39,7 +39,6 @@ void printState(UINT64 state[8])
 
 void mix_and_permute(UINT64 state[8], int subround, uint1 is_lo)
 {
-#pragma HLS INLINE
   const static int rot[4][8] = {
       {46, 36, 19, 37, 39, 30, 34, 24},
       {33, 27, 14, 42, 13, 50, 10, 17},
@@ -58,7 +57,6 @@ void mix_and_permute(UINT64 state[8], int subround, uint1 is_lo)
   /* Mix */
   for (i=0 ;i<4; i++)
   {
-#pragma HLS UNROLL
     temp[i*2+0] = state[i*2+0] + state[i*2+1];
     if (is_lo == 0)
       temp[i*2+1] = ROL64(state[i*2+1], rot[subround][i]);
@@ -70,14 +68,12 @@ void mix_and_permute(UINT64 state[8], int subround, uint1 is_lo)
   /* Permute */
   for (i=0; i<8; i++)
   {
-#pragma HLS UNROLL
     state[i] = temp[permute[i]];
   }
 }
 
 void getRoundKey(UINT64 keyState[8], uint64 tweak[3], uint5 subround, UINT64 subkey[8])
 {
-#pragma HLS INLINE
   subkey[7] = keyState[7] + (UINT64) subround;
   subkey[6] = keyState[6] + tweak[1];
   subkey[5] = keyState[5] + tweak[0];
@@ -90,7 +86,6 @@ void getRoundKey(UINT64 keyState[8], uint64 tweak[3], uint5 subround, UINT64 sub
 
 void skein(UINT64 data[8], UINT64 output[4], uint1 firstBlock,  uint1 lastBlock, uint32 size)
 {
-#pragma HLS INTERFACE ap_hs port=output
 
   int i;
   int total_round;
@@ -118,18 +113,6 @@ void skein(UINT64 data[8], UINT64 output[4], uint1 firstBlock,  uint1 lastBlock,
   UINT64 keyPar;
   static UINT64 subkey[8];
 
-#pragma HLS ARRAY_RESHAPE variable=data complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=output complete dim=1  
-#pragma HLS ARRAY_RESHAPE variable=tweak complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=initTweak complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=newTweak complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=state complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=keyIn complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=keyInjState complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=tmpState complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=keyState complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=subkey complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=keyNew complete dim=1
   
   if (lastBlock == 1)
     total_round = NB_ROUNDS*2;
@@ -140,7 +123,6 @@ void skein(UINT64 data[8], UINT64 output[4], uint1 firstBlock,  uint1 lastBlock,
   /* Initial values */\
   for (i = 0; i < 8; i++)
   {
-#pragma HLS UNROLL
     state[i] = data[i];
   }
   
@@ -161,7 +143,6 @@ void skein(UINT64 data[8], UINT64 output[4], uint1 firstBlock,  uint1 lastBlock,
     {
       for (i=0; i<8; i++)
       {
-#pragma HLS UNROLL
           initKeyState[i] = keyState[i];
       }
       initByteCounter = byteCounter;
@@ -181,7 +162,6 @@ void skein(UINT64 data[8], UINT64 output[4], uint1 firstBlock,  uint1 lastBlock,
   keyPar = 0x1BD11BDAA9FC1A22;
   for (i=0; i<8; i++)
   {
-#pragma HLS UNROLL
     keyPar  ^= initKeyState[i];
   }
 
@@ -190,7 +170,6 @@ void skein(UINT64 data[8], UINT64 output[4], uint1 firstBlock,  uint1 lastBlock,
   getRoundKey(initKeyState, initTweak, 0, subkey);
   for (i=0; i<7; i++)
   {
-#pragma HLS UNROLL
     keyState[i] = initKeyState[i+1];
   }
   keyState[7] = keyPar;
@@ -225,7 +204,6 @@ void skein(UINT64 data[8], UINT64 output[4], uint1 firstBlock,  uint1 lastBlock,
 #endif
     for (i=0; i<8; i++)
     {
-#pragma HLS UNROLL
       keyInjState[i]  = state[i] + subkey[i];
       tmpState[i]  = keyInjState[i];
     }
@@ -245,20 +223,17 @@ void skein(UINT64 data[8], UINT64 output[4], uint1 firstBlock,  uint1 lastBlock,
     /* Compute next subkey */
     for(i=0; i<8; i++)
     {
-#pragma HLS UNROLL
       keyNew[i] = keyInjState[i] ^ (data[i] & enableData);
     }
 
     if (round == NB_ROUNDS-1)
       for(i=0; i<8; i++)
       {
-#pragma HLS UNROLL
         keyIn[i] = keyNew[i];
       }
     else
       for(i=0; i<8; i++)
       {
-#pragma HLS UNROLL
         keyIn[i] = keyState[i];
       }
 
@@ -276,7 +251,6 @@ void skein(UINT64 data[8], UINT64 output[4], uint1 firstBlock,  uint1 lastBlock,
     keyPar = 0x1BD11BDAA9FC1A22;
     for(i=0; i<8; i++)
     {
-#pragma HLS UNROLL
       keyPar    ^= keyIn[i];
     }
 
@@ -305,7 +279,6 @@ void skein(UINT64 data[8], UINT64 output[4], uint1 firstBlock,  uint1 lastBlock,
     if (round == NB_ROUNDS*2-1)
       for (i=0; i<4; i++)
       {
-  #pragma HLS UNROLL
         output[i] = keyNew[i];
       }
 
@@ -313,14 +286,12 @@ void skein(UINT64 data[8], UINT64 output[4], uint1 firstBlock,  uint1 lastBlock,
     if ((round == NB_ROUNDS-1) && (total_round == NB_ROUNDS))
       for(i=0; i<8; i++)
       {
-#pragma HLS UNROLL
         keyState[i] = keyIn[i];
       }
     else
     {
       for(i=0; i<7; i++)
       {
-#pragma HLS UNROLL
         keyState[i] = keyIn[i+1];
       }
       keyState[7] = keyPar;
@@ -330,13 +301,11 @@ void skein(UINT64 data[8], UINT64 output[4], uint1 firstBlock,  uint1 lastBlock,
     if (round == NB_ROUNDS-1)
       for(i=0; i<8; i++)
       {
-#pragma HLS UNROLL
         state[i]     = 0;
       }
     else
       for(i=0; i<8; i++)
       {
-#pragma HLS UNROLL
         state[i]    = tmpState[i];
       }
 

@@ -50,21 +50,17 @@ void theta(UINT64 A[25], UINT64 B[25])
 
   for(x=0; x<5; x++) 
   {
-#pragma HLS UNROLL      
     C[x] = A[index(x, 0)]^A[index(x, 1)]^A[index(x, 2)]^A[index(x, 3)]^A[index(x, 4)];
   }
   for(x=0; x<5; x++)
   {
-#pragma HLS UNROLL
     D[x] = ROL64(C[(x+1)%5], 1) ^ C[(x+4)%5];
   }
 
   for(x=0; x<5; x++)
   {
-#pragma HLS UNROLL
     for(y=0; y<5; y++)
     {
-#pragma HLS UNROLL
       B[index(x, y)] = A[index(x, y)] ^ D[x];
     }
   }
@@ -83,10 +79,8 @@ void rho(UINT64 A[25])
 
   for(x=0; x<5; x++) 
   {
-#pragma HLS UNROLL
     for(y=0; y<5; y++)
     {
-#pragma HLS UNROLL
       A[index(x, y)] = ROL64(A[index(x, y)], KeccakRhoOffsets[index(x, y)]);
     }
   }
@@ -99,19 +93,15 @@ void pi(UINT64 A[25])
 
   for(x=0; x<5; x++) 
   {
-#pragma HLS UNROLL    
     for(y=0; y<5; y++)
     {
-#pragma HLS UNROLL      
       tempA[index(x, y)] = A[index(x, y)];
     }
   }
   for(x=0; x<5; x++) 
   {
-#pragma HLS UNROLL
     for(y=0; y<5; y++)
     {
-#pragma HLS UNROLL
       A[index(0*x+1*y, 2*x+3*y)] = tempA[index(x, y)];
     }
   }
@@ -124,17 +114,14 @@ void chi(UINT64 A[25])
 
   for(y=0; y<5; y++) 
   { 
-#pragma HLS UNROLL
     for(x=0; x<5; x++)
     {
-#pragma HLS UNROLL       
      C[index(x, y)] = A[index(x, y)] ^ ((~A[index(x+1, y)]) & A[index(x+2, y)]);
     }
   }
   
   for(x=0; x<25; x++)
   {
-#pragma HLS UNROLL    
     A[x] = C[x];
   }
 }
@@ -151,13 +138,11 @@ void iota(UINT64 A[25], unsigned int indexRound)
     0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000,
     0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000
   };
-#pragma HLS RESOURCE variable=KeccakRoundConstants core=ROM_1P_1S
   A[index(0, 0)] ^= KeccakRoundConstants[indexRound];
 }
 
 void keccak(UINT64 data[17], UINT64 output[4], uint1 last)
 {
-#pragma HLS INTERFACE ap_hs port=output
   int i;
   uint8 round;
   static UINT64 state[25] = {
@@ -169,15 +154,10 @@ void keccak(UINT64 data[17], UINT64 output[4], uint1 last)
   };
   UINT64 tmp_state[25];
   
-#pragma HLS ARRAY_RESHAPE variable=data complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=output complete dim=1  
-#pragma HLS ARRAY_RESHAPE variable=state complete dim=1  
-#pragma HLS ARRAY_RESHAPE variable=tmp_state complete dim=1
   
   /* State ^ Data */\
   for (i = 0; i < 17; i++)
   {
-#pragma HLS UNROLL
     state[i] ^= data[i];
   }
   
@@ -217,19 +197,16 @@ void keccak(UINT64 data[17], UINT64 output[4], uint1 last)
     {
       for (i = 0; i < 4; i++)
       {
-#pragma HLS UNROLL
         output[i] = tmp_state[i];
       }
       for (i = 0; i < 25; i++)
       {
-#pragma HLS UNROLL
         state[i] = 0;
       }
     }
     else
       for (i = 0; i < 25; i++)
       {
-#pragma HLS UNROLL
         state[i] = tmp_state[i];
       }
   }

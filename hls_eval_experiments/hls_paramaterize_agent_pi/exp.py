@@ -34,7 +34,7 @@ if __name__ == "__main__":
         BenchmarkCase(d, name=d.name) for d in all_benchmark_case_dirs
     ]
 
-    sets_to_test = set(["polybench__fixed__small"])
+    sets_to_test = set(["athena_crypto"])
 
     all_benchmark_cases = [
         bc
@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
     all_benchmark_cases = sorted(all_benchmark_cases, key=lambda x: x.name)
 
-    all_benchmark_cases = all_benchmark_cases[:1]
+    # all_benchmark_cases = all_benchmark_cases[:1]
 
     model_names_to_test = ["deepseek/deepseek-v4-flash"]
     models = [

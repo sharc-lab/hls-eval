@@ -48,7 +48,6 @@ static void printState(u32 state[16], u32 size)
 
 void permute(u32 m_first[16], u32 m[16], u32 c[16], u32 mxc[8], uint5 round)
 {
-#pragma HLS INLINE
   static const unsigned char sigma[20][8] = {
     {  0,  1,  2,  3,  4,  5,  6,  7}, { 8,  9, 10, 11, 12, 13, 14, 15 } ,
     { 14, 10,  4,  8,  9, 15, 13,  6}, { 1, 12,  0,  2, 11,  7,  5,  3 } ,
@@ -78,12 +77,9 @@ void permute(u32 m_first[16], u32 m[16], u32 c[16], u32 mxc[8], uint5 round)
 
   u32 msel[8], csel[8];
   
-#pragma HLS ARRAY_RESHAPE variable=msel complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=csel complete dim=1
 
   for (i=0; i<8; i++)
   {
-#pragma HLS UNROLL
     m00_first[i] = m_first[sigma[0][i]];
     m00[i] = m[sigma[0][i]]; c00[i] = c[sigma[0][i]];
     m01[i] = m[sigma[1][i]]; c01[i] = c[sigma[1][i]];
@@ -131,7 +127,6 @@ void permute(u32 m_first[16], u32 m[16], u32 c[16], u32 mxc[8], uint5 round)
 
   for (i=0; i<4; i++)
   {
-#pragma HLS UNROLL
     mxc[2*i+0] = msel[2*i] ^ csel[2*i+1];
     mxc[2*i+1] = msel[2*i+1] ^ csel[2*i];
 //    mxc[2*i+0] = msel[2*i];
@@ -141,7 +136,6 @@ void permute(u32 m_first[16], u32 m[16], u32 c[16], u32 mxc[8], uint5 round)
 
 void BLAKE32(u32 data[16], u32 data_reg[16], u32 output[8], uint1 last, u32 size)
 {
-#pragma HLS INTERFACE ap_hs port=output
 
   u32 v[16];
   u32 tmp[16];
@@ -172,15 +166,6 @@ void BLAKE32(u32 data[16], u32 data_reg[16], u32 output[8], uint1 last, u32 size
   static u32 t32[2] = {0, 0};
 
 
-#pragma HLS ARRAY_RESHAPE variable=data complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=data_reg complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=output complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=v complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=tmp complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=mxc complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=hash complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=t32 complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=c32 complete dim=1
 
 
 #define ROT32(x,n) (((x)<<(32-n))|( (x)>>(n)))
@@ -264,10 +249,8 @@ void BLAKE32(u32 data[16], u32 data_reg[16], u32 output[8], uint1 last, u32 size
     { // Forward permutation
       for(i=0; i<4; i++)
       {
-#pragma HLS UNROLL
         for(j=0; j<4; j++)
         {
-#pragma HLS UNROLL
           tmp[i*4+j] = v[((j+i)%4)+i*4];
         }
       }
@@ -276,10 +259,8 @@ void BLAKE32(u32 data[16], u32 data_reg[16], u32 output[8], uint1 last, u32 size
     { // Backward permutation
       for(i=0; i<4; i++)
       {
-#pragma HLS UNROLL
         for(j=0; j<4; j++)
         {
-#pragma HLS UNROLL
           tmp[i*4+j] = v[((j+4-i)%4)+i*4];
         }
       }
@@ -287,7 +268,6 @@ void BLAKE32(u32 data[16], u32 data_reg[16], u32 output[8], uint1 last, u32 size
 
     for (i=0; i<16; i++)
     {
-#pragma HLS UNROLL
       v[i] = tmp[i];
     }
 
@@ -323,14 +303,12 @@ void BLAKE32(u32 data[16], u32 data_reg[16], u32 output[8], uint1 last, u32 size
     t32[1] = 0;
     for (i = 0; i < 8; i++)
     {
-#pragma HLS UNROLL
       output[i] = new_hash[i];
     }
   }
   else
     for (i = 0; i < 8; i++)
     {
-#pragma HLS UNROLL
       hash[i] = new_hash[i];
     }
 }

@@ -9,6 +9,7 @@ import re
 import shutil
 import subprocess
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, cast
 
@@ -549,6 +550,73 @@ class HLSParameterizationAgentEvaluatorPi(HLSGenerationAgentEvaluatorPi):
             checks["submission_error"] = str(error)
             return checks, {}, DesignSpaceExplicit()
 
+    def _evaluate_point(
+        self,
+        original: Path,
+        eval_dir: Path,
+        kernel_files: list[str],
+        tb_file: str,
+        top_function: str,
+        pools: EvalThreadPools,
+        baseline: dict,
+        original_interfaces: dict[str, list[str]],
+        templates: dict[str, str],
+        index: int,
+        assignment: dict,
+    ) -> dict:
+        point_dir = eval_dir / "points" / f"point__{index}"
+        point_dir.mkdir(parents=True)
+        point: dict[str, Any] = {
+            "point_index": index,
+            "parameters": assignment,
+            "render_success": False,
+            "passed": False,
+        }
+        try:
+            rendered = JinjaParamaterizationFlow(
+                strict_undefined=True,
+                sandboxed=True,
+            ).preprocess(
+                templates,
+                DesignSpaceExplicit([assignment]),
+            )[0]
+            if any(
+                marker in source
+                for source in rendered.values()
+                for marker in ("{{", "{%", "{#")
+            ):
+                raise ValueError(
+                    "Unexpanded Jinja syntax remains in rendered sources"
+                )
+            point["render_success"] = True
+            digest = hashlib.sha256(
+                json.dumps(rendered, sort_keys=True).encode()
+            ).hexdigest()
+            point["source_sha256"] = digest
+            design_dir = point_dir / "design"
+            shutil.copytree(original, design_dir)
+            for name, source in rendered.items():
+                (design_dir / name).write_text(source)
+            point.update(
+                self._evaluate_variant(
+                    design_dir,
+                    kernel_files,
+                    tb_file,
+                    top_function,
+                    pools,
+                    expected_signatures=baseline.get("top_signatures", []),
+                )
+            )
+            point["interface_pragmas_preserved"] = (
+                _interface_pragmas(rendered) == original_interfaces
+            )
+            point["interface_preserved"] &= point["interface_pragmas_preserved"]
+            point["passed"] &= point["interface_preserved"]
+        except Exception as error:
+            point["error"] = f"{type(error).__name__}: {error}"
+        (point_dir / "result.json").write_text(json.dumps(point, indent=4))
+        return point
+
     def _evaluate_sample(
         self,
         original: Path,
@@ -573,65 +641,49 @@ class HLSParameterizationAgentEvaluatorPi(HLSGenerationAgentEvaluatorPi):
         )
         result["baseline"] = baseline
         (baseline_dir.parent / "result.json").write_text(json.dumps(baseline, indent=4))
-        seen_sources: dict[str, int] = {}
         original_interfaces = _interface_pragmas(
             {name: (original / name).read_text() for name in kernel_files}
         )
-        for index, assignment in enumerate(space.design_space):
-            point_dir = eval_dir / "points" / f"point__{index}"
-            point_dir.mkdir(parents=True)
-            point: dict[str, Any] = {
-                "point_index": index,
-                "parameters": assignment,
-                "render_success": False,
-                "passed": False,
-            }
-            try:
-                rendered = JinjaParamaterizationFlow(
-                    strict_undefined=True,
-                    sandboxed=True,
-                ).preprocess(
+
+        # Each point only blocks on the shared csim/synth pools, never on this
+        # one, so sizing it to the point count runs every point concurrently
+        # without risking a self-submit-and-wait deadlock on pools.pool_csim
+        # or pools.pool_synth.
+        points_by_index: dict[int, dict] = {}
+        with ThreadPoolExecutor(
+            max_workers=len(space.design_space), thread_name_prefix="eval-point"
+        ) as pool_points:
+            futures = {
+                pool_points.submit(
+                    self._evaluate_point,
+                    original,
+                    eval_dir,
+                    kernel_files,
+                    tb_file,
+                    top_function,
+                    pools,
+                    baseline,
+                    original_interfaces,
                     templates,
-                    DesignSpaceExplicit([assignment]),
-                )[0]
-                if any(
-                    marker in source
-                    for source in rendered.values()
-                    for marker in ("{{", "{%", "{#")
-                ):
-                    raise ValueError(
-                        "Unexpanded Jinja syntax remains in rendered sources"
-                    )
-                point["render_success"] = True
-                digest = hashlib.sha256(
-                    json.dumps(rendered, sort_keys=True).encode()
-                ).hexdigest()
-                point["source_sha256"] = digest
+                    index,
+                    assignment,
+                ): index
+                for index, assignment in enumerate(space.design_space)
+            }
+            for future in as_completed(futures):
+                points_by_index[futures[future]] = future.result()
+
+        seen_sources: dict[str, int] = {}
+        points = []
+        for index in range(len(space.design_space)):
+            point = points_by_index[index]
+            if point.get("render_success"):
+                digest = point["source_sha256"]
                 point["duplicate_of"] = seen_sources.get(digest)
                 seen_sources.setdefault(digest, index)
-                design_dir = point_dir / "design"
-                shutil.copytree(original, design_dir)
-                for name, source in rendered.items():
-                    (design_dir / name).write_text(source)
-                point.update(
-                    self._evaluate_variant(
-                        design_dir,
-                        kernel_files,
-                        tb_file,
-                        top_function,
-                        pools,
-                        expected_signatures=baseline.get("top_signatures", []),
-                    )
-                )
-                point["interface_pragmas_preserved"] = (
-                    _interface_pragmas(rendered) == original_interfaces
-                )
-                point["interface_preserved"] &= point["interface_pragmas_preserved"]
-                point["passed"] &= point["interface_preserved"]
-            except Exception as error:
-                point["error"] = f"{type(error).__name__}: {error}"
-            result["points"].append(point)
-            (point_dir / "result.json").write_text(json.dumps(point, indent=4))
+            points.append(point)
+        result["points"] = points
+
         result["summary"] = summarize_design_space(result["points"], baseline)
         result["passed"] = (
             all(point["passed"] for point in result["points"])

@@ -45,23 +45,19 @@ void AddRoundConstant(u8 x[ROWS*COLS], u8 round, uint1 is_q)
   if (is_q == 0)
     for (i = 0; i < COLS; i++)
     {
-#pragma HLS UNROLL
       x[i*8] ^= (i<<4)^round;
     }
   else
   {
     for (i = 0; i < COLS; i++)
     {
-#pragma HLS UNROLL
       for (j = 0; j < ROWS-1; j++)
       {
-#pragma HLS UNROLL
         x[i*8+j] ^= 0xff;
       }
     }
     for (i = 0; i < COLS; i++)
     {
-#pragma HLS UNROLL
       x[i*8+ROWS-1] ^= (i<<4)^0xff^round;
     }
   }
@@ -69,71 +65,6 @@ void AddRoundConstant(u8 x[ROWS*COLS], u8 round, uint1 is_q)
 
 void SubBytes(u8 x[ROWS*COLS], u8 y[ROWS*COLS])
 {
-#pragma HLS INLINE
-#pragma HLS RESOURCE variable=Sbox0 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox1 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox2 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox3 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox4 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox5 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox6 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox7 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox8 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox9 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox10 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox11 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox12 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox13 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox14 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox15 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox16 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox17 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox18 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox19 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox20 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox21 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox22 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox23 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox24 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox25 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox26 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox27 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox28 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox29 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox30 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox31 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox32 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox33 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox34 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox35 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox36 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox37 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox38 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox39 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox40 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox41 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox42 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox43 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox44 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox45 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox46 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox47 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox48 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox49 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox50 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox51 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox52 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox53 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox54 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox55 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox56 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox57 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox58 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox59 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox60 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox61 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox62 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=Sbox63 core=ROM_1P_1S
 
     y[0] = Sbox0[x[0]];      y[8 ] =  Sbox8[x[8 ]];
     y[1] = Sbox1[x[1]];      y[9 ] =  Sbox9[x[9 ]];
@@ -204,14 +135,12 @@ void ShiftBytes(u8 x[ROWS*COLS], uint1 is_q)
 
   for (i = 0; i < ROWS*COLS; i++)
   {
-#pragma HLS UNROLL
     x[i] = temp[i];
   }
 }
 
 u8 mul2v2(u8 x)
 {
-#pragma HLS INLINE
   u8    x7, x6, x5, x4, x3, x2, x1, x0;
   u8    output;
 
@@ -238,7 +167,6 @@ u8 mul2v2(u8 x)
 
 u8 mul3v2(u8 x)
 {
-#pragma HLS INLINE
   u8    x7, x6, x5, x4, x3, x2, x1, x0;
   u8    output;
 
@@ -265,7 +193,6 @@ u8 mul3v2(u8 x)
 
 u8 mul4v2(u8 x)
 {
-#pragma HLS INLINE
   u8    x7, x6, x5, x4, x3, x2, x1, x0;
   u8    output;
 
@@ -292,7 +219,6 @@ u8 mul4v2(u8 x)
 
 u8 mul5v2(u8 x)
 {
-#pragma HLS INLINE
   u8    x7, x6, x5, x4, x3, x2, x1, x0;
   u8    output;
 
@@ -319,7 +245,6 @@ u8 mul5v2(u8 x)
 
 u8 mul7v2(u8 x)
 {
-#pragma HLS INLINE
   u8    x7, x6, x5, x4, x3, x2, x1, x0;
   u8    output;
 
@@ -346,7 +271,6 @@ u8 mul7v2(u8 x)
 
 void MixBytes(u8 x[ROWS*COLS], u8 y[ROWS*COLS])
 {
-#pragma HLS INLINE
   int i, j;
   u8 temp[ROWS*COLS];
 
@@ -358,7 +282,6 @@ void MixBytes(u8 x[ROWS*COLS], u8 y[ROWS*COLS])
 
   for (i = 0; i < ROWS*COLS; i++)
   {
-#pragma HLS UNROLL
     mulx2[i] = mul2v2(x[i]);
     mulx3[i] = mul3v2(x[i]);
     mulx4[i] = mul4(x[i]);
@@ -368,10 +291,8 @@ void MixBytes(u8 x[ROWS*COLS], u8 y[ROWS*COLS])
 
   for (i = 0; i < COLS; i++)
   {
-#pragma HLS UNROLL
     for (j = 0; j < ROWS; j++)
     {
-#pragma HLS UNROLL
       temp[i*8+j] =
         mulx2[i*8+((j+0)%ROWS)]^
         mulx2[i*8+((j+1)%ROWS)]^
@@ -386,14 +307,12 @@ void MixBytes(u8 x[ROWS*COLS], u8 y[ROWS*COLS])
 
   for (i = 0; i < ROWS*COLS; i++)
   {
-#pragma HLS UNROLL
     y[i] = temp[i];
   }
 }
 
 void groestl(u8 data[ROWS*COLS], u8 output[ROWS*COLS/2], uint1 last)
 {
-#pragma HLS INTERFACE ap_hs port=output
 
   int i,j;
   u8 state_reg1[ROWS*COLS] = {
@@ -432,19 +351,12 @@ void groestl(u8 data[ROWS*COLS], u8 output[ROWS*COLS/2], uint1 last)
     0, 0, 0, 0, 0, 0, 1, 0};
   u8 new_hash[ROWS*COLS];
 
-#pragma HLS ARRAY_RESHAPE variable=data complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=output complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=state_reg1 complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=state_reg2 complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=m complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=hash complete dim=1
 
 
   /* Initialization */
   // Copy data to temporary var
   for (i = 0; i < ROWS*COLS; i++)
   {
-#pragma HLS UNROLL
     m[i] = data[i];
   }
 
@@ -463,7 +375,6 @@ void groestl(u8 data[ROWS*COLS], u8 output[ROWS*COLS/2], uint1 last)
   // H ^ M
   for (i = 0; i < ROWS*COLS; i++)
   {
-#pragma HLS UNROLL
     state_reg1[i] = hash[i] ^ m[i];
   }
 
@@ -518,14 +429,12 @@ void groestl(u8 data[ROWS*COLS], u8 output[ROWS*COLS/2], uint1 last)
 
     for (i = 0; i < ROWS*COLS; i++)
     {
-#pragma HLS UNROLL
       new_hash[i] = state_tmp2[i] ^ hash[i];
     }
 
     // Copy state_tmp to reg2
     for (i = 0; i < ROWS*COLS; i++)
     {
-#pragma HLS UNROLL
       state_reg2[i] = state_tmp1[i];
     }
 
@@ -533,19 +442,16 @@ void groestl(u8 data[ROWS*COLS], u8 output[ROWS*COLS/2], uint1 last)
     if (round == 0)
       for (i = 0; i < ROWS*COLS; i++)
       {
-#pragma HLS UNROLL
         state_reg1[i] = m[i];
       }
     else if (round == NB_ROUNDS-1)
       for (i = 0; i < ROWS*COLS; i++)
       {
-#pragma HLS UNROLL
         state_reg1[i] = new_hash[i];
       }
     else
       for (i = 0; i < ROWS*COLS; i++)
       {
-#pragma HLS UNROLL
         state_reg1[i] = state_tmp2[i];
       }
 
@@ -553,7 +459,6 @@ void groestl(u8 data[ROWS*COLS], u8 output[ROWS*COLS/2], uint1 last)
     if ((round == NB_ROUNDS-2) || (round == NB_ROUNDS-1))
       for (i = 0; i < ROWS*COLS; i++)
       {
-  #pragma HLS UNROLL
         hash[i] = new_hash[i];
       }
     else if (round == NB_ROUNDS*2-2)
@@ -561,7 +466,6 @@ void groestl(u8 data[ROWS*COLS], u8 output[ROWS*COLS/2], uint1 last)
       // Output
       for (i = 0; i < ROWS*COLS/2; i++)
       {
-  #pragma HLS UNROLL
         output[i] = new_hash[ROWS*COLS/2+i];
       }
 

@@ -64,9 +64,6 @@ void E8_initialgroup(uint8 H[128], uint4 A[256]) {
   unsigned char t0,t1,t2,t3;
   unsigned char tem[256];
 
-#pragma HLS ARRAY_RESHAPE variable=H complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=A complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=tem complete dim=1
 
 
   /*t0 is the i-th bit of H, i = 0, 1, 2, 3, ... , 127*/
@@ -75,7 +72,6 @@ void E8_initialgroup(uint8 H[128], uint4 A[256]) {
   /*t3 is the (i+768)-th bit of H*/
   for (i = 0; i < 256; i++)
   {
-#pragma HLS UNROLL
     t0 = (H[i>>3] >> (7 - (i & 7)) ) & 1;
     t1 = (H[(i+256)>>3] >> (7 - (i & 7)) ) & 1;
     t2 = (H[(i+ 512 )>>3] >> (7 - (i & 7)) ) & 1;
@@ -85,7 +81,6 @@ void E8_initialgroup(uint8 H[128], uint4 A[256]) {
   /*padding the odd-th elements and even-th elements separately*/
   for (i = 0; i < 128; i++)
   {
-#pragma HLS UNROLL
     A[i << 1]     = tem[i];
     A[(i << 1)+1] = tem[i+128];
   }
@@ -100,26 +95,20 @@ void E8_finaldegroup(uint4 A[256], uint8 H[128])
   unsigned char t0,t1,t2,t3;
   unsigned char tem[256];
 
-#pragma HLS ARRAY_RESHAPE variable=H complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=A complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=tem complete dim=1
 
   for (i = 0; i < 128; i++)
   {
-#pragma HLS UNROLL
     tem[i] = A[i << 1];
     tem[i+128] = A[(i << 1)+1];
   }
 
   for (i = 0; i < 128; i++)
   {
-#pragma HLS UNROLL
     H[i] = 0;
   }
 
   for (i = 0; i < 256; i++)
   {
-#pragma HLS UNROLL
     t0 = (tem[i] >> 3) & 1;
     t1 = (tem[i] >> 2) & 1;
     t2 = (tem[i] >> 1) & 1;
@@ -146,528 +135,6 @@ void R8(uint4 stateIn[256], uint8 roundconstant[32], uint4 stateOut[256])
   uint4 sbox0[256];
   uint4 sbox1[256];
 
-#pragma HLS INLINE
-#pragma HLS ARRAY_RESHAPE variable=stateIn complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=stateOut complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=roundconstant complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=roundconstant_expanded complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=stateTmp1 complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=stateTmp2 complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=stateTmp3 complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=sbox0 complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=sbox1 complete dim=1
-#pragma HLS RESOURCE variable=S0_0 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_1 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_2 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_3 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_4 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_5 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_6 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_7 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_8 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_9 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_10 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_11 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_12 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_13 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_14 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_15 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_16 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_17 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_18 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_19 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_20 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_21 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_22 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_23 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_24 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_25 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_26 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_27 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_28 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_29 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_30 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_31 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_32 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_33 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_34 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_35 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_36 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_37 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_38 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_39 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_40 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_41 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_42 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_43 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_44 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_45 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_46 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_47 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_48 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_49 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_50 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_51 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_52 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_53 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_54 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_55 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_56 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_57 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_58 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_59 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_60 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_61 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_62 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_63 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_64 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_65 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_66 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_67 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_68 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_69 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_70 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_71 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_72 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_73 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_74 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_75 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_76 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_77 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_78 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_79 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_80 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_81 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_82 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_83 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_84 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_85 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_86 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_87 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_88 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_89 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_90 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_91 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_92 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_93 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_94 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_95 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_96 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_97 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_98 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_99 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_100 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_101 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_102 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_103 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_104 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_105 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_106 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_107 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_108 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_109 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_110 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_111 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_112 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_113 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_114 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_115 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_116 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_117 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_118 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_119 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_120 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_121 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_122 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_123 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_124 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_125 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_126 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_127 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_128 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_129 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_130 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_131 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_132 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_133 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_134 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_135 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_136 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_137 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_138 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_139 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_140 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_141 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_142 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_143 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_144 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_145 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_146 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_147 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_148 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_149 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_150 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_151 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_152 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_153 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_154 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_155 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_156 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_157 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_158 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_159 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_160 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_161 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_162 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_163 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_164 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_165 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_166 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_167 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_168 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_169 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_170 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_171 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_172 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_173 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_174 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_175 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_176 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_177 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_178 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_179 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_180 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_181 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_182 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_183 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_184 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_185 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_186 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_187 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_188 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_189 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_190 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_191 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_192 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_193 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_194 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_195 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_196 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_197 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_198 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_199 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_200 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_201 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_202 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_203 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_204 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_205 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_206 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_207 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_208 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_209 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_210 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_211 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_212 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_213 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_214 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_215 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_216 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_217 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_218 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_219 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_220 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_221 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_222 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_223 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_224 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_225 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_226 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_227 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_228 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_229 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_230 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_231 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_232 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_233 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_234 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_235 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_236 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_237 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_238 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_239 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_240 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_241 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_242 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_243 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_244 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_245 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_246 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_247 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_248 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_249 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_250 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_251 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_252 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_253 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_254 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S0_255 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_0 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_1 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_2 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_3 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_4 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_5 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_6 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_7 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_8 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_9 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_10 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_11 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_12 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_13 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_14 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_15 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_16 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_17 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_18 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_19 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_20 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_21 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_22 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_23 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_24 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_25 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_26 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_27 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_28 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_29 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_30 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_31 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_32 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_33 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_34 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_35 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_36 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_37 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_38 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_39 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_40 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_41 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_42 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_43 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_44 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_45 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_46 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_47 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_48 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_49 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_50 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_51 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_52 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_53 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_54 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_55 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_56 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_57 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_58 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_59 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_60 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_61 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_62 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_63 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_64 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_65 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_66 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_67 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_68 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_69 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_70 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_71 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_72 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_73 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_74 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_75 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_76 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_77 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_78 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_79 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_80 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_81 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_82 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_83 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_84 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_85 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_86 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_87 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_88 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_89 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_90 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_91 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_92 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_93 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_94 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_95 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_96 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_97 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_98 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_99 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_100 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_101 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_102 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_103 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_104 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_105 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_106 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_107 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_108 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_109 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_110 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_111 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_112 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_113 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_114 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_115 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_116 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_117 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_118 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_119 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_120 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_121 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_122 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_123 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_124 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_125 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_126 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_127 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_128 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_129 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_130 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_131 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_132 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_133 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_134 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_135 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_136 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_137 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_138 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_139 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_140 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_141 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_142 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_143 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_144 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_145 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_146 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_147 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_148 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_149 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_150 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_151 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_152 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_153 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_154 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_155 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_156 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_157 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_158 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_159 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_160 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_161 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_162 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_163 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_164 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_165 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_166 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_167 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_168 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_169 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_170 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_171 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_172 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_173 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_174 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_175 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_176 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_177 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_178 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_179 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_180 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_181 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_182 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_183 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_184 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_185 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_186 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_187 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_188 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_189 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_190 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_191 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_192 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_193 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_194 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_195 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_196 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_197 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_198 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_199 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_200 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_201 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_202 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_203 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_204 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_205 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_206 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_207 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_208 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_209 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_210 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_211 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_212 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_213 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_214 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_215 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_216 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_217 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_218 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_219 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_220 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_221 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_222 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_223 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_224 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_225 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_226 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_227 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_228 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_229 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_230 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_231 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_232 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_233 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_234 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_235 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_236 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_237 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_238 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_239 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_240 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_241 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_242 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_243 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_244 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_245 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_246 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_247 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_248 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_249 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_250 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_251 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_252 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_253 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_254 core=ROM_1P_1S
-#pragma HLS RESOURCE variable=S1_255 core=ROM_1P_1S
 
 
 #if DEBUG_ROUND
@@ -678,10 +145,8 @@ void R8(uint4 stateIn[256], uint8 roundconstant[32], uint4 stateOut[256])
   /*expand the round constant into 256 one-bit element*/
   for (i = 0; i < 32; i++)
   {
-#pragma HLS UNROLL
     for (j = 0; j < 8; j++)
     {
-#pragma HLS UNROLL
       roundconstant_expanded[i*8+j] =  (roundconstant[i] >> (7-j)) & 1;
     }
   }
@@ -946,7 +411,6 @@ void R8(uint4 stateIn[256], uint8 roundconstant[32], uint4 stateOut[256])
 
   for (i = 0; i < 256; i++)
   {
-#pragma HLS UNROLL
     if (roundconstant_expanded[i] == 1)
       stateTmp1[i] = sbox1[i];
     else
@@ -961,7 +425,6 @@ void R8(uint4 stateIn[256], uint8 roundconstant[32], uint4 stateOut[256])
   /*MDS Layer*/
    for (i = 0; i < 256; i=i+2)
    {
-#pragma HLS UNROLL
      L(stateTmp1[i], stateTmp1[i+1]);
    }
 
@@ -974,7 +437,6 @@ void R8(uint4 stateIn[256], uint8 roundconstant[32], uint4 stateOut[256])
   /*initial swap Pi_8*/
   for ( i = 0; i < 256; i=i+4)
   {
-#pragma HLS UNROLL
     stateTmp2[i+0] = stateTmp1[i+0];
     stateTmp2[i+1] = stateTmp1[i+1];
     stateTmp2[i+2] = stateTmp1[i+3];
@@ -984,7 +446,6 @@ void R8(uint4 stateIn[256], uint8 roundconstant[32], uint4 stateOut[256])
   /*permutation P'_8*/
   for (i = 0; i < 128; i=i+1)
   {
-#pragma HLS UNROLL
     stateTmp3[i] = stateTmp2[i<<1];
     stateTmp3[i+128] = stateTmp2[(i<<1)+1];
   }
@@ -992,7 +453,6 @@ void R8(uint4 stateIn[256], uint8 roundconstant[32], uint4 stateOut[256])
   /*final swap Phi_8*/
   for ( i = 128; i < 256; i=i+2)
   {
-#pragma HLS UNROLL
     // Hi
     stateOut[i-128]   = stateTmp3[i-128];
     stateOut[i-128+1] = stateTmp3[i-128+1];
@@ -1050,65 +510,17 @@ void getRoundConstant(uint8 round, uint8 roundconstant[32])
         {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
     };
 
-#pragma HLS INLINE
-#pragma HLS ARRAY_RESHAPE variable=roundconstant complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[0] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[1] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[2] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[3] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[4] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[5] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[6] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[7] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[8] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[9] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[10] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[11] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[12] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[13] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[14] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[15] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[16] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[17] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[18] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[19] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[20] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[21] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[22] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[23] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[24] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[25] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[26] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[27] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[28] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[29] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[30] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[31] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[32] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[33] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[34] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[35] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[36] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[37] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[38] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[39] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[40] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[41] complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=rc_rom[42] complete dim=1
-#pragma HLS RESOURCE variable=rc_rom core=ROM_1P_1S
 
   int i;
 
   for (i = 0; i < 32; i++)
   {
-#pragma HLS UNROLL
     roundconstant[i] = rc_rom[round][i];
   }
 }
 
 void jh(uint8 data[64], uint8 output[32], uint1 firstBlock, uint1 lastBlock)
 {
-#pragma HLS INTERFACE ap_hs port=output
   int i, j;
   uint8 round;
   static uint4 state[256];
@@ -1136,15 +548,6 @@ void jh(uint8 data[64], uint8 output[32], uint1 firstBlock, uint1 lastBlock)
   static uint8 roundconstant[32];
   uint8 roundconstantTmp[32];
 
-#pragma HLS ARRAY_RESHAPE variable=data complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=output complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=state complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=stateTmp complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=hash complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=hashIV complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=hashTmp complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=roundconstant complete dim=1
-#pragma HLS ARRAY_RESHAPE variable=roundconstantTmp complete dim=1
 
 #if DEBUG
   printf("--Hash State\n");
@@ -1159,12 +562,10 @@ void jh(uint8 data[64], uint8 output[32], uint1 firstBlock, uint1 lastBlock)
   {
     for (i = 0; i < 64; i++)
     {
-#pragma HLS UNROLL
       hashTmp[i] = data[i] ^ hashIV[i];
     }
     for (i = 64; i < 128; i++)
     {
-#pragma HLS UNROLL
       hashTmp[i] = hashIV[i];
     }
   }
@@ -1172,12 +573,10 @@ void jh(uint8 data[64], uint8 output[32], uint1 firstBlock, uint1 lastBlock)
   {
     for (i = 0; i < 64; i++)
     {
-#pragma HLS UNROLL
       hashTmp[i] = data[i] ^ hash[i];
     }
     for (i = 64; i < 128; i++)
     {
-#pragma HLS UNROLL
       hashTmp[i] = hash[i];
     }    
   }
@@ -1237,14 +636,12 @@ void jh(uint8 data[64], uint8 output[32], uint1 firstBlock, uint1 lastBlock)
     R8(state, roundconstant, stateTmp);
     getRoundConstant(round, roundconstantTmp);
 
-    for (i = 0; i < 256; i++)
+    for (i = 0; i < 32; i++)
     {
-#pragma HLS UNROLL
         roundconstant[i] = roundconstantTmp[i];
     }
     for (i = 0; i < 256; i++)
     {
-#pragma HLS UNROLL
       state[i] = stateTmp[i];
     }
   }
@@ -1264,14 +661,12 @@ void jh(uint8 data[64], uint8 output[32], uint1 firstBlock, uint1 lastBlock)
   /*final swap Phi_8*/
   for (i = 64; i < 128; i++)
   {
-#pragma HLS UNROLL
     hashTmp[i] = data[i-64] ^ hashTmp[i];
   }
 
   /* Output data and new hash value */
   for (i = 0; i < 128; i++)
   {
-#pragma HLS UNROLL
     hash[i] = hashTmp[i];
   }
   
@@ -1283,7 +678,6 @@ void jh(uint8 data[64], uint8 output[32], uint1 firstBlock, uint1 lastBlock)
   if (lastBlock == 1)
     for (i = 96; i < 128; i++)
     {
-  #pragma HLS UNROLL
       output[i-96] = hashTmp[i];
     }
 }

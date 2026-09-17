@@ -112,7 +112,7 @@ class BenchmarkCase:
 
     @property
     def tb_file(self) -> Path:
-        tb_matches = [f for f in self.files if f.name.endswith("_tb.cpp")]
+        tb_matches = [f for f in self.files if f.stem.endswith("_tb")]
         if len(tb_matches) != 1:
             raise ValueError(f"Expected 1 _tb file, found {len(tb_matches)}")
         return tb_matches[0]

@@ -7,7 +7,10 @@ DIR_CURRENT = Path(__file__).parent
 
 DIR_OUTPUT_DATA = DIR_CURRENT / "output_data"
 
-CASE_NAME = "2mm__deepseek_deepseek_v4_flash"
+# CASE_NAME = "2mm__deepseek_deepseek_v4_flash"
+# hls_eval_experiments/hls_paramaterize_agent_pi/output_data/HLS_Keccak__deepseek_deepseek_v4_flash
+# CASE_NAME = "HLS_Keccak__deepseek_deepseek_v4_flash"
+CASE_NAME = "HLS_BLAKE__deepseek_deepseek_v4_flash"
 DIR_CASE = DIR_OUTPUT_DATA / CASE_NAME
 
 DIR_FIGURES = DIR_CURRENT / "figures"
@@ -128,7 +131,7 @@ def make_plot_for_case(dir_case: Path):
             ax.text(
                 point[resource_key],
                 point["latency"],
-                f'{pareto_data_baseline["latency"] / point["latency"]:.2f}x',
+                f"{pareto_data_baseline['latency'] / point['latency']:.2f}x",
                 fontsize=8,
                 verticalalignment="bottom",
                 horizontalalignment="right",
