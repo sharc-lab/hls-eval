@@ -44,50 +44,120 @@ PARETO_OBJECTIVES = (
 )
 
 
-def build_prompt_parameterization(
-    kernel_files: list[str],
-    top_function: str,
-    max_points: int,
-    hls_fpga_part: str,
-    hls_clock_period_ns: float,
-) -> str:
-    return f"""You are optimizing a complete, working HLS design in /workspace.
+def _prompt_section_intro() -> str:
+    return """You are optimizing a complete, working HLS design in /workspace.
 Read kernel_description.md, the source files, headers and testbench first.
+Your goal is to turn the kernel implementation into a Jinja template plus an
+explicit set of parameter assignments (design_space.jsonl), so that rendering
+each assignment yields a distinct, working hardware implementation. Together
+these implementations should trace out a useful latency/resource tradeoff
+frontier: some fast and large, some slow and small, and points in between."""
+
+
+def _prompt_section_io(kernel_files: list[str], max_points: int) -> str:
+    return f"""Input / output file layout:
 Modify only these existing kernel implementation files: {json.dumps(kernel_files)}.
 Create design_space.jsonl in /workspace. Preserve all other original files byte
 for byte, including every header, the testbench, input data and configuration.
-Scratch files may be created but are not included in the submitted design.
+Do not parameterize headers or the testbench. Scratch files may be created but
+are not included in the submitted design.
 
 Parameterize the kernel implementations using Jinja syntax: {{{{ factor }}}} for
-values and {{% if pipeline %}} ... {{% endif %}} for conditional code. Do not
-parameterize headers or the testbench. Each nonblank line of design_space.jsonl
-must be one JSON object containing a complete, explicit parameter assignment.
-Use string keys and finite string/number/boolean values, no arrays, nulls or nested
-objects. Submit between 2 and {max_points} distinct assignments, yielding at least
-two distinct fully rendered implementations. This is an explicit list of points,
-not a schema, ranges or a Cartesian-product specification. Every line is evaluated.
+values and {{% if pipeline %}} ... {{% endif %}} for conditional code. Each
+nonblank line of design_space.jsonl must be one JSON object containing a
+complete, explicit parameter assignment. Use string keys and finite
+string/number/boolean values, no arrays, nulls or nested objects. Submit
+between 2 and {max_points} distinct assignments, yielding at least two distinct
+fully rendered implementations. This is an explicit list of points, not a
+schema, ranges or a Cartesian-product specification. Every line is evaluated.
 For example, two lines might be:
 {{"unroll_factor": 1, "pipeline": false}}
 {{"unroll_factor": 4, "pipeline": true}}
 Every template variable must have a value; missing variables fail rendering.
 
+Validation strictly re-renders every point and fails it if the rendered source
+still contains a literal {{{{, {{%, or {{# anywhere, even inside a {{% raw %}}
+block. If your original C/C++ contains literal double braces (e.g. a nested
+array or struct initializer like {{{{0,1,2}}, {{3,4,5}}}}), do not rely on
+{{% raw %}} to protect it: wrapping it in raw only reproduces those literal
+braces verbatim, which still fails validation. Instead, either reformat the
+literal so no {{{{ substring appears in the rendered output (e.g. add a space:
+{{ {{0,1,2}}, {{3,4,5}} }}), or emit the brace explicitly with a Jinja expression,
+e.g. {{{{ '{{' }}}} renders to a single literal {{ character before validation
+ever sees it."""
+
+
+def _prompt_section_harness(vitis_available: bool) -> str:
+    tools = """Environment and tools available in /workspace:
+clang/clang++ and a standard build toolchain are installed for syntax checks
+and compiling/running the testbench yourself before submitting. `uv` is also
+preinstalled for any Python tooling you want: run one-off scripts with
+`uv run --with <package> script.py`, or set up a full environment with
+`uv venv` and `uv add <packages>`. Use it freely for automating checks,
+analysis, or modeling, not just template rendering (e.g. installing jinja2 to
+render and inspect your own templates before submitting)."""
+    if vitis_available:
+        vitis_note = """Vitis HLS (`vitis_hls`) is also available on PATH in this environment. You
+can run real csynth_design yourself on any rendered point to check whether it
+actually synthesizes, and to see its real latency/resource numbers, before
+you submit. Use this to catch synthesis-only failures and pathological
+pragma combinations (e.g. ones that make synthesis hang or take a very long
+time) that clang and the testbench alone cannot reveal."""
+    else:
+        vitis_note = """Vitis HLS is NOT available in this environment, so you cannot run
+csynth_design yourself. Self-validate only with clang syntax checks and by
+compiling/running the unchanged testbench; real synthesis is validated
+automatically by the harness after you submit (see Evaluation below), and you
+will not see those results. Because of this blind spot, avoid speculative or
+extreme pragma combinations you cannot reason about confidently (e.g. very
+large unroll/partition factors stacked together): they are more likely to
+time out or produce unbounded/unreported latency during the harness's real
+synthesis, which silently removes that point from the Pareto frontier."""
+    return tools + "\n\n" + vitis_note
+
+
+def _prompt_section_optimization(top_function: str) -> str:
+    return f"""How to parameterize and optimize the design:
+You are not required to keep the original implementation's structure, for
+either the algorithm or its hardware architecture. You may restructure loops,
+change data flow, reorganize storage, or use a different algorithm entirely,
+as long as every rendered point stays functionally equivalent at the top-level
+interface: identical outputs for all valid inputs.
+
+The parameterization itself can be as complex as it needs to be: it does not
+have to be limited to toggling pragma values or factors on an otherwise fixed
+code skeleton. `{{% if %}}` blocks can select between substantially different
+code structures per point, including a different architecture from the
+baseline implementation, if that is what a given point's tradeoff needs.
+
+Seek many useful latency/resource tradeoffs through loop unrolling, pipelining,
+array partitioning/reshaping, storage binding and resource allocation, and
+through functionally equivalent algorithmic or architectural restructuring
+shared across the design space. Choose legal factors and compatible
+combinations. Aim for most submitted points to be distinct, nondominated
+hardware tradeoffs and improve the entire frontier, including its fast and
+small endpoints, relative to the original design. Duplicate renderings or
+identical measured outcomes do not add tradeoff diversity. The baseline,
+unparameterized design is itself measured as a reference point. The goal is
+for the baseline to never end up as the sole point on the Pareto front: it
+should either be dominated by at least one of your points, or sit on the
+frontier alongside several of your points, not stand alone as the only
+nondominated tradeoff.
+
 Preserve the exact top function {top_function!r}, its linkage, parameter and return
 types, port/interface pragmas and behavior for all valid inputs at EVERY point.
 Do not change dimensions, numerical precision, arithmetic semantics or output
 values to obtain a speedup. Do not bypass the testbench or specialize on its data.
-Do not use simulation/synthesis conditionals to implement different behavior.
+Do not use simulation/synthesis conditionals to implement different behavior."""
 
-Seek many useful latency/resource tradeoffs through loop unrolling, pipelining,
-array partitioning/reshaping, storage binding and resource allocation, and through
-functionally equivalent algorithmic improvements shared across the design space.
-Choose legal factors and compatible combinations. Aim for most submitted points
-to be distinct, nondominated hardware tradeoffs and improve the entire frontier,
-including its fast and small endpoints, relative to the original design. Duplicate
-renderings or identical measured outcomes do not add tradeoff diversity.
 
-Validation renders each point, checks Clang C++ syntax and the original top
-signature, compiles and runs the unchanged testbench, and runs Vitis HLS
-csynth_design for each rendered point. The target is {hls_fpga_part} with a
+def _prompt_section_evaluation(hls_fpga_part: str, hls_clock_period_ns: float) -> str:
+    return f"""How this will be evaluated after you finish:
+Validation renders each point, checks Clang C++ syntax (with
+`-Wno-unknown-pragmas`, no `-Werror`, so HLS pragmas and unused helper code do
+not themselves cause syntax failures) and the original top signature, compiles
+and runs the unchanged testbench, and runs Vitis HLS csynth_design for each
+rendered point. The target is {hls_fpga_part} with a
 {hls_clock_period_ns} ns clock; unsafe math optimizations are enabled and Vitis
 HLS's own automatic optimizations (auto-pipelining, auto-unrolling, throughput-
 driven array partitioning) are disabled, so any latency/resource change must
@@ -96,8 +166,26 @@ objectives, all minimized, are worst-case latency in cycles and LUT, FF, DSP,
 BRAM and URAM usage. Missing/unknown metrics cannot enter the frontier. Failed
 points remain failures in the evaluation. Validate all points with available tools
 before finishing. Leave the kernel templates and design_space.jsonl as the final
-artifacts; do not replace the templates with one rendered variant.
-"""
+artifacts; do not replace the templates with one rendered variant."""
+
+
+def build_prompt_parameterization(
+    kernel_files: list[str],
+    top_function: str,
+    max_points: int,
+    hls_fpga_part: str,
+    hls_clock_period_ns: float,
+    *,
+    vitis_available: bool = False,
+) -> str:
+    sections = [
+        _prompt_section_intro(),
+        _prompt_section_io(kernel_files, max_points),
+        _prompt_section_harness(vitis_available),
+        _prompt_section_optimization(top_function),
+        _prompt_section_evaluation(hls_fpga_part, hls_clock_period_ns),
+    ]
+    return "\n\n".join(sections) + "\n"
 
 
 def _succeeded(output: ToolDataOutput | None) -> bool:
@@ -300,7 +388,7 @@ class HLSParameterizationAgentEvaluatorPi(HLSGenerationAgentEvaluatorPi):
         max_design_points: int = 8,
         compile_timeout: float = 120,
         csim_timeout: float = 120,
-        synth_timeout: float = 360,
+        synth_timeout: float = 60 * 8,
         hls_fpga_part: str = "xczu9eg-ffvb1156-2-e",
         hls_clock_period_ns: float = 5,
     ) -> None:
@@ -402,9 +490,7 @@ class HLSParameterizationAgentEvaluatorPi(HLSGenerationAgentEvaluatorPi):
         tb_path = design_dir / tb_file
         csim_sources = sorted(set(kernel_and_headers) | {tb_path})
         csim_aux = sorted(
-            p
-            for p in design_dir.rglob("*")
-            if p.is_file() and p not in csim_sources
+            p for p in design_dir.rglob("*") if p.is_file() and p not in csim_sources
         )
         build_dir = design_dir.parent / "build"
         csim_future = pools.pool_csim.submit(
@@ -585,9 +671,7 @@ class HLSParameterizationAgentEvaluatorPi(HLSGenerationAgentEvaluatorPi):
                 for source in rendered.values()
                 for marker in ("{{", "{%", "{#")
             ):
-                raise ValueError(
-                    "Unexpanded Jinja syntax remains in rendered sources"
-                )
+                raise ValueError("Unexpanded Jinja syntax remains in rendered sources")
             point["render_success"] = True
             digest = hashlib.sha256(
                 json.dumps(rendered, sort_keys=True).encode()
@@ -731,6 +815,7 @@ class HLSParameterizationAgentEvaluatorPi(HLSGenerationAgentEvaluatorPi):
             self.max_design_points,
             self.hls_fpga_part,
             self.hls_clock_period_ns,
+            vitis_available=self.vitis_dir is not None,
         )
         all_data = {}
         for sample_index in range(self.n_samples):

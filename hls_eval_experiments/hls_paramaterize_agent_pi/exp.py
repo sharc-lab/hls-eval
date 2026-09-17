@@ -34,7 +34,19 @@ if __name__ == "__main__":
         BenchmarkCase(d, name=d.name) for d in all_benchmark_case_dirs
     ]
 
-    sets_to_test = set(["athena_crypto"])
+    # sets_to_test = set(["athena_crypto"])
+
+    # full set of designss
+    # hls_eval_data_accel/athena_crypto
+    # hls_eval_data_accel/hls_polybench__fixed__small
+    # hls_eval_data_accel/llm4pqc_benchmarks
+    # hls_eval_data_accel/rodinia_clean
+    sets_to_test: set[str] = {
+        "athena_crypto",
+        "hls_polybench__fixed__small",
+        "llm4pqc_benchmarks",
+        "rodinia_clean",
+    }
 
     all_benchmark_cases = [
         bc
