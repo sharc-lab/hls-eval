@@ -5,10 +5,10 @@ description = "Benchmarking and evaluation of LLMs for HLS design"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "docker>=7.1.0",
-    "joblib>=1.5.3",
-    "llm>=0.28",
-    "llm-openrouter>=0.5",
+    "docker>=7.2.0",
+    "joblib>=1.6.0",
+    "llm>=0.35",
+    "llm-openrouter>=0.7.1",
     "llm-together>=0.4",
     "matplotlib>=3.10.8",
     "mini-swe-agent>=1.17.5",
@@ -26,7 +26,7 @@ dependencies = [
 
 [dependency-groups]
 # local_inference = ["vllm"]
-dev = ["mypy>=1.15.0", "pytest>=8.3.4", "pytest-xdist>=3.6.1", "ruff>=0.9.6"]
+dev = ["mypy>=2.3.1", "pytest>=8.3.4", "pytest-xdist>=3.6.1", "ruff>=0.9.6"]
 
 [tool.pytest.ini_options]
 log_cli = true

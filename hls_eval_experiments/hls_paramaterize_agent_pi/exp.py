@@ -4,7 +4,9 @@ from pathlib import Path
 from dotenv import dotenv_values
 
 from hls_eval.data import BenchmarkCase, find_benchmark_case_dirs
-from hls_eval.eval_agent_pi.eval_agent_pi import HLSGenerationAgentEvaluatorPi
+from hls_eval.eval_agent_pi.eval_agent_pi_paramaterized import (
+    HLSParameterizationAgentEvaluatorPi,
+)
 from hls_eval.llms import build_model_remote_openrouter
 from hls_eval.tools import VitisHLSCSimTool, VitisHLSSynthTool, auto_find_vitis_hls_dir
 from hls_eval.utils import check_key, unwrap
@@ -14,7 +16,7 @@ EXP_NAME = "hls_gen_agent"
 DIR_CURRENT = Path(__file__).resolve().parent
 DIR_ROOT = DIR_CURRENT.parent.parent
 
-DIR_HLS_EVAL_DATA = DIR_ROOT / "hls_eval_data"
+DIR_HLS_EVAL_DATA = DIR_ROOT / "hls_eval_data_accel"
 
 DIR_CURRENT_OUTPUT_DATA = DIR_CURRENT / "output_data"
 if not DIR_CURRENT_OUTPUT_DATA.exists():
@@ -32,8 +34,7 @@ if __name__ == "__main__":
         BenchmarkCase(d, name=d.name) for d in all_benchmark_case_dirs
     ]
 
-    # sets_to_test = set(["polybench", "machsuite", "chstone", "rosetta", "c2hlsc"])
-    sets_to_test = set(["polybench"])
+    sets_to_test = set(["polybench__fixed__small"])
 
     all_benchmark_cases = [
         bc
@@ -43,12 +44,9 @@ if __name__ == "__main__":
 
     all_benchmark_cases = sorted(all_benchmark_cases, key=lambda x: x.name)
 
-    all_benchmark_cases[:1]
+    all_benchmark_cases = all_benchmark_cases[:1]
 
-    model_names_to_test = [
-        # "openai/gpt-oss-120b",
-        "deepseek/deepseek-v4-flash"
-    ]
+    model_names_to_test = ["deepseek/deepseek-v4-flash"]
     models = [
         build_model_remote_openrouter(model_name, api_key=API_KEY_OPENROUTER)
         for model_name in model_names_to_test
@@ -59,12 +57,11 @@ if __name__ == "__main__":
 
     vitis_hls_dir = unwrap(auto_find_vitis_hls_dir(), "Vitis HLS bin not auto found")
 
-    evaluator = HLSGenerationAgentEvaluatorPi(
+    evaluator = HLSParameterizationAgentEvaluatorPi(
         vitis_hls_tool_csim=VitisHLSCSimTool(vitis_hls_dir),
         vitis_hls_tool_synth=VitisHLSSynthTool(vitis_hls_dir),
         output_data_dir=DIR_CURRENT_OUTPUT_DATA,
         n_samples=1,
-        vitis_dir=vitis_hls_dir,
     )
 
     benchmark_cases_filtered = all_benchmark_cases
@@ -73,9 +70,9 @@ if __name__ == "__main__":
     evaluator.evaluate_designs(
         benchmark_cases=benchmark_cases_filtered,
         models=models_filtered,
-        n_jobs=72,
-        n_jobs_pool_llm=72,
-        n_jobs_pool_agent=72,
-        n_jobs_pool_csim=72,
-        n_jobs_pool_synth=72,
+        n_jobs=32,
+        n_jobs_pool_llm=32,
+        n_jobs_pool_agent=32,
+        n_jobs_pool_csim=32,
+        n_jobs_pool_synth=32,
     )
