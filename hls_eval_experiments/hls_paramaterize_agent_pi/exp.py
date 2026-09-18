@@ -43,7 +43,7 @@ if __name__ == "__main__":
     # hls_eval_data_accel/rodinia_clean
     sets_to_test: set[str] = {
         "athena_crypto",
-        "hls_polybench__fixed__small",
+        "polybench__fixed__small",
         "llm4pqc_benchmarks",
         "rodinia_clean",
     }
@@ -82,9 +82,9 @@ if __name__ == "__main__":
     evaluator.evaluate_designs(
         benchmark_cases=benchmark_cases_filtered,
         models=models_filtered,
-        n_jobs=32,
-        n_jobs_pool_llm=32,
-        n_jobs_pool_agent=32,
-        n_jobs_pool_csim=32,
-        n_jobs_pool_synth=32,
+        n_jobs=64,
+        n_jobs_pool_llm=64,
+        n_jobs_pool_agent=64,
+        n_jobs_pool_csim=64,
+        n_jobs_pool_synth=64,
     )

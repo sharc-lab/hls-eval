@@ -1,4 +1,5 @@
 import json
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -10,8 +11,11 @@ DIR_OUTPUT_DATA = DIR_CURRENT / "output_data"
 
 DIR_FIGURES = DIR_CURRENT / "figures"
 
+# set matplotlib to use 'Agg' backend for headless environments
+plt.switch_backend("Agg")
 
-def make_plot_for_case(dir_case: Path):
+
+def make_plot_for_case(dir_case: Path, output_dir: Path):
     case_name = dir_case.name
     fp_all_eval_data_json = dir_case / "all_eval_data.json"
     eval_data = json.loads(fp_all_eval_data_json.read_text())
@@ -26,7 +30,8 @@ def make_plot_for_case(dir_case: Path):
 
     # assert baseline_point["passed"] is True
     if not baseline_point["passed"]:
-        raise ValueError(f"Baseline point did not pass for case {case_name}.")
+        # raise ValueError(f"Baseline point did not pass for case {case_name}.")
+        return
 
     pareto_data_baseline = {
         "latency": baseline_point["vitis_hls_tool_out"]["data_tool"][
@@ -77,6 +82,13 @@ def make_plot_for_case(dir_case: Path):
             ],
         }
         pareto_data_param.append(point_data)
+
+    # if any of the points have None latency return
+    if any(point["latency"] is None for point in pareto_data_param):
+        print(
+            f"Skipping case {case_name} because one or more points have None latency."
+        )
+        return
 
     resource_types = {
         "resources_lut_used": ("LUTs Used", "resources_lut_total"),
@@ -207,12 +219,16 @@ def make_plot_for_case(dir_case: Path):
                 legend_handle.set_markersize(6)
     fig.tight_layout()
 
-    if not DIR_FIGURES.exists():
-        DIR_FIGURES.mkdir()
+    # if not DIR_FIGURES.exists():
+    #     DIR_FIGURES.mkdir()
+    if not output_dir.exists():
+        output_dir.mkdir(parents=True, exist_ok=True)
 
     f_name = f"pareto_front__{case_name}.png"
-    fp_fig = DIR_FIGURES / f_name
+    fp_fig = output_dir / f_name
     fig.savefig(fp_fig, dpi=300)
+
+    plt.close(fig)
 
 
 if __name__ == "__main__":
@@ -233,6 +249,32 @@ if __name__ == "__main__":
 
         dir_cases_plot.append(dir_case)
 
-    for dir_case in dir_cases_plot:
+    # for dir_case in dir_cases_plot:
+    #     print(f"Making plot for case {dir_case.name}...")
+    #     make_plot_for_case(dir_case)
+
+    # parallel
+
+    if not DIR_FIGURES.exists():
+        DIR_FIGURES.mkdir(parents=True, exist_ok=True)
+
+    DIR_FIGURES_SINGLE = DIR_FIGURES / "single_agent_run_plots"
+
+    def job(dir_case):
         print(f"Making plot for case {dir_case.name}...")
-        make_plot_for_case(dir_case)
+        make_plot_for_case(dir_case, DIR_FIGURES_SINGLE)
+        return f"Done making plot for case {dir_case.name}"
+
+    N_JOBS = 32
+
+    with ProcessPoolExecutor(max_workers=N_JOBS) as executor:
+        futures = {
+            executor.submit(job, dir_case): dir_case for dir_case in dir_cases_plot
+        }
+        for future in as_completed(futures):
+            dir_case = futures[future]
+            try:
+                result = future.result()
+                print(result)
+            except Exception as e:
+                print(f"Error making plot for case {dir_case.name}: {e}")
