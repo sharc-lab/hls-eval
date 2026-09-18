@@ -12,8 +12,8 @@ from hls_eval.tools import VitisHLSCSimTool, VitisHLSSynthTool, auto_find_vitis_
 from hls_eval.utils import check_key, unwrap
 
 EXP_NAME = "hls_decomp_zero_shot"
-# MODEL_NAME = "deepseek/deepseek-v4-flash"
-MODEL_NAME = "openai/gpt-oss-120b"
+MODEL_NAME = "deepseek/deepseek-v4-flash"
+# MODEL_NAME = "openai/gpt-oss-120b"
 K_SAMPLES = 1
 
 DIR_CURRENT = Path(__file__).resolve().parent
@@ -33,6 +33,11 @@ API_KEY_OPENROUTER = check_key(dotenv_values(".env")["OPENROUTER_API_KEY"])
 
 DESIGNS_TO_RUN: None | list[str] = [
     "2mm",
+    "gemm",
+    "atax",
+    "mvt",
+    "trisolv",
+    "jacobi-1d",
 ]
 
 
