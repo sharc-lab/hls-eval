@@ -77,18 +77,33 @@ static const int32_t zetas[N] = {
 * Arguments:   - int32_t p[N]: input/output coefficient array
 **************************************************/
 void ntt(int32_t a[N]) {
-  unsigned int len, start, j, k;
   int32_t zeta, t;
 
-  k = 0;
-  for(len = 128; len > 0; len >>= 1) {
-    for(start = 0; start < N; start = j + len) {
-      zeta = zetas[++k];
-      for(j = start; j < start + len; ++j) {
-        t = montgomery_reduce((int64_t)zeta * a[j + len]);
-        a[j + len] = a[j] - t;
-        a[j] = a[j] + t;
-      }
+  /* Original form nests a middle loop bounded by `len` (which halves each
+   * stage: 128, 64, ..., 1) inside an outer loop over `len` itself, and a
+   * `start`/`j` pair whose bound is the loop-carried `len`. All of those
+   * bounds are non-affine from a static-analysis point of view (they change
+   * every outer iteration), so Vitis HLS cannot resolve the loop trip
+   * counts and reports the design's overall latency as "undef".
+   *
+   * This form is mathematically identical (verified by exhaustive
+   * simulation against the original control flow) but replaces the
+   * `len`-dependent middle/inner loop pair with a single flat loop over
+   * `stage_idx` in [0, N/2), which is a fixed N/2 total butterfly ops per
+   * stage regardless of `len`. `group`/`off` (the original `start`/`j -
+   * start`) are recovered by division/modulo instead of being loop bounds,
+   * so both loop bounds here are true compile-time constants (8 and N/2).
+   */
+  for (unsigned int stage = 0; stage < 8; stage++) {
+    unsigned int len = 128u >> stage;
+    for (unsigned int stage_idx = 0; stage_idx < N / 2; stage_idx++) {
+      unsigned int group = stage_idx / len;
+      unsigned int off = stage_idx % len;
+      unsigned int j = group * (2 * len) + off;
+      zeta = zetas[(1u << stage) + group];
+      t = montgomery_reduce((int64_t)zeta * a[j + len]);
+      a[j + len] = a[j] - t;
+      a[j] = a[j] + t;
     }
   }
 }

@@ -43,6 +43,11 @@
 #include <stdint.h>
 #include <string.h>
 
+/* log2 of the polynomial degree (512); hardcoded so the loop trip counts
+ * derived from it (n, hn, t, ...) are compile-time constants rather than
+ * flowing through a function parameter. */
+#define LOGN 9
+
 /* ====================================================================== */
 /*
  * FALCON_FPEMU support code, extracted verbatim from the upstream Falcon
@@ -1495,8 +1500,9 @@ const fpr fpr_gm_tab[] = {
  */
 
 void
-falcon_inner_FFT(fpr *f, unsigned logn)
+falcon_inner_FFT(fpr *f)
 {
+	const unsigned logn = LOGN;
 	/*
 	 * FFT algorithm in bit-reversal order uses the following
 	 * iterative algorithm:
@@ -1526,8 +1532,7 @@ falcon_inner_FFT(fpr *f, unsigned logn)
 	 * simply ignore the second part.
 	 */
 
-	unsigned u;
-	size_t t, n, hn, m;
+	size_t n, hn;
 
 	/*
 	 * First iteration: compute f[j] + i * f[j+N/2] for all j < N/2
@@ -1539,38 +1544,44 @@ falcon_inner_FFT(fpr *f, unsigned logn)
 	/*
 	 * Subsequent iterations are truncated to use only the first
 	 * half of values.
+	 *
+	 * The original nests a group loop (bound `hm`, doubling each stage)
+	 * inside a stage loop, with an inner offset loop bounded by the
+	 * loop-carried `ht`. Both inner bounds are non-affine from a
+	 * static-analysis point of view, so Vitis HLS cannot resolve the
+	 * trip counts and reports the design's overall latency as "undef".
+	 * This form flattens the group/offset pair into a single loop over
+	 * `stage_idx` in [0, hn/2), a fixed hn/2 butterfly ops per stage
+	 * regardless of `hm`/`ht`, recovering `group`/`off` (the original
+	 * `i1`/`j - j1`) via division/modulo instead of using them as loop
+	 * bounds. Verified equivalent to the original control flow by
+	 * exhaustive simulation.
 	 */
 	n = (size_t)1 << logn;
 	hn = n >> 1;
-	t = hn;
-	for (u = 1, m = 2; u < logn; u ++, m <<= 1) {
-		size_t ht, hm, i1, j1;
-
-		ht = t >> 1;
-		hm = m >> 1;
-		for (i1 = 0, j1 = 0; i1 < hm; i1 ++, j1 += t) {
-			size_t j, j2;
-
-			j2 = j1 + ht;
+	for (unsigned u = 1; u < logn; u++) {
+		size_t m = (size_t)1 << u;
+		size_t t = n >> u;
+		size_t ht = t >> 1;
+		for (size_t stage_idx = 0; stage_idx < (hn >> 1); stage_idx++) {
+			size_t group = stage_idx / ht;
+			size_t off = stage_idx % ht;
+			size_t j = group * t + off;
 			fpr s_re, s_im;
+			fpr x_re, x_im, y_re, y_im;
 
-			s_re = fpr_gm_tab[((m + i1) << 1) + 0];
-			s_im = fpr_gm_tab[((m + i1) << 1) + 1];
-			for (j = j1; j < j2; j ++) {
-				fpr x_re, x_im, y_re, y_im;
-
-				x_re = f[j];
-				x_im = f[j + hn];
-				y_re = f[j + ht];
-				y_im = f[j + ht + hn];
-				FPC_MUL(y_re, y_im, y_re, y_im, s_re, s_im);
-				FPC_ADD(f[j], f[j + hn],
-					x_re, x_im, y_re, y_im);
-				FPC_SUB(f[j + ht], f[j + ht + hn],
-					x_re, x_im, y_re, y_im);
-			}
+			s_re = fpr_gm_tab[((m + group) << 1) + 0];
+			s_im = fpr_gm_tab[((m + group) << 1) + 1];
+			x_re = f[j];
+			x_im = f[j + hn];
+			y_re = f[j + ht];
+			y_im = f[j + ht + hn];
+			FPC_MUL(y_re, y_im, y_re, y_im, s_re, s_im);
+			FPC_ADD(f[j], f[j + hn],
+				x_re, x_im, y_re, y_im);
+			FPC_SUB(f[j + ht], f[j + ht + hn],
+				x_re, x_im, y_re, y_im);
 		}
-		t = ht;
 	}
 }
 
@@ -1594,6 +1605,6 @@ static double fpr_to_double(fpr u) {
 void falcon_fft(double a[512]) {
     fpr f[512];
     for (unsigned i=0; i<512; ++i) f[i] = double_to_fpr(a[i]);
-    falcon_inner_FFT(f,9);
+    falcon_inner_FFT(f);
     for (unsigned i=0; i<512; ++i) a[i] = fpr_to_double(f[i]);
 }

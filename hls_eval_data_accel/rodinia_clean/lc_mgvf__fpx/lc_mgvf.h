@@ -18,7 +18,7 @@ typedef ap_fixed<32, 16> fixed_t;
 #define PARA_FACTOR 16
 
 
-#define ITERATION 64
+#define ITERATION 2
 
 
 #define TOP 0

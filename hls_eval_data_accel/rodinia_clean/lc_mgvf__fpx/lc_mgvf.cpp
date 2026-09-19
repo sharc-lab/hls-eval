@@ -1,7 +1,11 @@
 #include"lc_mgvf.h"
 
-extern "C" {
-
+/* heaviside() and lc_mgvf() return `fixed_t` (ap_fixed<32,16>, a C++ class
+ * type) by value, which is ill-formed under C linkage ("has C-linkage
+ * specified, but returns user-defined type ... which is incompatible with
+ * C"). They are only ever called from within this translation unit, so
+ * they don't need C linkage; only the top-level kernel entry point
+ * (workload) below does. */
 fixed_t heaviside(fixed_t x) {
     // A simpler, faster approximation of the Heaviside function
     fixed_t out = 0.0;
@@ -39,8 +43,19 @@ fixed_t lc_mgvf(fixed_t result[GRID_ROWS * GRID_COLS], fixed_t imgvf[GRID_ROWS *
         }
     }
 
-    return (total_diff / (fixed_t)(GRID_ROWS * GRID_COLS));
+    /* GRID_ROWS*GRID_COLS = 1,048,576 does not fit in fixed_t's 16-bit
+     * integer part (max ~32767); casting it directly to fixed_t wraps to
+     * exactly 0 (1,048,576 is a multiple of 65536), causing a
+     * divide-by-zero. Do the division in a wider fixed-point type with
+     * enough integer bits to hold the count exactly, then cast the
+     * (small, well-bounded) result back down to fixed_t. */
+    typedef ap_fixed<48, 32> wide_fixed_t;
+    wide_fixed_t wide_total_diff = total_diff;
+    wide_fixed_t wide_count = (wide_fixed_t)(GRID_ROWS * GRID_COLS);
+    return (fixed_t)(wide_total_diff / wide_count);
 }
+
+extern "C" {
 
 void workload(fixed_t result[GRID_ROWS * GRID_COLS], fixed_t imgvf[GRID_ROWS * GRID_COLS], fixed_t I[GRID_ROWS * GRID_COLS])
 {

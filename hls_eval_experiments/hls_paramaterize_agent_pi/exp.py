@@ -42,10 +42,10 @@ if __name__ == "__main__":
     # hls_eval_data_accel/llm4pqc_benchmarks
     # hls_eval_data_accel/rodinia_clean
     sets_to_test: set[str] = {
-        "athena_crypto",
-        "polybench__fixed__small",
+        # "athena_crypto",
+        # "polybench__fixed__small",
         "llm4pqc_benchmarks",
-        "rodinia_clean",
+        # "rodinia_clean",
     }
 
     all_benchmark_cases = [

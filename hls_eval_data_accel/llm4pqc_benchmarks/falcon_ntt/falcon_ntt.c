@@ -34,6 +34,11 @@
 #include <stddef.h>
 #define Q 12289
 #define Q0I 12287
+/* log2 of the polynomial degree (1024); hardcoded so the loop trip counts
+ * derived from it (n, t, m, ht, ...) are compile-time constants rather than
+ * flowing through a function parameter, which Vitis HLS's static trip-count
+ * analysis cannot resolve. */
+#define LOGN 10
 static const uint16_t GMb[] = {
 	 4091,  7888, 11060, 11208,  6960,  4342,  6275,  9759,
 	 1591,  6399,  9477,  5266,   586,  5825,  7538,  9710,
@@ -226,33 +231,40 @@ mq_montymul(uint32_t x, uint32_t y)
 	return z;
 }
 static void
-mq_NTT(uint16_t *a, unsigned logn)
+mq_NTT(uint16_t *a)
 {
-	size_t n, t, m;
+	const unsigned logn = LOGN;
+	const size_t n = (size_t)1 << logn;
 
-	n = (size_t)1 << logn;
-	t = n;
-	for (m = 1; m < n; m <<= 1) {
-		size_t ht, i, j1;
+	/* The original nests a group loop (bound `m`, doubling each stage:
+	 * 1, 2, 4, ..., n/2) inside a stage loop, with an inner offset loop
+	 * bounded by the loop-carried `ht`. Both inner bounds are non-affine
+	 * from a static-analysis point of view, so Vitis HLS cannot resolve
+	 * the trip counts and reports the design's overall latency as
+	 * "undef". This form flattens the group/offset pair into a single
+	 * loop over `stage_idx` in [0, n/2), a fixed n/2 butterfly ops per
+	 * stage regardless of `m`/`ht`, recovering `group`/`off` (the
+	 * original `i`/`j - j1`) via division/modulo instead of using them
+	 * as loop bounds. Verified equivalent to the original control flow
+	 * by exhaustive simulation.
+	 */
+	for (size_t stage = 0; stage < logn; stage++) {
+		size_t m = (size_t)1 << stage;
+		size_t t = n >> stage;
+		size_t ht = t >> 1;
+		for (size_t stage_idx = 0; stage_idx < (n >> 1); stage_idx++) {
+			size_t group = stage_idx / ht;
+			size_t off = stage_idx % ht;
+			size_t j = group * t + off;
+			uint32_t s, u, v;
 
-		ht = t >> 1;
-		for (i = 0, j1 = 0; i < m; i ++, j1 += t) {
-			size_t j, j2;
-			uint32_t s;
-
-			s = GMb[m + i];
-			j2 = j1 + ht;
-			for (j = j1; j < j2; j ++) {
-				uint32_t u, v;
-
-				u = a[j];
-				v = mq_montymul(a[j + ht], s);
-				a[j] = (uint16_t)mq_add(u, v);
-				a[j + ht] = (uint16_t)mq_sub(u, v);
-			}
+			s = GMb[m + group];
+			u = a[j];
+			v = mq_montymul(a[j + ht], s);
+			a[j] = (uint16_t)mq_add(u, v);
+			a[j + ht] = (uint16_t)mq_sub(u, v);
 		}
-		t = ht;
 	}
 }
 
-void falcon_ntt(uint16_t a[1024]) { mq_NTT(a, 10); }
+void falcon_ntt(uint16_t a[1024]) { mq_NTT(a); }

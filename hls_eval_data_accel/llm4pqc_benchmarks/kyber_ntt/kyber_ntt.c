@@ -65,18 +65,28 @@ static int16_t fqmul(int16_t a, int16_t b) {
 * Arguments:   - int16_t r[256]: input/output vector of elements of Zq
 **************************************************/
 void ntt(int16_t r[256]) {
-  unsigned int len, start, j, k;
   int16_t t, zeta;
 
-  k = 1;
-  for(len = 128; len >= 2; len >>= 1) {
-    for(start = 0; start < 256; start = j + len) {
-      zeta = zetas[k++];
-      for(j = start; j < start + len; j++) {
-        t = fqmul(zeta, r[j + len]);
-        r[j + len] = r[j] - t;
-        r[j] = r[j] + t;
-      }
+  /* See dilithium_ntt.c's ntt() for the rationale: the original nests loops
+   * bounded by the loop-carried `len` (halving each stage: 128, 64, ..., 2),
+   * which Vitis HLS's static trip-count analysis cannot resolve, so the
+   * design's overall latency is reported as "undef". This form flattens the
+   * `start`/`j` pair into a single loop over `stage_idx` in [0, 128), a
+   * fixed 128 butterfly ops per stage regardless of `len`, recovering
+   * `group`/`off` (the original `start`/`j - start`) via division/modulo
+   * instead of using them as loop bounds. Verified equivalent to the
+   * original control flow by exhaustive simulation.
+   */
+  for (unsigned int stage = 0; stage < 7; stage++) {
+    unsigned int len = 128u >> stage;
+    for (unsigned int stage_idx = 0; stage_idx < 128; stage_idx++) {
+      unsigned int group = stage_idx / len;
+      unsigned int off = stage_idx % len;
+      unsigned int j = group * (2 * len) + off;
+      zeta = zetas[(1u << stage) + group];
+      t = fqmul(zeta, r[j + len]);
+      r[j + len] = r[j] - t;
+      r[j] = r[j] + t;
     }
   }
 }

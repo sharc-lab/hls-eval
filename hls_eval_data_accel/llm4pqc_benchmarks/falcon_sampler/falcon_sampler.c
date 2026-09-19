@@ -948,7 +948,7 @@ falcon_inner_sampler(void *ctx, fpr mu, fpr isigma)
 	int s;
 	fpr r, dss, ccs;
 
-	spc = ctx;
+	spc = (sampler_context *)ctx;
 
 	/*
 	 * Center is mu. We compute mu = s + r where s is an integer

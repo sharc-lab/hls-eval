@@ -908,3 +908,6 @@ class HLSParameterizationAgentEvaluatorPi(HLSGenerationAgentEvaluatorPi):
             serialize_eval_data(eval_id, eval_dir, data)
             all_data[sample_index] = data
         (eval_top / "all_eval_data.json").write_text(json.dumps(all_data, indent=4))
+
+
+class HLSParameterizationIteratativeAgentEvaluatorPi(HLSGenerationAgentEvaluatorPi): ...

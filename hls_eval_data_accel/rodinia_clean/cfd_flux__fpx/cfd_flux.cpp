@@ -1,8 +1,10 @@
 #include"cfd_flux.h"
 
-extern "C" {
-
-
+/* These helpers return `fixed_t` (ap_fixed<32,16>, a C++ class type) by
+ * value, which is ill-formed under C linkage ("has C-linkage specified,
+ * but returns user-defined type ... which is incompatible with C"). They
+ * are only ever called from within this translation unit, so they don't
+ * need C linkage; only the top-level kernel entry point below does. */
 inline void compute_velocity(fixed_t& density, float3& momentum, float3& velocity)
 {
 	velocity.x = momentum.x / density;
@@ -24,6 +26,8 @@ inline fixed_t compute_speed_of_sound(fixed_t& density, fixed_t& pressure)
 {
 	return fixed_t(sqrt((double)(fixed_t(GAMMA)*pressure / density)));
 }
+
+extern "C" {
 
 
 
