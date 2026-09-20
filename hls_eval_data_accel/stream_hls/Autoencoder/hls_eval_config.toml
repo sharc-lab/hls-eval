@@ -1,0 +1,17 @@
+tags = ["stream_hls"]
+tb_data = [
+    "input_0.bin",
+    "output_0.bin",
+    "weight.bin",
+    "weight_1.bin",
+    "weight_10.bin",
+    "weight_11.bin",
+    "weight_2.bin",
+    "weight_3.bin",
+    "weight_4.bin",
+    "weight_5.bin",
+    "weight_6.bin",
+    "weight_7.bin",
+    "weight_8.bin",
+    "weight_9.bin",
+]

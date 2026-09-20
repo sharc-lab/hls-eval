@@ -30,6 +30,36 @@ LIMIT_KEYWORDS = (
     "429",
 )
 
+# OpenRouter models missing from pi's built-in registry. Pi silently falls back
+# to a default model (moonshotai/kimi-k2.6, 16K max output) for unknown IDs, so
+# each one is merged into the openrouter provider through a models.json.
+# Pricing is the peak rate, so cost is an upper bound.
+PI_CUSTOM_MODEL_THINKING_LEVEL = "high"
+PI_AGENT_DIR_CONTAINER = f"{CONTAINER_WORKDIR}/.pi/agent"
+PI_CUSTOM_OPENROUTER_MODELS: dict[str, dict[str, Any]] = {
+    "deepseek/deepseek-v4.1-flash": {
+        "id": "deepseek/deepseek-v4.1-flash",
+        "name": "DeepSeek: DeepSeek V4.1 Flash",
+        "api": "openai-completions",
+        "reasoning": True,
+        "thinkingLevelMap": {
+            "minimal": None,
+            "low": None,
+            "medium": None,
+            "high": "high",
+            "xhigh": "max",
+        },
+        "input": ["text"],
+        "contextWindow": 1048576,
+        "maxTokens": 384000,
+        "compat": {
+            "requiresReasoningContentOnAssistantMessages": True,
+            "thinkingFormat": "deepseek",
+        },
+        "cost": {"input": 0.30, "output": 1.20, "cacheRead": 0.006, "cacheWrite": 0},
+    },
+}
+
 
 @dataclass
 class PiAgentRunResult:
@@ -53,11 +83,34 @@ def setup_pi_config(agent_run_dir: Path, model_name: str) -> Path:
         "defaultModel": model_name,
         "sessionDir": ".pi/sessions",
     }
+    custom_model = PI_CUSTOM_OPENROUTER_MODELS.get(model_name)
+    if custom_model is not None:
+        pi_settings["defaultThinkingLevel"] = PI_CUSTOM_MODEL_THINKING_LEVEL
     (dir_pi_config / "settings.json").write_text(json.dumps(pi_settings, indent=4))
 
     os.chmod(dir_pi_config, 0o777)
     os.chmod(dir_sessions, 0o777)
+
+    if custom_model is not None:
+        # pi only reads models.json from its agent dir (~/.pi/agent or
+        # $PI_CODING_AGENT_DIR), not from the project-level .pi directory.
+        dir_pi_agent = dir_pi_config / "agent"
+        dir_pi_agent.mkdir(exist_ok=True)
+        models = {"providers": {"openrouter": {"models": [custom_model]}}}
+        (dir_pi_agent / "models.json").write_text(json.dumps(models, indent=4))
+        os.chmod(dir_pi_agent, 0o777)
     return dir_pi_config
+
+
+def _check_session_model(agent_trace: list[dict[str, Any]], model_name: str) -> None:
+    """Raise if pi ran a different model than requested (it silently falls back
+    to a default model when the requested ID is not in its registry)."""
+    used = [e.get("modelId") for e in agent_trace if e.get("type") == "model_change"]
+    if used and any(model_id != model_name for model_id in used):
+        raise RuntimeError(
+            f"Pi ran model(s) {sorted(set(map(str, used)))} instead of the "
+            f"requested {model_name!r}; the ID is likely missing from pi's registry"
+        )
 
 
 def _detect_limit_exceeded(exit_code: int, output: str) -> bool:
@@ -111,9 +164,12 @@ def run_pi_agent(
 
         quoted_prompt = shlex.quote(prompt)
         agent_command = "with-vitis pi" if vitis else "pi"
+        agent_env = {"OPENROUTER_API_KEY": api_key}
+        if model_name in PI_CUSTOM_OPENROUTER_MODELS:
+            agent_env["PI_CODING_AGENT_DIR"] = PI_AGENT_DIR_CONTAINER
         exit_code, output_bytes = container.exec_run(
             ["sh", "-lc", f"umask 000 && {agent_command} -p {quoted_prompt}"],
-            environment={"OPENROUTER_API_KEY": api_key},
+            environment=agent_env,
             workdir=CONTAINER_WORKDIR,
         )
         output = (
@@ -129,6 +185,7 @@ def run_pi_agent(
 
         if session_file is not None:
             agent_trace = load_jsonl_text(session_file.read_text())
+            _check_session_model(agent_trace, model_name)
             session_html_file = session_file.with_suffix(".html")
             export_cmd = (
                 "umask 000 && pi --export "
