@@ -102,7 +102,8 @@ can run real csynth_design yourself on any rendered point to check whether it
 actually synthesizes, and to see its real latency/resource numbers, before
 you submit. Use this to catch synthesis-only failures and pathological
 pragma combinations (e.g. ones that make synthesis hang or take a very long
-time) that clang and the testbench alone cannot reveal."""
+time) that clang and the testbench alone cannot reveal; see Evaluation below
+for the exact per-point timeouts the harness enforces on csim and csynth."""
     else:
         vitis_note = """Vitis HLS is NOT available in this environment, so you cannot run
 csynth_design yourself. Self-validate only with clang syntax checks and by
@@ -111,8 +112,9 @@ automatically by the harness after you submit (see Evaluation below), and you
 will not see those results. Because of this blind spot, avoid speculative or
 extreme pragma combinations you cannot reason about confidently (e.g. very
 large unroll/partition factors stacked together): they are more likely to
-time out or produce unbounded/unreported latency during the harness's real
-synthesis, which silently removes that point from the Pareto frontier."""
+exceed the harness's synthesis timeout (see Evaluation below) or produce
+unbounded/unreported latency, which silently removes that point from the
+Pareto frontier."""
     return tools + "\n\n" + vitis_note
 
 
@@ -151,7 +153,12 @@ values to obtain a speedup. Do not bypass the testbench or specialize on its dat
 Do not use simulation/synthesis conditionals to implement different behavior."""
 
 
-def _prompt_section_evaluation(hls_fpga_part: str, hls_clock_period_ns: float) -> str:
+def _prompt_section_evaluation(
+    hls_fpga_part: str,
+    hls_clock_period_ns: float,
+    csim_timeout: float,
+    synth_timeout: float,
+) -> str:
     return f"""How this will be evaluated after you finish:
 Validation renders each point, checks Clang C++ syntax (with
 `-Wno-unknown-pragmas`, no `-Werror`, so HLS pragmas and unused helper code do
@@ -161,12 +168,51 @@ rendered point. The target is {hls_fpga_part} with a
 {hls_clock_period_ns} ns clock; unsafe math optimizations are enabled and Vitis
 HLS's own automatic optimizations (auto-pipelining, auto-unrolling, throughput-
 driven array partitioning) are disabled, so any latency/resource change must
-come from the pragmas and code structure you add explicitly. The Pareto
+come from the pragmas and code structure you add explicitly. Each point has a
+{csim_timeout:.0f}s timeout to compile and run the testbench (csim), and a
+separate {synth_timeout:.0f}s (~{synth_timeout / 60:.1f} min) timeout to run
+csynth_design; exceeding either timeout scores that point as a failure with no
+metrics, the same as a compile, runtime, or synthesis error. The Pareto
 objectives, all minimized, are worst-case latency in cycles and LUT, FF, DSP,
 BRAM and URAM usage. Missing/unknown metrics cannot enter the frontier. Failed
 points remain failures in the evaluation. Validate all points with available tools
 before finishing. Leave the kernel templates and design_space.jsonl as the final
 artifacts; do not replace the templates with one rendered variant."""
+
+
+def _prompt_section_iteration_refinement(previous_iteration_summary: str) -> str:
+    return f"""You are refining an existing parameterized HLS design in /workspace.
+A previous iteration already turned this kernel into a Jinja template plus a
+design_space.jsonl of explicit parameter assignments; both are already present
+here. Read kernel_description.md, the current templated source files, headers,
+testbench, and design_space.jsonl before changing anything, then read the
+summary of the previous iteration's evaluation results below.
+previous_design_artifacts/point__<index>/ (matching the point numbering in
+that summary) holds the raw vitis_hls.log from that point's csim and csynth
+runs, for every point that rendered in the previous iteration, whether it
+passed or not; check these logs directly when you need more detail than the
+summary gives, e.g. the exact synthesis error, timeout, or the diagnostic
+behind an UNDETERMINED latency.
+
+Your job is to refine and improve this existing parameterized design, not to
+start over from the unparameterized kernel. You may edit the templates, add,
+remove or change template parameters, and rewrite design_space.jsonl, as long
+as every point still renders to a distinct, functionally equivalent, working
+implementation.
+
+Improve on the previous iteration along these objectives:
+- Strengthen the Pareto frontier: push points to dominate or match the best
+  latency/resource tradeoffs from the previous iteration; do not regress
+  points that were already on the frontier.
+- Broaden the resource-usage range the frontier covers, from very low
+  resource usage up to at or slightly above 100% of the target device's
+  available resources (resource usage percentages are included in the
+  summary below).
+- Spread submitted points as evenly as possible across the achievable
+  latency/resource range, so the resulting design scales well across
+  different resource budgets, rather than clustering points together.
+
+{previous_iteration_summary}"""
 
 
 def build_prompt_parameterization(
@@ -175,15 +221,20 @@ def build_prompt_parameterization(
     max_points: int,
     hls_fpga_part: str,
     hls_clock_period_ns: float,
+    csim_timeout: float,
+    synth_timeout: float,
     *,
     vitis_available: bool = False,
+    iteration_section: str | None = None,
 ) -> str:
     sections = [
-        _prompt_section_intro(),
+        iteration_section if iteration_section is not None else _prompt_section_intro(),
         _prompt_section_io(kernel_files, max_points),
         _prompt_section_harness(vitis_available),
         _prompt_section_optimization(top_function),
-        _prompt_section_evaluation(hls_fpga_part, hls_clock_period_ns),
+        _prompt_section_evaluation(
+            hls_fpga_part, hls_clock_period_ns, csim_timeout, synth_timeout
+        ),
     ]
     return "\n\n".join(sections) + "\n"
 
@@ -357,6 +408,246 @@ def summarize_design_space(points: list[dict], baseline: dict) -> dict:
         if baseline_values
         else [],
     }
+
+
+def _format_point_metrics(point: dict) -> str | None:
+    metrics = point.get("vitis_hls_tool_out", {}).get("data_tool") or {}
+    if not metrics:
+        return None
+    parts = []
+    latency = metrics.get("latency_worst_cycles")
+    if isinstance(latency, (int, float)) and not isinstance(latency, bool):
+        parts.append(f"latency={latency} cycles")
+    for label, used_key, frac_key in (
+        ("LUT", "resources_lut_used", "resources_lut_fraction_used"),
+        ("FF", "resources_ff_used", "resources_ff_fraction_used"),
+        ("DSP", "resources_dsp_used", "resources_dsp_fraction_used"),
+        ("BRAM", "resources_bram_used", "resources_bram_fraction_used"),
+        ("URAM", "resources_uram_used", "resources_uram_fraction_used"),
+    ):
+        used = metrics.get(used_key)
+        if used is None:
+            continue
+        fraction = metrics.get(frac_key)
+        if isinstance(fraction, (int, float)):
+            parts.append(f"{label}={used} ({fraction * 100:.1f}% of device)")
+        else:
+            parts.append(f"{label}={used}")
+    return ", ".join(parts) if parts else None
+
+
+def _stage_failure_reason(tool_output: dict | None) -> str | None:
+    """Distinguish a timeout from a plain nonzero exit for a failed stage."""
+    if not tool_output:
+        return None
+    execution = tool_output.get("data_execution") or {}
+    if execution.get("timeout"):
+        return "timed out"
+    return_code = execution.get("return_code")
+    if return_code not in (None, 0):
+        return f"exited with code {return_code}"
+    return None
+
+
+def _csim_failure_reason(point: dict) -> str | None:
+    if point.get("testbench_passed"):
+        return None
+    if not point.get("compile_passed"):
+        return _stage_failure_reason(point.get("c_compile_out")) or "compile failed"
+    return _stage_failure_reason(point.get("c_run_out")) or "testbench run failed"
+
+
+def _csynth_failure_reason(point: dict) -> str | None:
+    if point.get("synthesis_passed"):
+        return None
+    return _stage_failure_reason(point.get("vitis_hls_tool_out")) or "synthesis failed"
+
+
+def _undetermined_objective_reason(point: dict) -> str | None:
+    """A point that otherwise passed (csim, csynth, signature) but whose Pareto
+    objective values are not all usable numbers, most commonly because Vitis
+    reported an undefined worst-case latency for a loop with a data-dependent
+    trip count. Such a point is not a failure, but it cannot be scored."""
+    if not point.get("passed") or _objective_values(point) is not None:
+        return None
+    metrics = point.get("vitis_hls_tool_out", {}).get("data_tool") or {}
+    if metrics.get("latency_worst_cycles") is None:
+        return (
+            "worst-case latency UNDETERMINED (Vitis reported it as undefined, "
+            "often caused by a loop with a data-dependent/variable trip count)"
+        )
+    bad = [
+        key
+        for key in PARETO_OBJECTIVES
+        if not (
+            isinstance(metrics.get(key), (int, float))
+            and not isinstance(metrics.get(key), bool)
+            and math.isfinite(metrics.get(key))
+            and metrics.get(key) >= 0
+        )
+    ]
+    return f"UNDETERMINED objective metric(s): {', '.join(bad) or 'unknown'}"
+
+
+def _collect_point_artifacts(
+    iter_dir: Path, agent_dir: Path, points: list[dict]
+) -> None:
+    """Carry each rendered point's raw vitis_hls.log files (csim and csynth,
+    whether that point passed or not) forward into agent_dir, under
+    previous_design_artifacts/point__<index>/, so the next iteration's agent
+    starts with them already in its workspace. Only the plain logs are kept,
+    not the full *.rpt report directories."""
+    for point in points:
+        if not point.get("render_success"):
+            continue
+        index = point["point_index"]
+        point_build_dir = iter_dir / "points" / f"point__{index}" / "build"
+        csim_log = point_build_dir / "vitis_hls_csim_tool__variant" / "vitis_hls.log"
+        synth_log = (
+            point_build_dir / "vitis_hls_synth_tool__variant" / "vitis_hls.log"
+        )
+        if not csim_log.is_file() and not synth_log.is_file():
+            continue
+        point_artifacts_dir = (
+            agent_dir / "previous_design_artifacts" / f"point__{index}"
+        )
+        point_artifacts_dir.mkdir(parents=True, exist_ok=True)
+        if csim_log.is_file():
+            shutil.copy(csim_log, point_artifacts_dir / "vitis_hls_csim.log")
+        if synth_log.is_file():
+            shutil.copy(synth_log, point_artifacts_dir / "vitis_hls_synth.log")
+
+
+def _format_previous_iteration_summary(iteration: dict) -> str:
+    lines = ["Summary of the previous iteration:"]
+    if not iteration.get("agent_submitted"):
+        lines.append(
+            "- The agent did not successfully submit a design in the previous "
+            "iteration (it may have hit an error or a usage limit); the design "
+            "here is whatever it left behind."
+        )
+        return "\n".join(lines)
+
+    protected = iteration.get("modified_protected_files") or []
+    lines.append(
+        "- Protected-file check (original files besides the kernel templates "
+        "and design_space.jsonl must be untouched): "
+        + ("passed" if not protected else f"FAILED, modified: {', '.join(protected)}")
+    )
+    can_parse = iteration.get("can_parse_output", False)
+    lines.append(
+        "- Parameterization check (kernel templates and design_space.jsonl "
+        "found and parsed): "
+        + (
+            "passed"
+            if can_parse
+            else "FAILED" + (
+                f": {iteration['submission_error']}"
+                if iteration.get("submission_error")
+                else ""
+            )
+        )
+    )
+
+    points = iteration.get("points") or []
+    summary = iteration.get("summary")
+    if summary is not None:
+        n_points = summary["n_points"]
+        n_signature_passed = sum(1 for p in points if p.get("interface_preserved"))
+        n_syntax_passed = sum(1 for p in points if p.get("clang_syntax_passed"))
+        n_csim_passed = sum(1 for p in points if p.get("testbench_passed"))
+        n_csynth_passed = sum(1 for p in points if p.get("synthesis_passed"))
+        lines.append(
+            f"- Design-point sampling: {n_points} points submitted, "
+            f"{summary['n_rendered']} rendered, {summary['n_unique_renderings']} "
+            "distinct renderings."
+        )
+        lines.append(
+            "- Stage pass counts across sampled points: "
+            f"signature check {n_signature_passed}/{n_points}, "
+            f"clang syntax {n_syntax_passed}/{n_points}, "
+            f"csim {n_csim_passed}/{n_points}, "
+            f"csynth {n_csynth_passed}/{n_points}, "
+            f"fully passed {summary['n_passed']}/{n_points}."
+        )
+        if summary["n_metric_eligible"] < summary["n_passed"]:
+            lines.append(
+                f"- Of the {summary['n_passed']} fully-passed points, only "
+                f"{summary['n_metric_eligible']} have usable objective metrics "
+                "and are eligible for Pareto scoring; the rest passed csim and "
+                "csynth but have an undetermined objective metric (see below) "
+                "and cannot be scored."
+            )
+    else:
+        lines.append("- Design-point sampling: no points could be evaluated.")
+
+    if points:
+        lines.append("\nPer-point csim/csynth results:")
+        for point in sorted(points, key=lambda p: p["point_index"]):
+            index = point["point_index"]
+            csim_status = "passed" if point.get("testbench_passed") else "FAILED"
+            csynth_status = "passed" if point.get("synthesis_passed") else "FAILED"
+            csim_reason = _csim_failure_reason(point)
+            csynth_reason = _csynth_failure_reason(point)
+            line = (
+                f"- point {index} (parameters={point.get('parameters')}): "
+                f"csim {csim_status}"
+                + (f" ({csim_reason})" if csim_reason else "")
+                + f", csynth {csynth_status}"
+                + (f" ({csynth_reason})" if csynth_reason else "")
+            )
+            if not point.get("render_success"):
+                line += "; template failed to render"
+            elif not point.get("interface_preserved", True):
+                line += "; signature/interface check FAILED"
+            else:
+                undetermined_reason = _undetermined_objective_reason(point)
+                if undetermined_reason:
+                    line += (
+                        f"; {undetermined_reason} — NOT included in the Pareto "
+                        "frontier and cannot be scored"
+                    )
+            metrics_text = _format_point_metrics(point)
+            if metrics_text:
+                line += f"; {metrics_text}"
+            lines.append(line)
+
+    if summary is not None:
+        frontier_indices = summary.get("unique_pareto_point_indices", [])
+        lines.append("\nPareto frontier of sampled points (baseline excluded):")
+        if frontier_indices:
+            by_index = {p["point_index"]: p for p in points}
+            for index in frontier_indices:
+                point = by_index.get(index)
+                metrics_text = _format_point_metrics(point) if point else None
+                lines.append(
+                    f"- point {index}: {metrics_text or 'no metrics available'}"
+                )
+        else:
+            lines.append("- none (no sampled point had usable synthesis metrics)")
+
+    baseline = iteration.get("baseline")
+    if baseline is not None:
+        lines.append("\nBaseline point (unparameterized original design):")
+        status = "passed" if baseline.get("passed") else "FAILED"
+        baseline_csim_reason = _csim_failure_reason(baseline)
+        baseline_csynth_reason = _csynth_failure_reason(baseline)
+        reasons = ", ".join(
+            reason
+            for reason in (
+                f"csim {baseline_csim_reason}" if baseline_csim_reason else None,
+                f"csynth {baseline_csynth_reason}" if baseline_csynth_reason else None,
+            )
+            if reason
+        )
+        metrics_text = _format_point_metrics(baseline)
+        line = f"- {status}"
+        if reasons:
+            line += f" ({reasons})"
+        line += f", {metrics_text or 'no metrics available'}"
+        lines.append(line)
+
+    return "\n".join(lines)
 
 
 class HLSParameterizationAgentEvaluatorPi(HLSGenerationAgentEvaluatorPi):
@@ -710,6 +1001,7 @@ class HLSParameterizationAgentEvaluatorPi(HLSGenerationAgentEvaluatorPi):
         tb_file: str,
         top_function: str,
         pools: EvalThreadPools,
+        baseline: dict | None = None,
     ) -> dict:
         checks, templates, space = self._read_submission(
             original, agent_dir, kernel_files, tb_file
@@ -720,9 +1012,10 @@ class HLSParameterizationAgentEvaluatorPi(HLSGenerationAgentEvaluatorPi):
         (eval_dir / "design_space.jsonl").write_text(space.render_to_jsonl() + "\n")
         baseline_dir = eval_dir / "baseline" / "design"
         shutil.copytree(original, baseline_dir)
-        baseline = self._evaluate_variant(
-            baseline_dir, kernel_files, tb_file, top_function, pools
-        )
+        if baseline is None:
+            baseline = self._evaluate_variant(
+                baseline_dir, kernel_files, tb_file, top_function, pools
+            )
         result["baseline"] = baseline
         (baseline_dir.parent / "result.json").write_text(json.dumps(baseline, indent=4))
         original_interfaces = _interface_pragmas(
@@ -815,6 +1108,8 @@ class HLSParameterizationAgentEvaluatorPi(HLSGenerationAgentEvaluatorPi):
             self.max_design_points,
             self.hls_fpga_part,
             self.hls_clock_period_ns,
+            self.csim_timeout,
+            self.synth_timeout,
             vitis_available=self.vitis_dir is not None,
         )
         all_data = {}
@@ -910,4 +1205,281 @@ class HLSParameterizationAgentEvaluatorPi(HLSGenerationAgentEvaluatorPi):
         (eval_top / "all_eval_data.json").write_text(json.dumps(all_data, indent=4))
 
 
-class HLSParameterizationIteratativeAgentEvaluatorPi(HLSGenerationAgentEvaluatorPi): ...
+class HLSParameterizationIterativeAgentEvaluatorPi(HLSParameterizationAgentEvaluatorPi):
+    """Like HLSParameterizationAgentEvaluatorPi, but each evaluation runs n_iters
+    rounds per sample: an initial parameterization run identical to the parent
+    class, followed by n_iters - 1 refinement runs. Each refinement run starts
+    from the previous iteration's submitted design (its templates and
+    design_space.jsonl carry forward unchanged) and is prompted with a summary
+    of that iteration's validation and evaluation results, asking the agent to
+    improve the Pareto frontier and broaden and even out its resource-usage
+    coverage.
+    """
+
+    def __init__(
+        self,
+        vitis_hls_tool_csim: VitisHLSCSimTool,
+        vitis_hls_tool_synth: VitisHLSSynthTool,
+        output_data_dir: Path,
+        n_samples: int = 1,
+        n_iters: int = 3,
+        temperature: float = 0.7,
+        docker_image_name: str = DOCKER_IMAGE_NAME,
+        vitis_dir: str | Path | None = None,
+        vivado_dir: str | Path | None = None,
+        vitis_license_server: str | None = None,
+        *,
+        clang_bin: str | Path = "clang++",
+        clang_flags: tuple[str, ...] = (),
+        max_design_points: int = 8,
+        compile_timeout: float = 120,
+        csim_timeout: float = 120,
+        synth_timeout: float = 60 * 8,
+        hls_fpga_part: str = "xczu9eg-ffvb1156-2-e",
+        hls_clock_period_ns: float = 5,
+    ) -> None:
+        if n_iters < 1:
+            raise ValueError("n_iters must be positive")
+        super().__init__(
+            vitis_hls_tool_csim,
+            vitis_hls_tool_synth,
+            output_data_dir,
+            n_samples,
+            temperature,
+            docker_image_name,
+            vitis_dir,
+            vivado_dir,
+            vitis_license_server,
+            clang_bin=clang_bin,
+            clang_flags=clang_flags,
+            max_design_points=max_design_points,
+            compile_timeout=compile_timeout,
+            csim_timeout=csim_timeout,
+            synth_timeout=synth_timeout,
+            hls_fpga_part=hls_fpga_part,
+            hls_clock_period_ns=hls_clock_period_ns,
+        )
+        self.n_iters = n_iters
+
+    def _run_iteration(
+        self,
+        eval_id: str,
+        sample_index: int,
+        iter_index: int,
+        iter_dir: Path,
+        original: Path,
+        agent_source: Path,
+        kernel_files: list[str],
+        tb_file: str,
+        top_function: str,
+        model: Model,
+        pools: EvalThreadPools,
+        baseline: dict | None,
+        previous_iteration: dict | None,
+    ) -> dict:
+        design_dir = iter_dir / "design"
+        agent_dir = iter_dir / "agent_run_dir"
+        shutil.copytree(original, design_dir)
+        shutil.copytree(agent_source, agent_dir)
+        shutil.rmtree(agent_dir / ".pi", ignore_errors=True)
+
+        if previous_iteration is None:
+            iteration_section = _prompt_section_intro()
+        else:
+            iteration_section = _prompt_section_iteration_refinement(
+                _format_previous_iteration_summary(previous_iteration)
+            )
+        prompt = build_prompt_parameterization(
+            kernel_files,
+            top_function,
+            self.max_design_points,
+            self.hls_fpga_part,
+            self.hls_clock_period_ns,
+            self.csim_timeout,
+            self.synth_timeout,
+            vitis_available=self.vitis_dir is not None,
+            iteration_section=iteration_section,
+        )
+        (iter_dir / "raw_agent_prompt.txt").write_text(prompt)
+
+        iter_data: dict[str, Any] = {
+            "iteration_index": iter_index,
+            "prompt": prompt,
+            "passed": False,
+        }
+        self.logger.info(
+            "[%s] Sample %d iteration %d: running agent",
+            eval_id,
+            sample_index,
+            iter_index,
+        )
+        assert isinstance(model.llm, OpenRouterChat)
+        start = time.monotonic()
+        agent = pools.pool_agent.submit(
+            run_pi_agent,
+            agent_run_dir=agent_dir,
+            prompt=prompt,
+            model_name=model.llm.model_name,
+            api_key=model.llm.key,
+            docker_image_name=self.docker_image_name,
+            vitis_dir=self.vitis_dir,
+            vivado_dir=self.vivado_dir,
+            vitis_license_server=self.vitis_license_server,
+        ).result()
+        end = time.monotonic()
+        iter_data.update(
+            {
+                "agent_execution_time": {
+                    "t0": start,
+                    "t1": end,
+                    "execution_time": end - start,
+                },
+                "agent_submitted": agent.agent_submitted,
+                "agent_limit_exceeded": agent.agent_limit_exceeded,
+                "agent_exit_code": agent.exit_code,
+                "agent_output": agent.output,
+                "agent_trace": agent.agent_trace,
+            }
+        )
+        (iter_dir / "agent_output.txt").write_text(agent.output)
+        (iter_dir / "trace.json").write_text(json.dumps(agent.agent_trace, indent=4))
+        if agent.session_file is not None:
+            shutil.copy(agent.session_file, iter_dir / agent.session_file.name)
+        if agent.session_html_file is not None and agent.session_html_file.exists():
+            shutil.copy(agent.session_html_file, iter_dir / "trace.html")
+
+        if agent.agent_submitted and not agent.agent_limit_exceeded:
+            iter_data.update(
+                self._evaluate_sample(
+                    design_dir,
+                    agent_dir,
+                    iter_dir,
+                    kernel_files,
+                    tb_file,
+                    top_function,
+                    pools,
+                    baseline=baseline,
+                )
+            )
+            # The agent just ran against the previous iteration's artifacts; swap
+            # them for this iteration's, so only the immediately preceding
+            # iteration's logs are ever carried forward.
+            shutil.rmtree(agent_dir / "previous_design_artifacts", ignore_errors=True)
+            _collect_point_artifacts(iter_dir, agent_dir, iter_data.get("points", []))
+        (iter_dir / "iteration_eval_data.json").write_text(
+            json.dumps(iter_data, indent=4)
+        )
+        return iter_data
+
+    def evaluate_design(
+        self,
+        benchmark_case: BenchmarkCase,
+        model: Model,
+        pools: EvalThreadPools,
+        **kwargs,
+    ) -> None:
+        if not isinstance(model.llm, OpenRouterChat):
+            raise NotImplementedError(
+                "Pi evaluation currently requires an OpenRouter model"
+            )
+        if model.llm.key is None:
+            raise ValueError(f"API key not found for model {model.name}")
+        normalized = normalize_model_name(model.name)
+        eval_id = f"{benchmark_case.name}__{normalized}"
+        eval_top = (self.output_data_dir / eval_id).resolve()
+        if eval_top.exists():
+            shutil.rmtree(eval_top)
+        eval_top.mkdir(parents=True)
+        original = benchmark_case.design_dir.resolve()
+        tb_file = benchmark_case.tb_file.relative_to(
+            benchmark_case.design_dir
+        ).as_posix()
+        kernel_files = sorted(
+            p.relative_to(original).as_posix()
+            for p in original.rglob("*")
+            if p.is_file()
+            and p.suffix in CPP_EXTENSIONS
+            and p.relative_to(original).as_posix() != tb_file
+        )
+        if not kernel_files:
+            raise ValueError(
+                "The benchmark must contain complete kernel implementation files"
+            )
+
+        all_data = {}
+        for sample_index in range(self.n_samples):
+            sample_dir = eval_top / f"sample__{sample_index}"
+            sample_dir.mkdir()
+            sample_data: dict[str, Any] = {
+                "eval_type": "hls_parameterization_iterative_agentic_pi",
+                "eval_id": eval_id,
+                "benchmark_case_name": benchmark_case.name,
+                "benchmark_case_tags": benchmark_case.tags_all,
+                "model_name": model.name,
+                "model_name_normalized": normalized,
+                "docker_image_name": self.docker_image_name,
+                "n_samples": self.n_samples,
+                "sample_index": sample_index,
+                "n_iters": self.n_iters,
+                "passed": False,
+                "configuration": {
+                    "clang_bin": self.clang_bin,
+                    "clang_flags": self.clang_flags,
+                    "max_design_points": self.max_design_points,
+                    "hls_fpga_part": self.hls_fpga_part,
+                    "hls_clock_period_ns": self.hls_clock_period_ns,
+                    "compile_timeout": self.compile_timeout,
+                    "csim_timeout": self.csim_timeout,
+                    "synth_timeout": self.synth_timeout,
+                },
+                "iterations": [],
+            }
+
+            agent_source = original
+            baseline: dict[str, Any] | None = None
+            try:
+                for iter_index in range(self.n_iters):
+                    iter_dir = sample_dir / f"iteration__{iter_index}"
+                    iter_dir.mkdir()
+                    previous_iteration = (
+                        sample_data["iterations"][-1]
+                        if sample_data["iterations"]
+                        else None
+                    )
+                    iter_data = self._run_iteration(
+                        eval_id,
+                        sample_index,
+                        iter_index,
+                        iter_dir,
+                        original,
+                        agent_source,
+                        kernel_files,
+                        tb_file,
+                        benchmark_case.top_fn,
+                        model,
+                        pools,
+                        baseline,
+                        previous_iteration,
+                    )
+                    baseline = iter_data.get("baseline", baseline)
+                    sample_data["iterations"].append(iter_data)
+                    agent_source = iter_dir / "agent_run_dir"
+
+                    if not (
+                        iter_data.get("agent_submitted")
+                        and not iter_data.get("agent_limit_exceeded")
+                    ):
+                        break
+            except Exception as error:
+                self.logger.exception(
+                    "[%s] Iterative parameterization evaluation failed", eval_id
+                )
+                sample_data["error"] = f"{type(error).__name__}: {error}"
+
+            if sample_data["iterations"]:
+                sample_data["passed"] = sample_data["iterations"][-1].get(
+                    "passed", False
+                )
+            serialize_eval_data(eval_id, sample_dir, sample_data)
+            all_data[sample_index] = sample_data
+        (eval_top / "all_eval_data.json").write_text(json.dumps(all_data, indent=4))

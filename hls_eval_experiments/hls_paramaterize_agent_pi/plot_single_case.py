@@ -30,8 +30,7 @@ def make_plot_for_case(dir_case: Path, output_dir: Path):
 
     # assert baseline_point["passed"] is True
     if not baseline_point["passed"]:
-        # raise ValueError(f"Baseline point did not pass for case {case_name}.")
-        return
+        raise ValueError(f"Baseline point did not pass for case {case_name}.")
 
     pareto_data_baseline = {
         "latency": baseline_point["vitis_hls_tool_out"]["data_tool"][

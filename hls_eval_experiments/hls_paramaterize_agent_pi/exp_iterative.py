@@ -5,7 +5,7 @@ from dotenv import dotenv_values
 
 from hls_eval.data import BenchmarkCase, find_benchmark_case_dirs
 from hls_eval.eval_agent_pi.eval_agent_pi_paramaterized import (
-    HLSParameterizationAgentEvaluatorPi,
+    HLSParameterizationIterativeAgentEvaluatorPi,
 )
 from hls_eval.llms import build_model_remote_openrouter
 from hls_eval.tools import VitisHLSCSimTool, VitisHLSSynthTool, auto_find_vitis_hls_dir
@@ -18,7 +18,7 @@ DIR_ROOT = DIR_CURRENT.parent.parent
 
 DIR_HLS_EVAL_DATA = DIR_ROOT / "hls_eval_data_accel"
 
-DIR_CURRENT_OUTPUT_DATA = DIR_CURRENT / "output_data"
+DIR_CURRENT_OUTPUT_DATA = DIR_CURRENT / "output_data_v2"
 if not DIR_CURRENT_OUTPUT_DATA.exists():
     DIR_CURRENT_OUTPUT_DATA.mkdir()
 
@@ -36,16 +36,11 @@ if __name__ == "__main__":
 
     # sets_to_test = set(["athena_crypto"])
 
-    # full set of designss
-    # hls_eval_data_accel/athena_crypto
-    # hls_eval_data_accel/hls_polybench__fixed__small
-    # hls_eval_data_accel/llm4pqc_benchmarks
-    # hls_eval_data_accel/rodinia_clean
     sets_to_test: set[str] = {
-        # "athena_crypto",
-        # "polybench__fixed__small",
+        "athena_crypto",
+        "polybench__fixed__small",
         "llm4pqc_benchmarks",
-        # "rodinia_clean",
+        "rodinia_clean",
     }
 
     all_benchmark_cases = [
@@ -58,7 +53,7 @@ if __name__ == "__main__":
 
     # all_benchmark_cases = all_benchmark_cases[:1]
 
-    model_names_to_test = ["deepseek/deepseek-v4-flash"]
+    model_names_to_test = ["deepseek/deepseek-v4.1-flash"]
     models = [
         build_model_remote_openrouter(model_name, api_key=API_KEY_OPENROUTER)
         for model_name in model_names_to_test
@@ -69,11 +64,12 @@ if __name__ == "__main__":
 
     vitis_hls_dir = unwrap(auto_find_vitis_hls_dir(), "Vitis HLS bin not auto found")
 
-    evaluator = HLSParameterizationAgentEvaluatorPi(
+    evaluator = HLSParameterizationIterativeAgentEvaluatorPi(
         vitis_hls_tool_csim=VitisHLSCSimTool(vitis_hls_dir),
         vitis_hls_tool_synth=VitisHLSSynthTool(vitis_hls_dir),
         output_data_dir=DIR_CURRENT_OUTPUT_DATA,
         n_samples=1,
+        n_iters=5,
     )
 
     benchmark_cases_filtered = all_benchmark_cases
@@ -82,9 +78,9 @@ if __name__ == "__main__":
     evaluator.evaluate_designs(
         benchmark_cases=benchmark_cases_filtered,
         models=models_filtered,
-        n_jobs=64,
-        n_jobs_pool_llm=64,
-        n_jobs_pool_agent=64,
-        n_jobs_pool_csim=64,
-        n_jobs_pool_synth=64,
+        n_jobs=72,
+        n_jobs_pool_llm=72,
+        n_jobs_pool_agent=72,
+        n_jobs_pool_csim=72,
+        n_jobs_pool_synth=72,
     )
