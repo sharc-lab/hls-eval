@@ -35,6 +35,19 @@ LIMIT_KEYWORDS = (
 # each one is merged into the openrouter provider through a models.json.
 # Pricing is the peak rate, so cost is an upper bound.
 PI_CUSTOM_MODEL_THINKING_LEVEL = "high"
+# Pi caps every request at min(model.maxTokens, 32000) and a turn cut off at the
+# cap ends the session, so a provider-request extension raises it.
+PI_CUSTOM_MODEL_MAX_OUTPUT_TOKENS = 64000
+PI_MAX_TOKENS_EXTENSION = """\
+export default function (pi: any) {
+  pi.on("before_provider_request", (event: any) => {
+    const payload = { ...event.payload };
+    if ("max_tokens" in payload) payload.max_tokens = %d;
+    if ("max_completion_tokens" in payload) payload.max_completion_tokens = %d;
+    return payload;
+  });
+}
+""" % (PI_CUSTOM_MODEL_MAX_OUTPUT_TOKENS, PI_CUSTOM_MODEL_MAX_OUTPUT_TOKENS)
 PI_AGENT_DIR_CONTAINER = f"{CONTAINER_WORKDIR}/.pi/agent"
 PI_CUSTOM_OPENROUTER_MODELS: dict[str, dict[str, Any]] = {
     "deepseek/deepseek-v4.1-flash": {
@@ -98,7 +111,11 @@ def setup_pi_config(agent_run_dir: Path, model_name: str) -> Path:
         dir_pi_agent.mkdir(exist_ok=True)
         models = {"providers": {"openrouter": {"models": [custom_model]}}}
         (dir_pi_agent / "models.json").write_text(json.dumps(models, indent=4))
+        dir_extensions = dir_pi_agent / "extensions"
+        dir_extensions.mkdir(exist_ok=True)
+        (dir_extensions / "raise-max-tokens.ts").write_text(PI_MAX_TOKENS_EXTENSION)
         os.chmod(dir_pi_agent, 0o777)
+        os.chmod(dir_extensions, 0o777)
     return dir_pi_config
 
 
