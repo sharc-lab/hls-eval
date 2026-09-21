@@ -7,9 +7,11 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.transforms import blended_transform_factory
 
+from plot_style_trj import apply_trj_style, source_label
+
 DIR_CURRENT = Path(__file__).parent
 
-DIR_OUTPUT_DATA = DIR_CURRENT / "output_data_v2"
+DIR_OUTPUT_DATA = DIR_CURRENT / "output_data_v2_big_run"
 
 DIR_FIGURES = DIR_CURRENT / "figures"
 
@@ -27,6 +29,15 @@ RESOURCE_TYPES = {
 # overlapping points from different iterations can be told apart by shape as
 # well as color.
 ITERATION_MARKERS = ["x", "+", "1", "2", "3", "4", "P", "*"]
+
+# Axes-fraction heights the resource-budget labels alternate between, going
+# from the smallest budget (10%) to the largest (100%): 10% high, 25% low,
+# 50% high, 75% low, 100% high. Neighbors only collide where their lines are
+# closer than a label's width, so the gap can be smaller than a label's height.
+LABEL_Y_ROWS = [0.9, 0.72]
+
+# Figure-fraction top of the axes grid, under the title / subtitle / legend.
+AXES_TOP = 0.85
 
 
 def _iteration_color(fraction: float):
@@ -65,6 +76,18 @@ def _pareto_front(points: list[dict], resource_key: str) -> list[dict]:
     ]
     front.sort(key=lambda point: point[resource_key])
     return front
+
+
+def _style_panel(ax, resource_label: str):
+    """Shared axis text/tick styling of the plot family: bold axis labels (no
+    per-panel title, the labels name the panel), inout ticks, major and minor
+    grid."""
+    ax.set_xlabel(resource_label, fontweight="bold")
+    ax.set_ylabel("Latency (cycles)", fontweight="bold")
+    ax.tick_params(which="both", length=4, width=1.0, direction="inout")
+    # Major grid at the decades, a fainter minor grid at the 2..9 multiples.
+    ax.grid(True, which="major")
+    ax.grid(True, which="minor", linewidth=0.35, alpha=0.35)
 
 
 def make_plot_for_case(dir_case: Path, output_dir: Path):
@@ -140,7 +163,8 @@ def make_plot_for_case(dir_case: Path, output_dir: Path):
         for iter_index, _ in iteration_points
     ]
 
-    fig, axes = plt.subplots(2, 2, figsize=(14, 7))
+    apply_trj_style()
+    fig, axes = plt.subplots(2, 2, figsize=(7, 5.6))
     for ax, (resource_key, (resource_label, total_key)) in zip(
         axes.flat, RESOURCE_TYPES.items()
     ):
@@ -159,10 +183,9 @@ def make_plot_for_case(dir_case: Path, output_dir: Path):
                 verticalalignment="center",
                 transform=ax.transAxes,
             )
-            ax.set_xlabel(resource_label)
-            ax.set_ylabel("Latency (cycles)")
-            ax.set_title(resource_label)
-            ax.legend(handles=legend_handles, fontsize=6, loc="best")
+            _style_panel(ax, resource_label)
+            # Nothing to read off the placeholder axes, so no tick labels.
+            ax.tick_params(labelbottom=False, labelleft=False)
             continue
 
         ax.scatter(
@@ -170,6 +193,7 @@ def make_plot_for_case(dir_case: Path, output_dir: Path):
             [pareto_data_baseline["latency"]],
             color="red",
             marker="o",
+            s=22,
             zorder=5,
         )
 
@@ -180,6 +204,7 @@ def make_plot_for_case(dir_case: Path, output_dir: Path):
                 [point["latency"] for point in points],
                 color=color,
                 marker=iter_markers[iter_index],
+                s=22,
             )
 
             front = _pareto_front(points, resource_key)
@@ -214,26 +239,31 @@ def make_plot_for_case(dir_case: Path, output_dir: Path):
 
         total_resources = baseline_point["vitis_hls_tool_out"]["data_tool"][total_key]
         vline_transform = blended_transform_factory(ax.transData, ax.transAxes)
-        for pct in [1.0, 0.75, 0.5, 0.25, 0.1]:
+        for label_row, pct in enumerate([0.1, 0.25, 0.5, 0.75, 1.0]):
             vline_x = total_resources * pct
             ax.axvline(
                 vline_x,
                 color="gray",
                 linestyle="--",
+                linewidth=1.0,
                 zorder=-10,
             )
+            # Neighboring budget lines are close on the log axis, so alternate
+            # the label height between two rows to keep the labels apart.
+            label_y = LABEL_Y_ROWS[label_row % len(LABEL_Y_ROWS)]
             ax.text(
                 vline_x,
-                0.9,
+                label_y,
                 f"{int(pct * 100)}%",
                 transform=vline_transform,
-                fontsize=8,
+                fontsize=7,
+                fontweight="bold",
                 color="black",
                 rotation=90,
                 horizontalalignment="center",
                 verticalalignment="center",
                 bbox={
-                    "boxstyle": "round,pad=0.2",
+                    "boxstyle": "round,pad=0.15",
                     "facecolor": "white",
                     "edgecolor": "black",
                     "linewidth": 0.5,
@@ -242,10 +272,7 @@ def make_plot_for_case(dir_case: Path, output_dir: Path):
             )
         ax.set_xscale("log")
         ax.set_yscale("log")
-        ax.set_xlabel(resource_label)
-        ax.set_ylabel("Latency (cycles)")
-        ax.set_title(resource_label)
-        ax.legend(handles=legend_handles, fontsize=6, loc="best")
+        _style_panel(ax, resource_label)
 
     pass_rate_parts = []
     for iteration in iterations:
@@ -257,16 +284,36 @@ def make_plot_for_case(dir_case: Path, output_dir: Path):
             pass_rate_parts.append(f"iter {idx}: n/a")
     subtitle = "Pass rates: " + ", ".join(pass_rate_parts)
 
-    fig.suptitle(case_name, fontsize=14, y=0.99)
-    fig.text(0.5, 0.955, subtitle, ha="center", va="top", fontsize=9, color="dimgray")
-    fig.tight_layout(rect=(0, 0, 1, 0.93))
+    # Title: "<design name>" from <source>. The design name is the benchmark
+    # case's own name (no model suffix), the source its readable tag label.
+    design_name = sample_data.get("benchmark_case_name") or case_name.rsplit("__", 1)[0]
+    tags = sample_data.get("benchmark_case_tags") or []
+    source = source_label(", ".join(sorted(tags))) if tags else "unknown source"
+    title = f'"{design_name}" from {source}'
+    fig.suptitle(title, y=0.995, fontweight="bold")
+    fig.text(0.5, 0.945, subtitle, ha="center", va="top", fontsize=10)
+    fig.legend(
+        handles=legend_handles,
+        loc="upper center",
+        bbox_to_anchor=(0.5, 0.915),
+        ncol=len(legend_handles),
+        prop={"size": 8.5, "weight": "bold"},
+        frameon=False,
+        columnspacing=1.0,
+        handletextpad=0.4,
+    )
+    fig.tight_layout(rect=(0, 0, 1, 0.865))
+    # tight_layout also reserves room for the figure-level legend, which leaves
+    # a larger gap under it than between title, subtitle and legend; pin the top
+    # of the axes so the four gaps are even.
+    fig.subplots_adjust(top=AXES_TOP)
 
     if not output_dir.exists():
         output_dir.mkdir(parents=True, exist_ok=True)
 
     f_name = f"pareto_front_iterative__{case_name}.png"
     fp_fig = output_dir / f_name
-    fig.savefig(fp_fig, dpi=300)
+    fig.savefig(fp_fig, bbox_inches="tight", pad_inches=0.02, dpi=300)
 
     plt.close(fig)
 

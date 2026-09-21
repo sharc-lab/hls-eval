@@ -12,13 +12,16 @@ from plot_style_trj import (
     GREY_LW,
     MEAN_LW,
     finish_figure,
+    source_color_map,
     new_stacked_figure,
+    set_two_line_score_ylabel,
+    source_label,
     style_score_row,
 )
 
 DIR_CURRENT = Path(__file__).parent
 
-DIR_OUTPUT_DATA = DIR_CURRENT / "output_data_v2"
+DIR_OUTPUT_DATA = DIR_CURRENT / "output_data_v2_big_run"
 
 DIR_FIGURES = DIR_CURRENT / "figures"
 
@@ -312,24 +315,43 @@ def make_plot_for_case(dir_case: Path, output_dir: Path):
     return iter_indices, scores_by_resource
 
 
+def _case_source(dir_case: Path) -> str:
+    """Benchmark source of a design (its `benchmark_case_tags`), e.g. rodinia_clean."""
+    eval_data = json.loads((dir_case / "all_eval_data.json").read_text())
+    tags = eval_data[list(eval_data.keys())[0]].get("benchmark_case_tags") or []
+    return "/".join(tags) if tags else "unknown"
+
+
 def make_combined_plot(
-    case_scores: dict[str, tuple[list[int], dict[str, list[float]]]], output_dir: Path
+    case_scores: dict[str, tuple[list[int], dict[str, list[float]]]],
+    case_sources: dict[str, str],
+    output_dir: Path,
+    by_source: bool = False,
+    filename: str = "pareto_score__all_designs.png",
 ):
     """One row per resource type: every design's score line in faint gray, plus
-    one blue line for the mean score across designs at each iteration."""
+    the mean score across designs at each iteration: one blue line over all
+    designs, or (by_source) one colored line per benchmark source."""
     case_names = sorted(case_scores)
+    sources = sorted(set(case_sources.values()))
+    source_colors = source_color_map(sources)
     max_iter = max(
         (max(iter_indices) for iter_indices, _ in case_scores.values()), default=0
     )
 
     fig, axes = new_stacked_figure(
         len(RESOURCE_TYPES),
-        "Pareto Front Hypervolume Ratio per Iteration",
-        f"{len(case_names)} designs",
+        "Parameterized Design Pareto Frontier Scores per Iteration",
+        # The by-source plot names the sources in its legend instead.
+        ""
+        if by_source
+        else f"{len(case_names)} designs across "
+        + ", ".join(source_label(s) for s in sorted(set(case_sources.values()))),
     )
     for ax, (resource_key, (resource_label, _)) in zip(axes, RESOURCE_TYPES.items()):
-        # iteration index -> scores of every design that has one there
-        scores_at_iter: dict[int, list[float]] = {}
+        # group -> iteration index -> scores of every design that has one there;
+        # the group is the benchmark source, or "" for a single mean over all
+        scores_at_iter: dict[str, dict[int, list[float]]] = {}
         n_lines = 0
         for name in case_names:
             iter_indices, scores_by_resource = case_scores[name]
@@ -347,9 +369,12 @@ def make_combined_plot(
                 alpha=GREY_ALPHA,
                 zorder=2,
             )
+            group = case_sources[name] if by_source else ""
             for iter_index, score in zip(iter_indices, scores):
                 if not math.isnan(score):
-                    scores_at_iter.setdefault(iter_index, []).append(score)
+                    scores_at_iter.setdefault(group, {}).setdefault(
+                        iter_index, []
+                    ).append(score)
             n_lines += 1
 
         if n_lines == 0:
@@ -362,45 +387,59 @@ def make_combined_plot(
                 va="center",
             )
         else:
-            mean_iters = sorted(scores_at_iter)
-            ax.plot(
-                mean_iters,
-                [sum(scores_at_iter[i]) / len(scores_at_iter[i]) for i in mean_iters],
-                color=AVERAGE_LINE_COLOR,
-                lw=MEAN_LW,
-                zorder=4,
-                marker="o",
-                markersize=5,
-                markerfacecolor="white",
-                markeredgecolor=AVERAGE_LINE_COLOR,
-                markeredgewidth=1,
-            )
+            for group, group_scores_at_iter in scores_at_iter.items():
+                line_color = source_colors[group] if by_source else AVERAGE_LINE_COLOR
+                mean_iters = sorted(group_scores_at_iter)
+                ax.plot(
+                    mean_iters,
+                    [
+                        sum(group_scores_at_iter[i]) / len(group_scores_at_iter[i])
+                        for i in mean_iters
+                    ],
+                    color=line_color,
+                    lw=MEAN_LW,
+                    zorder=4,
+                    marker="o",
+                    markersize=5,
+                    markerfacecolor="white",
+                    markeredgecolor=line_color,
+                    markeredgewidth=1,
+                )
         ax.set_xticks(range(max_iter + 1))
         style_score_row(
             ax,
             f"vs. {resource_label}",
-            f"Latency vs. {resource_label} ({n_lines})",
+            None,  # no boxed label: the y label already names the resource
             (0, max_iter),
             ax is axes[-1],
-            box_edge_color=AVERAGE_LINE_COLOR,
+            box_edge_color="black",
+            y_limits=(0.0, 1.0),
         )
+        set_two_line_score_ylabel(ax, resource_label)
 
     finish_figure(
         fig,
-        output_dir / "pareto_score__all_designs.png",
+        output_dir / filename,
         [
             Line2D([0], [0], color=GREY, alpha=0.8, label="Individual design"),
-            Line2D(
-                [0],
-                [0],
-                color=AVERAGE_LINE_COLOR,
-                lw=MEAN_LW,
-                marker="o",
-                markersize=5,
-                markerfacecolor="white",
-                markeredgecolor=AVERAGE_LINE_COLOR,
-                label="Average",
-            ),
+            *[
+                Line2D(
+                    [0],
+                    [0],
+                    color=color,
+                    lw=MEAN_LW,
+                    marker="o",
+                    markersize=5,
+                    markerfacecolor="white",
+                    markeredgecolor=color,
+                    label=label,
+                )
+                for color, label in (
+                    [(source_colors[src], f"Mean, {source_label(src)}") for src in sources]
+                    if by_source
+                    else [(AVERAGE_LINE_COLOR, "Average")]
+                )
+            ],
             Line2D(
                 [0],
                 [0],
@@ -410,7 +449,11 @@ def make_combined_plot(
                 label="Gap (no scoreable points)",
             ),
         ],
-        "Design Optimization Iteration",
+        "Agent Iteration Step",
+        legend_fontsize=10,
+        legend_bold=True,
+        legend_y=0.955 if by_source else 0.925,
+        rect_top=0.945 if by_source else 0.94,
     )
 
 
@@ -453,5 +496,13 @@ if __name__ == "__main__":
             except Exception as e:
                 print(f"Error making plot for case {dir_case.name}: {e}")
 
-    make_combined_plot(case_scores, DIR_FIGURES_SCORES)
+    case_sources = {name: _case_source(DIR_OUTPUT_DATA / name) for name in case_scores}
+    make_combined_plot(case_scores, case_sources, DIR_FIGURES_SCORES)
+    make_combined_plot(
+        case_scores,
+        case_sources,
+        DIR_FIGURES_SCORES,
+        by_source=True,
+        filename="pareto_score__all_designs__by_source.png",
+    )
     print(f"Done making combined plot for {len(case_scores)} designs")

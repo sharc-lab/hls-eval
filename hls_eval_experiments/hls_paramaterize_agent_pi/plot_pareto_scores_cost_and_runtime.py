@@ -16,12 +16,13 @@ from plot_style_trj import (
     finish_figure,
     new_stacked_figure,
     source_color_map,
+    source_label,
     style_score_row,
 )
 
 DIR_CURRENT = Path(__file__).parent
 
-DIR_OUTPUT_DATA = DIR_CURRENT / "output_data_v2"
+DIR_OUTPUT_DATA = DIR_CURRENT / "output_data_v2_big_run"
 
 DIR_FIGURES = DIR_CURRENT / "figures"
 
@@ -436,7 +437,7 @@ def make_combined_plot(
                     markersize=5,
                     markerfacecolor="white",
                     markeredgecolor=source_colors[source],
-                    label=f"Mean, {source}",
+                    label=f"Mean, {source_label(source)}",
                 )
                 for source in sources
                 if source in sources_present

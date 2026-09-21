@@ -1,0 +1,96 @@
+% Requires: \usepackage{amsmath,amssymb}
+\section{Pareto Frontier Scoring}
+\label{sec:pareto-scoring}
+
+Each evaluated design is optimized by the agent over $T$ iterations. Iteration
+$i$ submits a small set of parameterized implementations, and we retain the set
+$S_i$ of \emph{scoreable} points, i.e., those that render, pass the unchanged
+testbench, and report synthesis metrics. The unmodified design is measured once
+as a baseline $b$. Every point $p$ has a worst-case latency $L(p)$ in cycles and
+a usage $R_r(p)$ of each resource type $r \in \{\text{LUT}, \text{FF}, \text{DSP},
+\text{BRAM}\}$. Because different designs have very different scales and
+tradeoff curves, we want a single scalar that says how good the tradeoff
+frontier found by the agent is, that is comparable across designs, and that
+credits both the fast/large and the slow/small ends of the frontier.
+We obtain it from the hypervolume of the latency--resource Pareto front.
+
+\paragraph{Objective space.}
+We score each resource type separately, in the two-dimensional space
+$(R_r, L)$ where both objectives are minimized. All values are mapped to
+$\tilde{x} = \log_{10}(x + 1)$ before any front or area is computed. The
+logarithm makes improvements count by ratio rather than by absolute amount
+(halving latency is worth the same at $10^3$ and at $10^6$ cycles), and the
+$+1$ keeps a resource count of zero well defined. A point $p$ \emph{dominates}
+$q$ if $\tilde{R}_r(p) \le \tilde{R}_r(q)$ and $\tilde{L}(p) \le \tilde{L}(q)$
+with at least one strict inequality. For a set of points $P$, we write
+$\mathrm{ND}(P)$ for its Pareto front, the subset of points not dominated by
+any other point in $P$.
+
+\paragraph{Hypervolume.}
+For a front $F$ and a reference point $\rho = (\rho_R, \rho_L)$, the
+hypervolume $\mathrm{HV}(F)$ is the area of the region that is dominated by $F$
+and bounded by $\rho$. If $F$ is sorted by increasing resource,
+$\tilde{R}_1 < \dots < \tilde{R}_k$, with strictly decreasing latency
+$\tilde{L}_1 > \dots > \tilde{L}_k$, then
+\begin{equation}
+  \mathrm{HV}(F) = \sum_{j=1}^{k} \bigl(\rho_R - \tilde{R}_j\bigr)
+  \bigl(\tilde{L}_{j-1} - \tilde{L}_j\bigr), \qquad \tilde{L}_0 \equiv \rho_L .
+\end{equation}
+A larger hypervolume means the front reaches lower latency, lower resource use,
+or covers more of the tradeoff between them.
+
+\paragraph{Reference point and normalization.}
+For each design and resource type, let
+\begin{equation}
+  P^{*} = \mathrm{ND}\Bigl(\{b\} \cup \bigcup_{i=1}^{T} S_i\Bigr)
+\end{equation}
+be the combined front of the baseline and \emph{all} points found in
+\emph{all} iterations. The reference point $\rho$ is the worst latency and worst
+resource use among points of $P^{*}$, each increased by a $1.1\times$ margin
+on $x+1$ (an additive $\log_{10} 1.1$ in log space), so that the extreme points
+of $P^{*}$ contribute a nonzero area. The reference is fixed per design and
+resource, which makes scores of different iterations of the same design
+directly comparable. The score of a point set $P$ is
+\begin{equation}
+  s(P) \;=\; \frac{\mathrm{HV}\bigl(\mathrm{ND}(P \cup \{b\})\bigr) - \mathrm{HV}(\{b\})}
+                 {\mathrm{HV}(P^{*}) - \mathrm{HV}(\{b\})} .
+  \label{eq:score}
+\end{equation}
+The score is anchored at the baseline: $s = 0$ means $P$ adds nothing to the
+baseline, and $s = 1$ means $P$ recovers the entire combined front $P^{*}$. For
+any $P \subseteq \bigcup_i S_i$ it lies in $[0, 1]$. It therefore reports the
+fraction of the improvement over the baseline that was actually achieved, and
+it is dimensionless, so it can be averaged across designs. Note that $P^{*}$ is
+the best frontier the agent found on that design, not the true optimum, so
+$s = 1$ does not imply optimality. A resource type is not scored for a design if
+the design never uses it (e.g., no DSPs) or if no point improves on the
+baseline ($\mathrm{HV}(P^{*}) = \mathrm{HV}(\{b\})$).
+
+\paragraph{Per-iteration and cumulative scores.}
+We use two ways to choose $P$ in Eq.~\eqref{eq:score}. The
+\emph{per-iteration} score $s_i = s(S_i)$ evaluates the frontier proposed by
+iteration $i$ alone; it can decrease if a later iteration proposes a worse set
+of points. The \emph{cumulative} score $s^{\mathrm{cum}}_i =
+s\bigl(\bigcup_{j \le i} S_j\bigr)$ evaluates the best frontier found so far.
+Because the pool only grows, $s^{\mathrm{cum}}_i$ is non-decreasing and reaches
+exactly $1$ at $i = T$.
+
+\paragraph{Scores against agent cost and time.}
+To compare designs with different iteration costs, we also index the score by a
+budget $\beta$, either cumulative agent cost (\$) or cumulative agent wall-clock
+time (s). If iteration $i$ finishes at cumulative spend $c_i$, the score of a
+design at budget $\beta$ is the score of the last iteration with $c_i \le \beta$,
+i.e., $s^{\mathrm{cum}}_{i}$ or $s_{i}$ depending on the variant, held constant
+until the next iteration completes; the design has no value before its first
+iteration finishes. We evaluate every design on a common uniform grid of
+budgets, and report the mean across the designs of a benchmark suite at each
+grid point, taken over the designs that have a value there. Since the set of
+contributing designs changes with $\beta$, the mean is not itself monotone even
+when each design's cumulative score is.
+
+\paragraph{Baseline coverage.}
+For the per-iteration score we additionally flag iterations whose front
+contains no point that is at least as good as the baseline in both latency and
+the resource under consideration. Such an iteration can obtain a positive
+score by improving one objective while regressing on the other, and the flag
+identifies these cases.

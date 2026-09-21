@@ -18,7 +18,14 @@ from plot_pareto_scores_cost_and_runtime import (
     CaseData,
     _load_case_data,
 )
-from plot_style_trj import GREY, GREY_ALPHA, GREY_LW, apply_trj_style, source_color_map
+from plot_style_trj import (
+    GREY,
+    GREY_ALPHA,
+    GREY_LW,
+    apply_trj_style,
+    source_color_map,
+    source_label,
+)
 
 
 def make_cost_vs_time_plot(cases: dict[str, CaseData], output_dir: Path):
@@ -75,7 +82,7 @@ def make_cost_vs_time_plot(cases: dict[str, CaseData], output_dir: Path):
         va="top",
         fontsize=10,
     )
-    fig.legend(
+    ax.legend(
         handles=[
             Line2D(
                 [0],
@@ -85,17 +92,19 @@ def make_cost_vs_time_plot(cases: dict[str, CaseData], output_dir: Path):
                 markersize=7,
                 color=source_colors[source],
                 markeredgecolor="white",
-                label=f"{source} ({sum(case.source == source for case in cases.values())})",
+                label=f"{source_label(source)} ({sum(case.source == source for case in cases.values())})",
             )
             for source in sources
         ],
-        loc="upper center",
-        bbox_to_anchor=(0.5, 0.905),
-        ncol=2,
+        loc="lower right",
+        ncol=1,
         fontsize=8,
-        frameon=False,
-    )
-    fig.tight_layout(rect=[0, 0, 1, 0.87])
+        frameon=True,
+        facecolor="white",
+        edgecolor="black",
+        framealpha=1.0,
+    ).set_zorder(10)
+    fig.tight_layout(rect=[0, 0, 1, 0.98])
 
     output_dir.mkdir(parents=True, exist_ok=True)
     fig.savefig(

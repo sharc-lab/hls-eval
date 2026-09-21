@@ -12,6 +12,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.transforms import blended_transform_factory
+from plot_style_trj import source_label
 
 DIR_CURRENT = Path(__file__).parent
 
@@ -206,7 +207,7 @@ def make_iso_resource_plot(
         ax.text(
             (start + end - 1) / 2,
             0.97,
-            tag,
+            source_label(tag),
             transform=axes_trans,
             ha="center",
             va="top",
