@@ -40,6 +40,8 @@ from plot_style_trj import (
     style_score_row,
 )
 
+# Runtime budgets are evaluated in seconds and drawn in minutes.
+SECONDS_PER_MINUTE = 60
 N_BUDGET_POINTS = 400
 
 # Whether the plots carry the "<n> designs across ... | <what> within the <x> budget"
@@ -156,6 +158,7 @@ def make_iso_budget_plot(
     two_line_ylabel: bool = False,
     show_row_box: bool = True,
     y_limits: tuple[float, float] = (-0.04, 1.04),
+    x_scale: float = 1.0,
 ):
     """One row per resource type: every design's score-vs-budget curve in faint
     gray, plus one colored mean curve per benchmark source.
@@ -166,7 +169,9 @@ def make_iso_budget_plot(
     score_description is the phrase for it in the subtitle. two_line_ylabel uses
     the bold "Pareto Score" / "(Lat. vs. <resource>)" y label of the score plots;
     show_row_box toggles the boxed "Latency vs. <resource> (n)" label at the
-    bottom right of each row."""
+    bottom right of each row. x_scale divides the budget for display only (the
+    budgets are still evaluated in the units of x_attr): 60 draws seconds as
+    minutes."""
     case_names = sorted(case_scores)
     sources = sorted({case.source for case in case_scores.values()})
     source_colors = source_color_map(sources)
@@ -196,7 +201,12 @@ def make_iso_budget_plot(
                 getattr(case, x_attr), case_resource_scores[resource_key], budgets
             )
             ax.plot(
-                budgets, curve, color=GREY, linewidth=GREY_LW, alpha=GREY_ALPHA, zorder=2
+                budgets / x_scale,
+                curve,
+                color=GREY,
+                linewidth=GREY_LW,
+                alpha=GREY_ALPHA,
+                zorder=2,
             )
             curves_by_source.setdefault(case.source, []).append(curve)
 
@@ -218,14 +228,18 @@ def make_iso_budget_plot(
                 counts > 0, np.nansum(stacked, axis=0) / np.maximum(counts, 1), np.nan
             )
             ax.plot(
-                budgets, mean_curve, color=source_colors[source], lw=MEAN_LW, zorder=4
+                budgets / x_scale,
+                mean_curve,
+                color=source_colors[source],
+                lw=MEAN_LW,
+                zorder=4,
             )
             sources_present.add(source)
         style_score_row(
             ax,
             f"vs. {resource_label}",
             f"Latency vs. {resource_label} ({n_lines})" if show_row_box else None,
-            (0, max_budget),
+            (0, max_budget / x_scale),
             ax is axes[-1],
             box_edge_color="black",
             y_limits=y_limits,
@@ -290,9 +304,10 @@ if __name__ == "__main__":
         case_scores,
         DIR_FIGURES_SCORES,
         "cumulative_seconds",
-        "Budget: Cumulative Agent Time (s)",
+        "Budget: Cumulative Agent Time (min)",
         "iso_budget_pareto_score__runtime.png",
         "time",
+        x_scale=SECONDS_PER_MINUTE,
     )
 
     # Same plots with the per-iteration scoring: each design's value at a
@@ -315,7 +330,7 @@ if __name__ == "__main__":
         case_scores,
         DIR_FIGURES_SCORES,
         "cumulative_seconds",
-        "Budget: Cumulative Agent Time (s)",
+        "Budget: Cumulative Agent Time (min)",
         "iso_budget_pareto_score_per_iter__runtime.png",
         "time",
         score_attr="iter_scores_by_resource",
@@ -324,5 +339,6 @@ if __name__ == "__main__":
         two_line_ylabel=True,
         show_row_box=False,
         y_limits=(0.0, 1.0),
+        x_scale=SECONDS_PER_MINUTE,
     )
     print(f"Done making iso-budget plots for {len(case_scores)} designs")

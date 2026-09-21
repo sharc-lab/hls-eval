@@ -1,5 +1,5 @@
 """Cumulative agent cost vs. cumulative agent time: one point per design per
-iteration, at the design's total agent time (x, seconds) and total agent cost (y,
+iteration, at the design's total agent time (x, minutes) and total agent cost (y,
 dollars) through the end of that iteration. All samples of one iteration share the
 same cost and time, so they land on the same point; a thin line joins a design's
 iterations in order.
@@ -28,6 +28,9 @@ from plot_style_trj import (
 )
 
 
+SECONDS_PER_MINUTE = 60
+
+
 def make_cost_vs_time_plot(cases: dict[str, CaseData], output_dir: Path):
     apply_trj_style()
     sources = sorted({case.source for case in cases.values()})
@@ -36,7 +39,7 @@ def make_cost_vs_time_plot(cases: dict[str, CaseData], output_dir: Path):
     fig, ax = plt.subplots(figsize=(6.5, 4.6 * 0.7))
     for case in cases.values():
         ax.plot(
-            case.cumulative_seconds,
+            [x / SECONDS_PER_MINUTE for x in case.cumulative_seconds],
             case.cumulative_cost,
             color=GREY,
             linewidth=GREY_LW,
@@ -46,7 +49,11 @@ def make_cost_vs_time_plot(cases: dict[str, CaseData], output_dir: Path):
     for source in sources:
         source_cases = [case for case in cases.values() if case.source == source]
         ax.scatter(
-            [x for case in source_cases for x in case.cumulative_seconds],
+            [
+                x / SECONDS_PER_MINUTE
+                for case in source_cases
+                for x in case.cumulative_seconds
+            ],
             [y for case in source_cases for y in case.cumulative_cost],
             s=30,
             color=source_colors[source],
@@ -54,9 +61,13 @@ def make_cost_vs_time_plot(cases: dict[str, CaseData], output_dir: Path):
             linewidth=0.6,
             zorder=3,
         )
-    all_seconds = [x for case in cases.values() for x in case.cumulative_seconds]
+    all_minutes = [
+        x / SECONDS_PER_MINUTE
+        for case in cases.values()
+        for x in case.cumulative_seconds
+    ]
     all_costs = [y for case in cases.values() for y in case.cumulative_cost]
-    correlation = np.corrcoef(all_seconds, all_costs)[0, 1]
+    correlation = np.corrcoef(all_minutes, all_costs)[0, 1]
     ax.text(
         0.03,
         0.95,
@@ -73,7 +84,7 @@ def make_cost_vs_time_plot(cases: dict[str, CaseData], output_dir: Path):
     )
     ax.set_xlim(left=0)
     ax.set_ylim(bottom=0)
-    ax.set_xlabel("Cumulative Agent Time (s)", fontweight="bold")
+    ax.set_xlabel("Cumulative Agent Time (min)", fontweight="bold")
     ax.set_ylabel("Cumulative Agent Cost ($)", fontweight="bold")
     ax.tick_params(which="both", length=5, width=1.0, direction="inout")
     ax.set_title(
