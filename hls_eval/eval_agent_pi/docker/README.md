@@ -90,3 +90,51 @@ and unified Vitis 2025.2.1 installation. Pi also started successfully with
 each tool environment and with no vendor mounts or configuration. No host
 locale mount, custom `LD_LIBRARY_PATH`, or license environment was needed
 for these smoke tests.
+
+## Dataflow image (LightningSim and FIFOAdvisor)
+
+`Dockerfile.dataflow` extends the base image with LightningSim and FIFOAdvisor
+for `HLSParameterizationIterativeDataflowAgentEvaluatorPi`. The base image and
+its build script are unchanged and still used by the other evaluations.
+
+```bash
+bash hls_eval/eval_agent_pi/docker/build_docker_image.sh           # base, once
+bash hls_eval/eval_agent_pi/docker/build_docker_image_dataflow.sh  # hls-eval-agent-pi-dataflow
+```
+
+Both tools live in a locked Pixi environment (`dataflow_tools/pixi.toml` and
+`pixi.lock`: Python 3.12, LightningSim 0.2.6 from its conda channel, FIFOAdvisor
+pinned to a git commit) at `/opt/hls-dataflow-tools`. `dataflow_tools/bin/`
+provides `lightningsim`, `fifo-advisor` and `hls-python` shims that go through
+`pixi run --frozen`; activation gives LightningSim conda's compilers, which
+matters because the base image sets `CC=clang`. The tools are only put on `PATH`
+by the `with-dataflow-tools` wrapper. LightningSim compiles the testbench
+against `$XILINX_HLS`, so it needs the same host Vitis HLS mount as `vitis_hls`
+(`vitis_dir`), and that release must be the one that synthesized the solution.
+
+The evaluator's `agent_dataflow_tools` switch selects the access mode:
+
+- `True`: the agent runs under `with-vitis with-dataflow-tools pi`.
+- `False`: the agent gets neither the tools nor Vitis HLS. An empty tmpfs masks
+  `/opt/hls-dataflow-tools`, so the tools do not exist; `sharc-lab.github.io`,
+  `github.com` and related hosts resolve to loopback so the agent cannot install
+  them; and no Vitis installation, environment variable or `with-vitis` wrapper
+  is given to the container (the evaluator rejects `vitis_dir`, `vivado_dir` and
+  `vitis_license_server` in this mode). Other hosts (e.g. PyPI) still work. The
+  harness's own csim, synthesis and LightningSim runs still use Vitis on the host.
+
+The same environment is installed on the host (`pixi install` in
+`dataflow_tools/`) for the evaluator's own LightningSim runs between iterations.
+The `.pixi` directory is git-ignored and excluded from the Docker build context.
+
+Validate the image and both modes without an LLM (this synthesizes `atax`
+inside the container, following the same Tcl recipe the agent prompt gives):
+
+```bash
+bash hls_eval/eval_agent_pi/docker/test_dataflow_image.sh \
+    --vitis-dir /tools/software/xilinx/ARCHIVE/Vitis_HLS/2024.1
+```
+
+Validated with Vitis HLS 2024.1. Vitis HLS 2024.2 in `ARCHIVE` is a partial
+install (no `include`/`data`, no matching Vitis or Vivado), and 2025.x/2026.1 are
+unified installs without a `vitis_hls` binary, which the synthesis tool needs.

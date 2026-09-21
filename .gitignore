@@ -9,3 +9,8 @@
 **/__pycache__/
 
 .env
+
+**/.pixi/
+build_dataflow.log
+
+dataflow_run.log

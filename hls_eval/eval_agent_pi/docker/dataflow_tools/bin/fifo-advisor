@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+exec pixi run --frozen --manifest-path /opt/hls-dataflow-tools/pixi.toml -- fifo-advisor "$@"

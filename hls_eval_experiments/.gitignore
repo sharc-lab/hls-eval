@@ -2,3 +2,7 @@
 **/output_data_backup/
 **/output_data_v*/
 **/output_data__v*/
+**/output_data_old/
+
+**/output_data_dataflow__agent_no_vitis_no_tools
+**/output_data_dataflow__agent_vitis_and_tools

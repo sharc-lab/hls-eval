@@ -1,0 +1,5 @@
+**/.pixi
+**/__pycache__
+build.log
+build_dataflow.log
+vitis_smoke

@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# `pixi run` activates the environment, which sets CC/CXX to conda's compilers
+# (the base image sets CC=clang, which LightningSim must not pick up).
+exec pixi run --frozen --manifest-path /opt/hls-dataflow-tools/pixi.toml -- lightningsim "$@"

@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Python with lightningsim and fifo_advisor importable (e.g. fifo_advisor.opt_env.LSEnv).
+exec pixi run --frozen --manifest-path /opt/hls-dataflow-tools/pixi.toml -- python "$@"

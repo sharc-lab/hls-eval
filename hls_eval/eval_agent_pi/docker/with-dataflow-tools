@@ -1,0 +1,13 @@
+#!/bin/bash
+set -e
+
+# Like with-vitis: docker exec does not inherit entrypoint changes, so wrap the
+# agent command. Only used when the agent is granted LightningSim/FIFOAdvisor;
+# otherwise /opt/hls-dataflow-tools is masked by an empty tmpfs.
+if [ ! -x /opt/hls-dataflow-tools/bin/lightningsim ]; then
+    printf 'LightningSim tools are missing from /opt/hls-dataflow-tools\n' >&2
+    exit 1
+fi
+export PATH="/opt/hls-dataflow-tools/bin:$PATH"
+
+exec "$@"

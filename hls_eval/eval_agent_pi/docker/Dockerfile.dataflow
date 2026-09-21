@@ -1,0 +1,21 @@
+# Agent image for the dataflow parameterization evals: the base agent image plus
+# LightningSim and FIFOAdvisor in a Pixi environment. Build the base image first
+# (build_docker_image.sh), then build_docker_image_dataflow.sh.
+ARG BASE_IMAGE=hls-eval-agent-pi
+FROM ${BASE_IMAGE}
+
+# LightningSim needs Vitis HLS at runtime ($XILINX_HLS), supplied by the same
+# host mount as for `vitis_hls`; nothing vendor-specific is installed here.
+COPY dataflow_tools/pixi.toml dataflow_tools/pixi.lock /opt/hls-dataflow-tools/
+RUN cd /opt/hls-dataflow-tools && \
+    PIXI_CACHE_DIR=/tmp/pixi-cache UV_CACHE_DIR=/tmp/uv-cache pixi install --locked && \
+    rm -rf /tmp/pixi-cache /tmp/uv-cache && \
+    chmod -R a+rX /opt/hls-dataflow-tools
+
+COPY --chmod=755 dataflow_tools/bin/ /opt/hls-dataflow-tools/bin/
+COPY --chmod=755 with-dataflow-tools /usr/local/bin/with-dataflow-tools
+
+# Build-time check that both tools import and their CLIs start.
+RUN /opt/hls-dataflow-tools/bin/hls-python -c "import lightningsim, fifo_advisor" && \
+    /opt/hls-dataflow-tools/bin/lightningsim --help >/dev/null && \
+    /opt/hls-dataflow-tools/bin/fifo-advisor --help >/dev/null

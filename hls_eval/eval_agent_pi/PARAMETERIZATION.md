@@ -113,3 +113,49 @@ retained. Correctness `passed` is separate from optimization quality: there is
 no arbitrary scalar quality score or claim that the measured frontier is globally
 optimal. Frontier size, coverage and baseline comparisons should be considered
 together when assessing the agent's optimization quality.
+
+## Dataflow evaluator: `HLSParameterizationIterativeDataflowAgentEvaluatorPi`
+
+Defined in `eval_agent_pi_paramaterized_dataflow.py`. It follows
+`HLSParameterizationIterativeAgentEvaluatorPi` with a dataflow-specific prompt and
+an image with LightningSim and FIFOAdvisor (see `docker/README.md`).
+
+```python
+evaluator = HLSParameterizationIterativeDataflowAgentEvaluatorPi(
+    vitis_hls_tool_csim=VitisHLSCSimTool(vitis),
+    vitis_hls_tool_synth=VitisHLSSynthTool(vitis),
+    output_data_dir=Path("output_dataflow"),
+    n_iters=3,
+    vitis_dir=vitis,                  # required when agent_dataflow_tools=True
+    agent_dataflow_tools=True,        # False: no tools and no Vitis for the agent
+                                      # (vitis_dir must then be None)
+    lightningsim_timeout=600,
+)
+evaluator.evaluate_designs(
+    benchmark_cases, models, n_jobs_pool_agent=8, n_jobs_pool_csim=16, n_jobs_pool_synth=16
+)
+```
+
+Per point, after each agent iteration: Clang interface check and csim, then Vitis
+HLS synthesis (with the testbench registered via `add_files -tb`), then
+LightningSim on the synthesized solution. Resource metrics come from the
+synthesis report; **latency is LightningSim's top-module cycle count**
+(`latency_lightningsim_cycles`), which replaces `latency_worst_cycles` in the
+Pareto objectives. The Vitis estimate is kept beside it for comparison. A point
+passes only if LightningSim reports a latency.
+
+- LightningSim runs on its own thread pool, the same size as `n_jobs_pool_synth`,
+  on the host through the Pixi environment in `docker/dataflow_tools`. Each run
+  uses about 1.5 GB of memory on `atax`; peak RSS is recorded per run.
+- Its `XILINX_HLS` defaults to the synthesis tool's installation (override with
+  `lightningsim_xilinx_hls`); a mismatch of releases between the synthesis tool,
+  that path and `vitis_dir` is rejected. Use the Vitis HLS release LightningSim
+  works with (2024.1 was validated; see `docker/README.md`).
+- Failures are kept per point: `lightningsim_status` is `passed`, `deadlock`,
+  `timeout`, `failed` or `skipped` (with `lightningsim_skip_reason`, when
+  synthesis or csim failed). They are reported to the next iteration's agent
+  along with `lightningsim.log`.
+- Access mode is enforced by the container, not just by the prompt, which also
+  changes. With the tools on, they and Vitis HLS are present and on `PATH`. With
+  them off, the tools are absent and not installable and no Vitis HLS is mounted
+  for the agent, so it can only check its work with clang and the testbench.

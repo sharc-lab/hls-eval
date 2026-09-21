@@ -3,6 +3,7 @@ import os
 import shlex
 import shutil
 import time
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -146,7 +147,16 @@ def run_pi_agent(
     vitis_dir: str | Path | None = None,
     vivado_dir: str | Path | None = None,
     vitis_license_server: str | None = None,
+    *,
+    extra_volumes: dict[str, dict[str, str]] | None = None,
+    extra_environment: dict[str, str] | None = None,
+    tmpfs: dict[str, str] | None = None,
+    extra_hosts: dict[str, str] | None = None,
+    command_wrappers: Sequence[str] = (),
 ) -> PiAgentRunResult:
+    """`extra_*`, `tmpfs` and `extra_hosts` are passed to the container as-is;
+    `command_wrappers` are executables (like `with-vitis`) that each exec their
+    arguments and run in front of `pi`, after `with-vitis` when Vitis is set."""
     if vitis_dir is None and (vivado_dir is not None or vitis_license_server is not None):
         raise ValueError("vitis_dir is required when configuring Vivado or licensing")
     vitis = (
@@ -171,16 +181,24 @@ def run_pi_agent(
             detach=True,
             volumes={
                 **(vitis.volumes if vitis else {}),
+                **(extra_volumes or {}),
                 str(agent_run_dir.resolve()): {
                     "bind": CONTAINER_WORKDIR,
                     "mode": "rw",
                 }
             },
-            environment=vitis.environment if vitis else {},
+            environment={
+                **(vitis.environment if vitis else {}),
+                **(extra_environment or {}),
+            },
+            tmpfs=tmpfs or None,
+            extra_hosts=extra_hosts or None,
         )
 
         quoted_prompt = shlex.quote(prompt)
-        agent_command = "with-vitis pi" if vitis else "pi"
+        agent_command = " ".join(
+            [*(["with-vitis"] if vitis else []), *command_wrappers, "pi"]
+        )
         agent_env = {"OPENROUTER_API_KEY": api_key}
         if model_name in PI_CUSTOM_OPENROUTER_MODELS:
             agent_env["PI_CODING_AGENT_DIR"] = PI_AGENT_DIR_CONTAINER

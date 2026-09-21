@@ -135,7 +135,12 @@ class VitisHLSSynthTool:
         hls_disable_auto_optimizations: bool = False,
         hls_compiler_defines: list[str] | None = None,
         timeout: float = 60.0 * 6,
+        tb_files: list[Path] = [],
     ) -> ToolDataOutput:
+        """`tb_files` (testbench sources and their data files) are registered
+        with `add_files -tb`. They do not change csynth results, but tools that
+        re-run the testbench from the synthesized solution (e.g. LightningSim)
+        read them from the project."""
         if build_name is None:
             build_name = f"{build_name_prefix}{uuid.uuid4().hex}"
         else:
@@ -146,7 +151,7 @@ class VitisHLSSynthTool:
             shutil.rmtree(unique_build_dir)
         unique_build_dir.mkdir(parents=True, exist_ok=True)
 
-        for fp in source_files + aux_files:
+        for fp in source_files + aux_files + tb_files:
             shutil.copy(fp, unique_build_dir)
 
         tcl_script_fp: Path = unique_build_dir / "run_hls.tcl"
@@ -159,6 +164,8 @@ class VitisHLSSynthTool:
                 tcl_script += f"add_files -cflags {{{compiler_cflags}}} {fp}\n"
             else:
                 tcl_script += f"add_files {fp}\n"
+        for fp in tb_files:
+            tcl_script += f"add_files -tb {fp}\n"
         tcl_script += f"open_solution solution__synth -flow_target {hls_flow_target}\n"
         if hls_top_function is not None:
             tcl_script += f"set_top {hls_top_function}\n"

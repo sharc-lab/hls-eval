@@ -1,0 +1,19 @@
+[workspace]
+name = "hls-dataflow-tools"
+channels = ["conda-forge", "https://sharc-lab.github.io/LightningSim/repo"]
+platforms = ["linux-64"]
+
+[dependencies]
+python = "3.12.*"
+lightningsim = "==0.2.6"
+numpy = "*"
+pandas = "*"
+scipy = "*"
+matplotlib = "*"
+seaborn = "*"
+joblib = "*"
+pymoo = "*"
+
+[pypi-dependencies]
+# Pinned; FIFOAdvisor is not on PyPI and must not pull in its own LightningSim.
+fifo-advisor = { git = "https://github.com/sharc-lab/fifo-advisor.git", rev = "bc49e7218157c2786e8279ed5592b5374c895343" }

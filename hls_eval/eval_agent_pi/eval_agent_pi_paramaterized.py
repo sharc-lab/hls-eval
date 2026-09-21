@@ -9,6 +9,7 @@ import re
 import shutil
 import subprocess
 import time
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, cast
@@ -341,11 +342,13 @@ def _top_signatures(ast_output: str, top_function: str) -> list[dict]:
     )
 
 
-def _objective_values(point: dict) -> tuple[float, ...] | None:
+def _objective_values(
+    point: dict, objectives: tuple[str, ...] = PARETO_OBJECTIVES
+) -> tuple[float, ...] | None:
     if not point.get("passed"):
         return None
     metrics = point.get("vitis_hls_tool_out", {}).get("data_tool") or {}
-    values = tuple(metrics.get(key) for key in PARETO_OBJECTIVES)
+    values = tuple(metrics.get(key) for key in objectives)
     if not all(
         isinstance(value, (int, float))
         and not isinstance(value, bool)
@@ -363,11 +366,15 @@ def _dominates(left: tuple, right: tuple) -> bool:
     )
 
 
-def summarize_design_space(points: list[dict], baseline: dict) -> dict:
+def summarize_design_space(
+    points: list[dict],
+    baseline: dict,
+    objectives: tuple[str, ...] = PARETO_OBJECTIVES,
+) -> dict:
     eligible = [
         (point["point_index"], values)
         for point in points
-        if (values := _objective_values(point)) is not None
+        if (values := _objective_values(point, objectives)) is not None
     ]
     frontier = [
         (index, values)
@@ -378,10 +385,10 @@ def summarize_design_space(points: list[dict], baseline: dict) -> dict:
     unique_frontier: dict[tuple[float, ...], int] = {}
     for index, values in frontier:
         unique_frontier.setdefault(values, index)
-    baseline_values = _objective_values(baseline)
+    baseline_values = _objective_values(baseline, objectives)
     total = len(points)
     return {
-        "objectives": list(PARETO_OBJECTIVES),
+        "objectives": list(objectives),
         "objective_direction": "minimize",
         "n_points": total,
         "n_rendered": sum(p.get("render_success", False) for p in points),
@@ -394,7 +401,7 @@ def summarize_design_space(points: list[dict], baseline: dict) -> dict:
         "unique_pareto_point_indices": list(unique_frontier.values()),
         "n_unique_pareto_points": len(unique_frontier),
         "unique_pareto_fraction": len(unique_frontier) / total if total else 0.0,
-        "baseline_objectives": dict(zip(PARETO_OBJECTIVES, baseline_values))
+        "baseline_objectives": dict(zip(objectives, baseline_values))
         if baseline_values
         else None,
         "points_dominating_baseline": [
@@ -410,14 +417,20 @@ def summarize_design_space(points: list[dict], baseline: dict) -> dict:
     }
 
 
-def _format_point_metrics(point: dict) -> str | None:
+LATENCY_KEYS = (("latency_worst_cycles", "latency"),)
+
+
+def _format_point_metrics(
+    point: dict, latency_keys: tuple[tuple[str, str], ...] = LATENCY_KEYS
+) -> str | None:
     metrics = point.get("vitis_hls_tool_out", {}).get("data_tool") or {}
     if not metrics:
         return None
     parts = []
-    latency = metrics.get("latency_worst_cycles")
-    if isinstance(latency, (int, float)) and not isinstance(latency, bool):
-        parts.append(f"latency={latency} cycles")
+    for latency_key, latency_label in latency_keys:
+        latency = metrics.get(latency_key)
+        if isinstance(latency, (int, float)) and not isinstance(latency, bool):
+            parts.append(f"{latency_label}={latency} cycles")
     for label, used_key, frac_key in (
         ("LUT", "resources_lut_used", "resources_lut_fraction_used"),
         ("FF", "resources_ff_used", "resources_ff_fraction_used"),
@@ -463,22 +476,28 @@ def _csynth_failure_reason(point: dict) -> str | None:
     return _stage_failure_reason(point.get("vitis_hls_tool_out")) or "synthesis failed"
 
 
-def _undetermined_objective_reason(point: dict) -> str | None:
+def _undetermined_objective_reason(
+    point: dict,
+    objectives: tuple[str, ...] = PARETO_OBJECTIVES,
+    latency_missing_reason: Callable[[dict], str] | None = None,
+) -> str | None:
     """A point that otherwise passed (csim, csynth, signature) but whose Pareto
     objective values are not all usable numbers, most commonly because Vitis
     reported an undefined worst-case latency for a loop with a data-dependent
     trip count. Such a point is not a failure, but it cannot be scored."""
-    if not point.get("passed") or _objective_values(point) is not None:
+    if not point.get("passed") or _objective_values(point, objectives) is not None:
         return None
     metrics = point.get("vitis_hls_tool_out", {}).get("data_tool") or {}
-    if metrics.get("latency_worst_cycles") is None:
+    if metrics.get(objectives[0]) is None:
+        if latency_missing_reason is not None:
+            return latency_missing_reason(point)
         return (
             "worst-case latency UNDETERMINED (Vitis reported it as undefined, "
             "often caused by a loop with a data-dependent/variable trip count)"
         )
     bad = [
         key
-        for key in PARETO_OBJECTIVES
+        for key in objectives
         if not (
             isinstance(metrics.get(key), (int, float))
             and not isinstance(metrics.get(key), bool)
@@ -518,7 +537,18 @@ def _collect_point_artifacts(
             shutil.copy(synth_log, point_artifacts_dir / "vitis_hls_synth.log")
 
 
-def _format_previous_iteration_summary(iteration: dict) -> str:
+def _format_previous_iteration_summary(
+    iteration: dict,
+    *,
+    objectives: tuple[str, ...] = PARETO_OBJECTIVES,
+    latency_keys: tuple[tuple[str, str], ...] = LATENCY_KEYS,
+    latency_missing_reason: Callable[[dict], str] | None = None,
+    extra_stage: Callable[[dict], str | None] | None = None,
+    extra_stage_counts: tuple[tuple[str, str], ...] = (),
+) -> str:
+    """`extra_stage` appends a per-point (and baseline) note after the csynth
+    status; `extra_stage_counts` is (label, point key) pairs of extra boolean
+    stages to include in the stage pass counts."""
     lines = ["Summary of the previous iteration:"]
     if not iteration.get("agent_submitted"):
         lines.append(
@@ -557,6 +587,10 @@ def _format_previous_iteration_summary(iteration: dict) -> str:
         n_syntax_passed = sum(1 for p in points if p.get("clang_syntax_passed"))
         n_csim_passed = sum(1 for p in points if p.get("testbench_passed"))
         n_csynth_passed = sum(1 for p in points if p.get("synthesis_passed"))
+        extra_counts = "".join(
+            f"{label} {sum(1 for p in points if p.get(key))}/{n_points}, "
+            for label, key in extra_stage_counts
+        )
         lines.append(
             f"- Design-point sampling: {n_points} points submitted, "
             f"{summary['n_rendered']} rendered, {summary['n_unique_renderings']} "
@@ -568,6 +602,7 @@ def _format_previous_iteration_summary(iteration: dict) -> str:
             f"clang syntax {n_syntax_passed}/{n_points}, "
             f"csim {n_csim_passed}/{n_points}, "
             f"csynth {n_csynth_passed}/{n_points}, "
+            f"{extra_counts}"
             f"fully passed {summary['n_passed']}/{n_points}."
         )
         if summary["n_metric_eligible"] < summary["n_passed"]:
@@ -596,18 +631,23 @@ def _format_previous_iteration_summary(iteration: dict) -> str:
                 + f", csynth {csynth_status}"
                 + (f" ({csynth_reason})" if csynth_reason else "")
             )
+            extra_text = extra_stage(point) if extra_stage else None
+            if extra_text:
+                line += f", {extra_text}"
             if not point.get("render_success"):
                 line += "; template failed to render"
             elif not point.get("interface_preserved", True):
                 line += "; signature/interface check FAILED"
             else:
-                undetermined_reason = _undetermined_objective_reason(point)
+                undetermined_reason = _undetermined_objective_reason(
+                    point, objectives, latency_missing_reason
+                )
                 if undetermined_reason:
                     line += (
                         f"; {undetermined_reason} — NOT included in the Pareto "
                         "frontier and cannot be scored"
                     )
-            metrics_text = _format_point_metrics(point)
+            metrics_text = _format_point_metrics(point, latency_keys)
             if metrics_text:
                 line += f"; {metrics_text}"
             lines.append(line)
@@ -619,7 +659,9 @@ def _format_previous_iteration_summary(iteration: dict) -> str:
             by_index = {p["point_index"]: p for p in points}
             for index in frontier_indices:
                 point = by_index.get(index)
-                metrics_text = _format_point_metrics(point) if point else None
+                metrics_text = (
+                    _format_point_metrics(point, latency_keys) if point else None
+                )
                 lines.append(
                     f"- point {index}: {metrics_text or 'no metrics available'}"
                 )
@@ -640,10 +682,13 @@ def _format_previous_iteration_summary(iteration: dict) -> str:
             )
             if reason
         )
-        metrics_text = _format_point_metrics(baseline)
+        metrics_text = _format_point_metrics(baseline, latency_keys)
         line = f"- {status}"
         if reasons:
             line += f" ({reasons})"
+        baseline_extra = extra_stage(baseline) if extra_stage else None
+        if baseline_extra:
+            line += f", {baseline_extra}"
         line += f", {metrics_text or 'no metrics available'}"
         lines.append(line)
 
@@ -661,6 +706,9 @@ class HLSParameterizationAgentEvaluatorPi(HLSGenerationAgentEvaluatorPi):
     retain independent results, logged in the same `data_execution`/`data_tool`
     shape used by the rest of the codebase.
     """
+
+    # Pareto objectives, all minimized; subclasses may swap the latency metric.
+    objectives: tuple[str, ...] = PARETO_OBJECTIVES
 
     def __init__(
         self,
@@ -757,6 +805,10 @@ class HLSParameterizationAgentEvaluatorPi(HLSGenerationAgentEvaluatorPi):
                 result["interface_error"] = str(error)
         return result
 
+    def _synth_extra_kwargs(self, design_dir: Path, tb_file: str) -> dict[str, Any]:
+        """Extra keyword arguments for the synthesis tool run (none by default)."""
+        return {}
+
     def _evaluate_variant(
         self,
         design_dir: Path,
@@ -806,6 +858,7 @@ class HLSParameterizationAgentEvaluatorPi(HLSGenerationAgentEvaluatorPi):
             hls_unsafe_math=True,
             hls_disable_auto_optimizations=True,
             timeout=self.synth_timeout,
+            **self._synth_extra_kwargs(design_dir, tb_file),
         )
 
         try:
@@ -1061,7 +1114,9 @@ class HLSParameterizationAgentEvaluatorPi(HLSGenerationAgentEvaluatorPi):
             points.append(point)
         result["points"] = points
 
-        result["summary"] = summarize_design_space(result["points"], baseline)
+        result["summary"] = summarize_design_space(
+            result["points"], baseline, self.objectives
+        )
         result["passed"] = (
             all(point["passed"] for point in result["points"])
             and len(seen_sources) >= 2
@@ -1261,6 +1316,61 @@ class HLSParameterizationIterativeAgentEvaluatorPi(HLSParameterizationAgentEvalu
         )
         self.n_iters = n_iters
 
+    eval_type = "hls_parameterization_iterative_agentic_pi"
+
+    def _extra_configuration(self) -> dict[str, Any]:
+        """Evaluator-specific settings recorded in each sample's configuration."""
+        return {}
+
+    def _collect_artifacts(
+        self, iter_dir: Path, agent_dir: Path, points: list[dict]
+    ) -> None:
+        _collect_point_artifacts(iter_dir, agent_dir, points)
+
+    def _build_iteration_prompt(
+        self,
+        original: Path,
+        kernel_files: list[str],
+        tb_file: str,
+        top_function: str,
+        previous_iteration: dict | None,
+    ) -> str:
+        if previous_iteration is None:
+            iteration_section = _prompt_section_intro()
+        else:
+            iteration_section = _prompt_section_iteration_refinement(
+                _format_previous_iteration_summary(previous_iteration)
+            )
+        return build_prompt_parameterization(
+            kernel_files,
+            top_function,
+            self.max_design_points,
+            self.hls_fpga_part,
+            self.hls_clock_period_ns,
+            self.csim_timeout,
+            self.synth_timeout,
+            vitis_available=self.vitis_dir is not None,
+            iteration_section=iteration_section,
+        )
+
+    def _run_agent(
+        self, agent_dir: Path, prompt: str, model: Model, pools: EvalThreadPools
+    ):
+        """Run the Pi agent (in the agent pool) on `agent_dir`; returns its result."""
+        assert isinstance(model.llm, OpenRouterChat)
+        assert model.llm.key is not None
+        return pools.pool_agent.submit(
+            run_pi_agent,
+            agent_run_dir=agent_dir,
+            prompt=prompt,
+            model_name=model.llm.model_name,
+            api_key=model.llm.key,
+            docker_image_name=self.docker_image_name,
+            vitis_dir=self.vitis_dir,
+            vivado_dir=self.vivado_dir,
+            vitis_license_server=self.vitis_license_server,
+        ).result()
+
     def _run_iteration(
         self,
         eval_id: str,
@@ -1284,22 +1394,8 @@ class HLSParameterizationIterativeAgentEvaluatorPi(HLSParameterizationAgentEvalu
         # root-owned 0600 files (e.g. .pi/agent/auth.json), so never copy it.
         shutil.copytree(agent_source, agent_dir, ignore=shutil.ignore_patterns(".pi"))
 
-        if previous_iteration is None:
-            iteration_section = _prompt_section_intro()
-        else:
-            iteration_section = _prompt_section_iteration_refinement(
-                _format_previous_iteration_summary(previous_iteration)
-            )
-        prompt = build_prompt_parameterization(
-            kernel_files,
-            top_function,
-            self.max_design_points,
-            self.hls_fpga_part,
-            self.hls_clock_period_ns,
-            self.csim_timeout,
-            self.synth_timeout,
-            vitis_available=self.vitis_dir is not None,
-            iteration_section=iteration_section,
+        prompt = self._build_iteration_prompt(
+            original, kernel_files, tb_file, top_function, previous_iteration
         )
         (iter_dir / "raw_agent_prompt.txt").write_text(prompt)
 
@@ -1314,19 +1410,8 @@ class HLSParameterizationIterativeAgentEvaluatorPi(HLSParameterizationAgentEvalu
             sample_index,
             iter_index,
         )
-        assert isinstance(model.llm, OpenRouterChat)
         start = time.monotonic()
-        agent = pools.pool_agent.submit(
-            run_pi_agent,
-            agent_run_dir=agent_dir,
-            prompt=prompt,
-            model_name=model.llm.model_name,
-            api_key=model.llm.key,
-            docker_image_name=self.docker_image_name,
-            vitis_dir=self.vitis_dir,
-            vivado_dir=self.vivado_dir,
-            vitis_license_server=self.vitis_license_server,
-        ).result()
+        agent = self._run_agent(agent_dir, prompt, model, pools)
         end = time.monotonic()
         iter_data.update(
             {
@@ -1366,7 +1451,7 @@ class HLSParameterizationIterativeAgentEvaluatorPi(HLSParameterizationAgentEvalu
             # them for this iteration's, so only the immediately preceding
             # iteration's logs are ever carried forward.
             shutil.rmtree(agent_dir / "previous_design_artifacts", ignore_errors=True)
-            _collect_point_artifacts(iter_dir, agent_dir, iter_data.get("points", []))
+            self._collect_artifacts(iter_dir, agent_dir, iter_data.get("points", []))
         (iter_dir / "iteration_eval_data.json").write_text(
             json.dumps(iter_data, indent=4)
         )
@@ -1412,7 +1497,7 @@ class HLSParameterizationIterativeAgentEvaluatorPi(HLSParameterizationAgentEvalu
             sample_dir = eval_top / f"sample__{sample_index}"
             sample_dir.mkdir()
             sample_data: dict[str, Any] = {
-                "eval_type": "hls_parameterization_iterative_agentic_pi",
+                "eval_type": self.eval_type,
                 "eval_id": eval_id,
                 "benchmark_case_name": benchmark_case.name,
                 "benchmark_case_tags": benchmark_case.tags_all,
@@ -1432,6 +1517,7 @@ class HLSParameterizationIterativeAgentEvaluatorPi(HLSParameterizationAgentEvalu
                     "compile_timeout": self.compile_timeout,
                     "csim_timeout": self.csim_timeout,
                     "synth_timeout": self.synth_timeout,
+                    **self._extra_configuration(),
                 },
                 "iterations": [],
             }

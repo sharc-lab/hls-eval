@@ -33,7 +33,7 @@ def make_cost_vs_time_plot(cases: dict[str, CaseData], output_dir: Path):
     sources = sorted({case.source for case in cases.values()})
     source_colors = source_color_map(sources)
 
-    fig, ax = plt.subplots(figsize=(6.5, 4.6))
+    fig, ax = plt.subplots(figsize=(6.5, 4.6 * 0.7))
     for case in cases.values():
         ax.plot(
             case.cumulative_seconds,
@@ -76,11 +76,11 @@ def make_cost_vs_time_plot(cases: dict[str, CaseData], output_dir: Path):
     ax.set_xlabel("Cumulative Agent Time (s)", fontweight="bold")
     ax.set_ylabel("Cumulative Agent Cost ($)", fontweight="bold")
     ax.tick_params(which="both", length=5, width=1.0, direction="inout")
-    fig.suptitle("Cumulative Agent Cost vs. Agent Time", y=0.985, fontweight="bold")
-    fig.text(0.5, 0.925, f"{sum(len(c.cumulative_cost) for c in cases.values())} points from {len(cases)} designs | one per design per iteration",
-        ha="center",
-        va="top",
-        fontsize=10,
+    ax.set_title(
+        "Cumulative Agent Cost vs. Agent Time",
+        fontsize=plt.rcParams["figure.titlesize"],
+        fontweight="bold",
+        pad=8,
     )
     ax.legend(
         handles=[
@@ -104,7 +104,7 @@ def make_cost_vs_time_plot(cases: dict[str, CaseData], output_dir: Path):
         edgecolor="black",
         framealpha=1.0,
     ).set_zorder(10)
-    fig.tight_layout(rect=[0, 0, 1, 0.98])
+    fig.tight_layout()
 
     output_dir.mkdir(parents=True, exist_ok=True)
     fig.savefig(
