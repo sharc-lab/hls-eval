@@ -28,3 +28,4 @@ Important Data Structures and Data Types:
 Sub-Components:
 - The kernel consists of four nested loops: two outer loops iterating over the rows and columns of the input array, and two inner loops iterating over the elements of the filter. The inner loops perform the stencil computation, accumulating the results in a temporary variable `temp`.
 - The kernel uses a temporary variable `mul` to store the product of the filter element and the corresponding input element.
+Boundary/domain clarification: compute output only for row i=0..125 and column j=0..61, where the complete3-by3 window is inside orig. Preserve all remaining sol entries exactly from call entry; no implicit zero padding is used. orig and filter are preserved. Inputs obey the header's MIN/MAX positive bounds, so every product and nine-term accumulated result fits int32_t; no signed-overflow behavior is requested. Visit filter elements in row-major order. No persistent inter-call state exists.

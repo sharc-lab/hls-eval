@@ -48,7 +48,7 @@ void print_array(int ni, int nl,
   for (i = 0; i < ni; i++)
     for (j = 0; j < nl; j++) {
 	if ((i * ni + j) % 20 == 0) fprintf (stderr, "\n");
-	fprintf (stderr, "%0.6lf ", (float)G[i][j]);
+	fprintf(stderr, "%s ", ap_uint<32>(G[i][j].range(31, 0)).to_string(16).c_str());
     }
   fprintf(stderr, "\nend   dump: %s\n", "G");
   fprintf(stderr, "==END   DUMP_ARRAYS==\n");

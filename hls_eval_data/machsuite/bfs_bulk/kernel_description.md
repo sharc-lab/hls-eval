@@ -1,7 +1,7 @@
 Kernel Description:
 The Breadth-First Search (BFS) algorithm is a graph traversal technique that explores a graph level by level, starting from a given source node. The algorithm works by maintaining a queue of nodes to visit, where each node is added to the queue when it is first visited. The algorithm then iteratively visits each node in the queue, adding its unvisited neighbors to the queue. This process continues until all reachable nodes have been visited. The BFS algorithm is commonly used in many applications, including network topology discovery, web crawlers, and social network analysis.
 
-In this implementation, the BFS algorithm is optimized for large graphs and uses a bulk-synchronous parallel approach to achieve high performance. The algorithm starts by initializing the level of the starting node to 0 and the level counts to 1. It then iterates over the levels of the graph, starting from the starting node and exploring the graph level by level. At each level, the algorithm adds unmarked neighbors to the next level and updates the level counts.
+In this implementation, the BFS algorithm is optimized for large graphs and uses a bulk-synchronous parallel approach to achieve high performance. The caller provides the initialized arrays specified below. The kernel sets the starting node's level to 0 and level_counts[0] to 1. It then iterates over the levels of the graph, starting from the starting node and exploring the graph level by level. At each level, the algorithm adds unmarked neighbors to the next level and updates the level counts.
 
 The algorithm uses the following data structures:
 - `node_t`: a struct representing a node in the graph, with `edge_begin` and `edge_end` fields indicating the range of edges connected to the node.
@@ -53,3 +53,6 @@ Sub-Components:
 - `loop_neighbors`: a loop that iterates over the edges connected to a node, marking unmarked neighbors and updating the level counts.
     - Signature: `for (e = tmp_begin; e < tmp_end; e++)`
     - Details: This loop is responsible for iterating over the edges connected to a node and marking unmarked neighbors. It also updates the level counts by incrementing the count of nodes at the next level.
+
+Call-entry and output contract: Before every call, the caller initializes all level[n] entries to MAX_LEVEL and all level_counts[d] entries to zero. The kernel sets level[starting_node] to zero and level_counts[0] to one. On return, level[n] is the shortest directed-path distance from starting_node for each reachable node, and remains MAX_LEVEL for every unreachable node. For every d in [0, N_LEVELS), level_counts[d] is the number of nodes at that distance; unused level counts are zero. No traversal state persists between calls. nodes and edges are preserved.
+Legal input domain: starting_node and every edge destination are valid node indices; every node's half-open [edge_begin, edge_end) range lies within edges. Every reachable node has shortest-path distance at most N_LEVELS-1. Input and output arrays occupy distinct, non-overlapping storage.

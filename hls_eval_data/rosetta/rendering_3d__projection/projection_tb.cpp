@@ -4,28 +4,28 @@
 
 void print_triangle_2d(Triangle_2D triangle) {
     printf(
-        "Triangle 2d: (%d, %d), (%d, %d), (%d, %d) z=%d\n",
-        triangle.x0,
-        triangle.y0,
-        triangle.x1,
-        triangle.y1,
-        triangle.x2,
-        triangle.y2,
-        triangle.z);
+        "Triangle 2d: (%u, %u), (%u, %u), (%u, %u) z=%u\n",
+        (unsigned int)triangle.x0,
+        (unsigned int)triangle.y0,
+        (unsigned int)triangle.x1,
+        (unsigned int)triangle.y1,
+        (unsigned int)triangle.x2,
+        (unsigned int)triangle.y2,
+        (unsigned int)triangle.z);
 }
 
 void print_triangle_3d(Triangle_3D triangle) {
     printf(
-        "Triangle 3d: (%d, %d, %d), (%d, %d, %d), (%d, %d, %d)\n",
-        triangle.x0,
-        triangle.y0,
-        triangle.z0,
-        triangle.x1,
-        triangle.y1,
-        triangle.z1,
-        triangle.x2,
-        triangle.y2,
-        triangle.z2);
+        "Triangle 3d: (%u, %u, %u), (%u, %u, %u), (%u, %u, %u)\n",
+        (unsigned int)triangle.x0,
+        (unsigned int)triangle.y0,
+        (unsigned int)triangle.z0,
+        (unsigned int)triangle.x1,
+        (unsigned int)triangle.y1,
+        (unsigned int)triangle.z1,
+        (unsigned int)triangle.x2,
+        (unsigned int)triangle.y2,
+        (unsigned int)triangle.z2);
 }
 
 // Function to compare two 2D triangles
@@ -42,7 +42,7 @@ int main() {
     {
         Triangle_3D triangle_3d = {10, 20, 30, 40, 50, 60, 70, 80, 90};
         Triangle_2D triangle_2d_expected = {
-            10, 20, 40, 50, 70, 80, (30 / 3) + (60 / 3) + (90 / 3)};
+            10, 20, 40, 50, 70, 80, (30 + 60 + 90) / 3};
         Triangle_2D triangle_2d_actual;
 
         projection(triangle_3d, &triangle_2d_actual, 0);
@@ -64,7 +64,7 @@ int main() {
     {
         Triangle_3D triangle_3d = {10, 20, 30, 40, 50, 60, 70, 80, 90};
         Triangle_2D triangle_2d_expected = {
-            10, 30, 40, 60, 70, 90, (20 / 3) + (50 / 3) + (80 / 3)};
+            10, 30, 40, 60, 70, 90, (20 + 50 + 80) / 3};
         Triangle_2D triangle_2d_actual;
 
         projection(triangle_3d, &triangle_2d_actual, 1);
@@ -86,7 +86,7 @@ int main() {
     {
         Triangle_3D triangle_3d = {10, 20, 30, 40, 50, 60, 70, 80, 90};
         Triangle_2D triangle_2d_expected = {
-            30, 20, 60, 50, 90, 80, (10 / 3) + (40 / 3) + (70 / 3)};
+            30, 20, 60, 50, 90, 80, (10 + 40 + 70) / 3};
         Triangle_2D triangle_2d_actual;
 
         projection(triangle_3d, &triangle_2d_actual, 2);

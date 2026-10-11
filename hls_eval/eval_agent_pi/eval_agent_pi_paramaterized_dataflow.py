@@ -532,6 +532,7 @@ class HLSParameterizationIterativeDataflowAgentEvaluatorPi(
         top_function: str,
         pools: EvalThreadPools,
         expected_signatures: list[dict] | None = None,
+        reference_dir: Path | None = None,
     ) -> dict:
         result = super()._evaluate_variant(
             design_dir,
@@ -540,6 +541,7 @@ class HLSParameterizationIterativeDataflowAgentEvaluatorPi(
             top_function,
             pools,
             expected_signatures=expected_signatures,
+            reference_dir=reference_dir,
         )
         base_passed = result["passed"]  # everything except LightningSim
         result["lightningsim_passed"] = False

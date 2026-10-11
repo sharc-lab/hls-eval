@@ -21,7 +21,7 @@ table(i+1,j-1) + w(i,j) \\
 \end{cases}
 $$
 
-where $w$ is the scoring function that evaluate the pair of sequences $seq[i]$ and $seq[j]$. For Nussinov algorithm, the scoring function returns 1 if the sequences are complementary (either 'A' with 'T' or 'G' with 'C'), and 0 otherwise.
+where $w$ is the scoring function that evaluate the pair of sequences $seq[i]$ and $seq[j]$. For Nussinov algorithm, the scoring function returns 1 if the sequences are complementary (either 'A' with 'T'/'U', or 'G' with 'C', in either order), and 0 otherwise.
 
 ---
 
@@ -42,3 +42,9 @@ Important Data Structures and Data Types:
 
 Sub-Components:
 - None
+
+### Precise recurrence and storage contract
+
+The output represents the maximum number of noncrossing complementary pairs in each inclusive interval [i,j]. Each base participates in at most one pair. Adjacent bases may pair: no minimum hairpin length is imposed. The diagonal table[i][i] and empty intervals have score zero. The recurrence above applies to every i<j; an empty inner interval contributes zero. Both T and U pair with A in either order; G pairs with C in either order. Character byte values 0,1,2,3 are not valid sequence entries.
+
+All entries with 0<=i<=j<60 are outputs and must be written independently of their incoming contents. The lower triangle is not part of the output contract. The sequence is input-only. No preservation requirement is imposed on the unused lower triangle.

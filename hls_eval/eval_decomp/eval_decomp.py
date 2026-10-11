@@ -5,6 +5,7 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
+from hls_eval.comparison import functional_passed
 from hls_eval.data import BenchmarkCase
 from hls_eval.decomp.prompt_decomp import build_decompilation_prompt
 from hls_eval.eval import EvalThreadPools, Evaluator, serialize_eval_data
@@ -269,7 +270,8 @@ class HLSDecompilationZeroShotEvaluator(Evaluator):
                     synth_build_dir.mkdir()
                     build_name = f"{eval_id}__sample_{sample_idx}"
                     compile_future = pools.pool_csim.submit(
-                        self.cpp_compiler_tool.run,
+                        self.run_csim,
+                        benchmark_case,
                         compile_build_dir,
                         [generated_source, *validation_sources],
                         aux_files=validation_data,
@@ -288,6 +290,9 @@ class HLSDecompilationZeroShotEvaluator(Evaluator):
                     compile_output, run_output = compile_future.result()
                     synth_output = synth_future.result()
                     eval_data["c_compile_out"] = asdict(compile_output)
+                    eval_data["functional_check"] = (
+                        run_output or compile_output
+                    ).data_tool["functional_check"]
                     eval_data["pass_compile"] = (
                         compile_output.data_execution.return_code == 0
                         and not compile_output.data_execution.timeout
@@ -296,8 +301,7 @@ class HLSDecompilationZeroShotEvaluator(Evaluator):
                         eval_data["c_run_out"] = asdict(run_output)
                         eval_data["pass_run"] = (
                             eval_data["pass_compile"]
-                            and run_output.data_execution.return_code == 0
-                            and not run_output.data_execution.timeout
+                            and functional_passed(run_output)
                         )
                     eval_data["vitis_hls_tool_out"] = asdict(synth_output)
                     eval_data["pass_synth"] = (

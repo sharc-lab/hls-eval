@@ -74,7 +74,7 @@ int main() {
     (original / "top.txt").write_text("kernel\n")
     (original / "kernel_description.md").write_text("Add one to the input.\n")
     (original / "hls_eval_config.toml").write_text(
-        'tags = ["test"]\ntb_data = ["input.txt"]\n'
+        'tags = ["test"]\ntb_data = ["input.txt"]\n[comparison]\nkind = "exit_code"\n'
     )
     return original
 

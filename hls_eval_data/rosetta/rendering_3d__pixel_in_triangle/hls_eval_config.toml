@@ -1,1 +1,4 @@
 tags = ["rosetta"]
+
+[comparison]
+kind = "exit_code"

@@ -16,6 +16,7 @@ from typing import Any, cast
 
 from llm_openrouter import OpenRouterChat
 
+from hls_eval.comparison import functional_passed
 from hls_eval.data import CPP_EXTENSIONS, H_EXTENSIONS, BenchmarkCase
 from hls_eval.eval import EvalThreadPools, serialize_eval_data
 from hls_eval.eval_agent_pi.eval_agent_pi import (
@@ -467,7 +468,11 @@ def _csim_failure_reason(point: dict) -> str | None:
         return None
     if not point.get("compile_passed"):
         return _stage_failure_reason(point.get("c_compile_out")) or "compile failed"
-    return _stage_failure_reason(point.get("c_run_out")) or "testbench run failed"
+    return (
+        point.get("functional_check", {}).get("reason")
+        or _stage_failure_reason(point.get("c_run_out"))
+        or "testbench run failed"
+    )
 
 
 def _csynth_failure_reason(point: dict) -> str | None:
@@ -817,6 +822,7 @@ class HLSParameterizationAgentEvaluatorPi(HLSGenerationAgentEvaluatorPi):
         top_function: str,
         pools: EvalThreadPools,
         expected_signatures: list[dict] | None = None,
+        reference_dir: Path | None = None,
     ) -> dict:
         result: dict[str, Any] = {"passed": False}
         interface_future = pools.pool_csim.submit(
@@ -837,7 +843,8 @@ class HLSParameterizationAgentEvaluatorPi(HLSGenerationAgentEvaluatorPi):
         )
         build_dir = design_dir.parent / "build"
         csim_future = pools.pool_csim.submit(
-            self.cpp_compiler_tool.run,
+            self.run_csim,
+            BenchmarkCase(reference_dir or design_dir),
             build_dir,
             csim_sources,
             csim_aux,
@@ -868,12 +875,15 @@ class HLSParameterizationAgentEvaluatorPi(HLSGenerationAgentEvaluatorPi):
 
         try:
             compile_out, run_out = csim_future.result()
+            result["functional_check"] = (run_out or compile_out).data_tool[
+                "functional_check"
+            ]
             result["c_compile_out"] = _serialize_tool_output(compile_out)
             result["compile_passed"] = _succeeded(compile_out)
             result["testbench_passed"] = False
             if run_out is not None:
                 result["c_run_out"] = _serialize_tool_output(run_out)
-                result["testbench_passed"] = _succeeded(run_out)
+                result["testbench_passed"] = functional_passed(run_out)
         except Exception as error:
             result["compile_passed"] = False
             result["testbench_passed"] = False
@@ -1033,6 +1043,7 @@ class HLSParameterizationAgentEvaluatorPi(HLSGenerationAgentEvaluatorPi):
                     top_function,
                     pools,
                     expected_signatures=baseline.get("top_signatures", []),
+                    reference_dir=original,
                 )
             )
             point["interface_pragmas_preserved"] = (
@@ -1067,7 +1078,12 @@ class HLSParameterizationAgentEvaluatorPi(HLSGenerationAgentEvaluatorPi):
         shutil.copytree(original, baseline_dir)
         if baseline is None:
             baseline = self._evaluate_variant(
-                baseline_dir, kernel_files, tb_file, top_function, pools
+                baseline_dir,
+                kernel_files,
+                tb_file,
+                top_function,
+                pools,
+                reference_dir=original,
             )
         result["baseline"] = baseline
         (baseline_dir.parent / "result.json").write_text(json.dumps(baseline, indent=4))

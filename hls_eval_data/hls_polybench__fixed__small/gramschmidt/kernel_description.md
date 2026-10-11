@@ -1,14 +1,7 @@
-## gramschmidt
+# Rank-deficient modified Gram-Schmidt numerical kernel
 
-QR Decomposition with Modified Gram Schmidt.
-It takes the following as input,
+Use the complete original header and its scalar types/dimensions. A is 60x80, Q is 60x80, and R is 80x80. M=60<N=80; a full-column-rank input or N mutually orthonormal columns is not required or possible. This is a numerical recurrence with dependent columns permitted, rather than a promise of a full-rank thin QR factorization.
 
-- $A: M \times N$ rank $N$ matrix ($M \geq N$).
+Initialize every entry of R to zero. Process columns k in increasing order. In the declared scalar type, initialize norm to zero and accumulate A[i][k]*A[i][k] for rows i in increasing order, with a store into norm after each addition. Store sqrt(norm) into R[k][k] using the native sqrt for double or hls::sqrt for the fixed type. If the stored diagonal is exactly zero, write Q[i][k]=0 for all rows and leave the rest of this R row zero; continue to the next column without dividing by zero or updating the remaining A columns. There is no near-zero threshold or epsilon replacement.
 
-and gives the following as outputs:
-
-- $Q: M \times N$ orthogonal matrix
-- $R: N \times N$ upper triangular matrix
-
-such that $A = QR$.
-The algorithm is described in a techreport by Walter Gander: `http://www.inf.ethz.ch/personal/gander/`.
+Otherwise write Q[i][k]=A[i][k]/R[k][k] in the declared type. For each column j>k in increasing order, accumulate R[k][j] from zero using Q[i][k]*A[i][j], storing in the declared type after each row addition, then update each A[i][j] with A[i][j]-Q[i][k]*R[k][j], storing in the declared type. Observable results are all Q and R entries and the in-place residual A. Input values are finite and supplied so that computed squared norms do not overflow and are nonnegative in the declared type. No tolerance is specified; conversion and storage points above define the numerical kernel.

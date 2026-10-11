@@ -46,3 +46,5 @@ Sub-Components:
 - `loop_grid1`: a set of three nested loops that iterate over the 3x3x3 cube of blocks around a given block.
 - `loop_p`: a loop that iterates over the points in a block.
 - `loop_q`: a loop that iterates over the points in a neighboring block.
+
+Active-output contract: each n_points[i][j][k] is in [0,densityFactor]. For each block, only force[i][j][k][0:n_points[i][j][k]] is an output region; inactive capacity slots are unspecified and are not compared. The active bounds are the entry counts, independent of candidate writes to n_points. Valid positions are finite and distinct when their pair is used for inverse-distance arithmetic, so denominators are nonzero; supplied stimuli yield finite computed forces. Preserve the stated original double arithmetic and neighbor-block interactions.

@@ -40,3 +40,5 @@ Important Data Structures and Data Types:
 
 Sub-Components:
 - None
+
+Interface clarification: there are no separate L/U output arguments. Overwrite A in place with L in its strict lower triangle and U in its diagonal and upper triangle. L has an implicit unit diagonal, which is not stored in A. Inputs admit this no-pivot factorization with nonzero pivots; do not introduce pivot permutations or separate output buffers.

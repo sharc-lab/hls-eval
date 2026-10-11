@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+from hls_eval.comparison import recorded_functional_result
+
 
 def pass_at_k(n: int, c: int, k: int) -> float:
     if n - c < k:
@@ -99,12 +101,10 @@ def build_df_from_all_eval_json_files(all_eval_json_paths: list[Path]):
                     eval_data["c_compile_out"]["data_execution"]["return_code"] == 0
                 )
 
-            if "c_run_out" not in eval_data:
-                df_row["pass_tb"] = False
-            else:
-                df_row["pass_tb"] = (
-                    eval_data["c_run_out"]["data_execution"]["return_code"] == 0
-                )
+            df_row["pass_tb"] = recorded_functional_result(eval_data)
+            df_row["functional_status"] = eval_data.get("functional_check", {}).get(
+                "status", "unverified"
+            )
 
             if "vitis_hls_tool_out" not in eval_data:
                 df_row["pass_synth"] = False
@@ -187,13 +187,16 @@ def compute_pass_rates(df: pd.DataFrame, ks=[1, 5]):
         n_pass_tb = df_group["pass_tb"].sum()
         n_pass_synth = df_group["pass_synth"].sum()
         n_pass_tb_and_synth = df_group["pass_tb_and_synth"].sum()
+        functional_known = df_group["pass_tb"].notna().all()
 
         for k in ks:
             pass_at_k_parse = pass_at_k(n_samples, n_pass_parse, k)
             pass_at_k_compile = pass_at_k(n_samples, n_pass_compile, k)
-            pass_at_k_tb = pass_at_k(n_samples, n_pass_tb, k)
+            pass_at_k_tb = pass_at_k(n_samples, n_pass_tb, k) if functional_known else np.nan
             pass_at_k_synth = pass_at_k(n_samples, n_pass_synth, k)
-            pass_at_k_tb_and_synth = pass_at_k(n_samples, n_pass_tb_and_synth, k)
+            pass_at_k_tb_and_synth = (
+                pass_at_k(n_samples, n_pass_tb_and_synth, k) if functional_known else np.nan
+            )
 
             pass_at_k_vals = {
                 "pass_parse": pass_at_k_parse,

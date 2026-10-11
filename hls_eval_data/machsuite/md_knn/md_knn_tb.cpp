@@ -276,24 +276,24 @@ int check_data(void *vdata, void *vref) {
         diff_y = data->force_y[i] - ref->force_y[i];
         diff_z = data->force_z[i] - ref->force_z[i];
 
-        has_errors |= (diff_x < -EPSILON) || (EPSILON < diff_x);
-        if ((diff_x < -EPSILON) || (EPSILON < diff_x)) {
+        has_errors |= !((-EPSILON <= diff_x) && (diff_x <= EPSILON));
+        if (!((-EPSILON <= diff_x) && (diff_x <= EPSILON))) {
             printf("Mismatch at force_x[%d]\n", i);
             printf("  Actual: %f\n", data->force_x[i]);
             printf("  Expected: %f\n", ref->force_x[i]);
             printf("  Diff: %f\n", diff_x);
         }
 
-        has_errors |= (diff_y < -EPSILON) || (EPSILON < diff_y);
-        if ((diff_y < -EPSILON) || (EPSILON < diff_y)) {
+        has_errors |= !((-EPSILON <= diff_y) && (diff_y <= EPSILON));
+        if (!((-EPSILON <= diff_y) && (diff_y <= EPSILON))) {
             printf("Mismatch at force_y[%d]\n", i);
             printf("  Actual: %f\n", data->force_y[i]);
             printf("  Expected: %f\n", ref->force_y[i]);
             printf("  Diff: %f\n", diff_y);
         }
 
-        has_errors |= (diff_z < -EPSILON) || (EPSILON < diff_z);
-        if ((diff_z < -EPSILON) || (EPSILON < diff_z)) {
+        has_errors |= !((-EPSILON <= diff_z) && (diff_z <= EPSILON));
+        if (!((-EPSILON <= diff_z) && (diff_z <= EPSILON))) {
             printf("Mismatch at force_z[%d]\n", i);
             printf("  Actual: %f\n", data->force_z[i]);
             printf("  Expected: %f\n", ref->force_z[i]);

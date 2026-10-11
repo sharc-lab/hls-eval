@@ -29,7 +29,7 @@ def setup_eval(tmp_path):
     for name, content in {
         "top.txt": "top",
         "kernel_description.md": "SECRET_DESCRIPTION",
-        "hls_eval_config.toml": 'tags = ["test"]\ntb_data = ["input.dat"]',
+        "hls_eval_config.toml": 'tags = ["test"]\ntb_data = ["input.dat"]\n[comparison]\nkind = "exit_code"',
         "top.h": "int top(int a); // SECRET_HEADER",
         "top.cpp": "int top(int a) { return a + 1; } // SECRET_IMPLEMENTATION",
         "top_tb.cpp": '#include "top.h"\nint main() { return top(1) != 2; } // SECRET_TB',

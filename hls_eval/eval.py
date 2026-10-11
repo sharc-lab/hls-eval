@@ -11,6 +11,7 @@ from typing import Any
 from joblib import Parallel, delayed
 from llm import Response
 
+from hls_eval.comparison import functional_passed, run_checked_csim
 from hls_eval.data import BenchmarkCase
 from hls_eval.llms import Model, TAIPromptTooLong, TAITimeout, normalize_model_name
 from hls_eval.prompting import approx_num_tokens, extract_code_xml_from_llm_output
@@ -78,6 +79,9 @@ class Evaluator(ABC):
         self.logger.addHandler(logging.StreamHandler())
         self.logger.setLevel(logging.INFO)
         self.logger.propagate = True
+
+    def run_csim(self, benchmark_case: BenchmarkCase, *args, **kwargs):
+        return run_checked_csim(self.cpp_compiler_tool, benchmark_case, *args, **kwargs)
 
     @abstractmethod
     def evaluate_design(
@@ -330,6 +334,8 @@ class HLSGenerationZeroShotEvaluator(Evaluator):
             shutil.copy(design_header, design_generated_dir)
             shutil.copy(design_tb, design_generated_dir)
             shutil.copy(design_description, design_generated_dir)
+            for data_file in benchmark_case.tb_data_files:
+                shutil.copy(data_file, design_generated_dir)
 
             # write the generated code to a file
             for file_name, code in generated_code.items():
@@ -351,7 +357,8 @@ class HLSGenerationZeroShotEvaluator(Evaluator):
             print(f"[{eval_id}] Compiling and running the LLM version of the design...")
 
             future_tool_cpp = pool_csim.submit(
-                self.cpp_compiler_tool.run,
+                self.run_csim,
+                benchmark_case,
                 build_dir,
                 build_dir_source_files,
                 build_dir_not_source_files,
@@ -359,6 +366,10 @@ class HLSGenerationZeroShotEvaluator(Evaluator):
             )
 
             c_compile_out, c_run_out = future_tool_cpp.result()
+            eval_data["functional_passed"] = functional_passed(c_run_out)
+            eval_data["functional_check"] = (c_run_out or c_compile_out).data_tool[
+                "functional_check"
+            ]
 
             eval_data["c_compile_out"] = {}
             eval_data["c_compile_out"]["data_execution"] = {
@@ -643,7 +654,8 @@ class HLSEditingZeroShotEvaluator(Evaluator):
             print(f"[{eval_id}] Compiling and running the LLM version of the design...")
 
             future_tool_cpp = pool_csim.submit(
-                self.cpp_compiler_tool.run,
+                self.run_csim,
+                benchmark_case,
                 build_dir,
                 build_dir_source_files,
                 build_dir_not_source_files,
@@ -651,6 +663,10 @@ class HLSEditingZeroShotEvaluator(Evaluator):
             )
 
             c_compile_out, c_run_out = future_tool_cpp.result()
+            eval_data["functional_passed"] = functional_passed(c_run_out)
+            eval_data["functional_check"] = (c_run_out or c_compile_out).data_tool[
+                "functional_check"
+            ]
 
             eval_data["c_compile_out"] = {}
             eval_data["c_compile_out"]["data_execution"] = {

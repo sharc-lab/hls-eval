@@ -32,7 +32,7 @@ void print_array(int n,
   fprintf(stderr, "begin dump: %s", "y");
   for (i = 0; i < n; i++) {
     if (i % 20 == 0) fprintf (stderr, "\n");
-    fprintf (stderr, "%0.6lf ", (float)y[i]);
+    fprintf(stderr, "%s ", ap_uint<32>(y[i].range(31, 0)).to_string(16).c_str());
   }
   fprintf(stderr, "\nend   dump: %s\n", "y");
   fprintf(stderr, "==END   DUMP_ARRAYS==\n");

@@ -155,13 +155,16 @@ struct bench_args_t {
     char input[STRING_SIZE];
     int32_t kmpNext[PATTERN_SIZE];
     int32_t n_matches[1];
+    int returned_count;
+    char entry_pattern[PATTERN_SIZE];
+    char entry_input[STRING_SIZE];
 };
 
 int INPUT_SIZE = sizeof(struct bench_args_t);
 
 void run_benchmark(void *vargs) {
     struct bench_args_t *args = (struct bench_args_t *)vargs;
-    kmp(args->pattern, args->input, args->kmpNext, args->n_matches);
+    args->returned_count = kmp(args->pattern, args->input, args->kmpNext, args->n_matches);
 }
 
 /* Input format:
@@ -181,9 +184,11 @@ void input_to_data(int fd, void *vdata) {
 
     s = find_section_start(p, 1);
     parse_string(s, data->pattern, PATTERN_SIZE);
+    memcpy(data->entry_pattern,data->pattern,PATTERN_SIZE);
 
     s = find_section_start(p, 2);
     parse_string(s, data->input, STRING_SIZE);
+    memcpy(data->entry_input,data->input,STRING_SIZE);
     free(p);
 }
 
@@ -220,6 +225,10 @@ void data_to_output(int fd, void *vdata) {
 
     write_section_header(fd); // No section header
     write_int32_t_array(fd, data->n_matches, 1);
+    write_section_header(fd);
+    write_int32_t_array(fd,data->kmpNext,PATTERN_SIZE);
+    write_section_header(fd);
+    fd_printf(fd,"%d\n",data->returned_count);
 }
 
 int check_data(void *vdata, void *vref) {
@@ -235,11 +244,55 @@ int check_data(void *vdata, void *vref) {
             ref->n_matches[0]);
     }
 
+    has_errors |= (data->returned_count != ref->n_matches[0]);
+    has_errors |= memcmp(data->pattern,data->entry_pattern,PATTERN_SIZE) != 0;
+    has_errors |= memcmp(data->input,data->entry_input,STRING_SIZE) != 0;
+    int32_t expected_prefix[PATTERN_SIZE] = {};
+    for (int q=1;q<PATTERN_SIZE;++q) {
+        int k=expected_prefix[q-1];
+        while (k>0 && data->entry_pattern[k]!=data->entry_pattern[q]) k=expected_prefix[k-1];
+        if (data->entry_pattern[k]==data->entry_pattern[q]) ++k;
+        expected_prefix[q]=k;
+    }
+    for (int q=0;q<PATTERN_SIZE;++q) has_errors |= (data->kmpNext[q]!=expected_prefix[q]);
     // Return true if it's correct.
     return !has_errors;
 }
 
+static int check_regressions() {
+    const char patterns[][PATTERN_SIZE] = {
+        {'A','A','A','A'}, {'A','A','A','A'}, {'A','B','A','B'},
+        {'A','A','B','C'}, {'\0','A','\0','A'}
+    };
+    for (int test = 0; test < 5; ++test) {
+        char pattern[PATTERN_SIZE], input[STRING_SIZE], saved_input[STRING_SIZE];
+        memcpy(pattern, patterns[test], PATTERN_SIZE);
+        for (int i = 0; i < STRING_SIZE; ++i)
+            input[i] = test == 0 ? 'B' : pattern[i % PATTERN_SIZE];
+        if (test == 0) input[0] = input[1] = input[2] = 'A'; // AAAB triggers fallback.
+        memcpy(saved_input, input, STRING_SIZE);
+        int32_t expected_count = 0, expected_prefix[PATTERN_SIZE] = {};
+        for (int i = 0; i + PATTERN_SIZE <= STRING_SIZE; ++i)
+            if (memcmp(saved_input + i, patterns[test], PATTERN_SIZE) == 0) ++expected_count;
+        for (int q = 1; q < PATTERN_SIZE; ++q)
+            for (int length = 1; length <= q; ++length)
+                if (memcmp(patterns[test], patterns[test] + q + 1 - length, length) == 0)
+                    expected_prefix[q] = length;
+        int32_t prefix[PATTERN_SIZE] = {99,99,99,99}, count[1] = {17};
+        int returned = kmp(pattern, input, prefix, count);
+        if (returned != expected_count || count[0] != expected_count
+            || memcmp(prefix, expected_prefix, sizeof(prefix)) != 0
+            || memcmp(pattern, patterns[test], PATTERN_SIZE) != 0
+            || memcmp(input, saved_input, STRING_SIZE) != 0) {
+            fprintf(stderr, "KMP regression %d failed\n", test);
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int main() {
+    if (check_regressions()) return 1;
     char *in_file;
     char *check_file;
 

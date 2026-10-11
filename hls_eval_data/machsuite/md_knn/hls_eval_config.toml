@@ -3,3 +3,6 @@ tb_data = [
     "input.data",
     "check.data",
 ]
+
+[comparison]
+kind = "exit_code"

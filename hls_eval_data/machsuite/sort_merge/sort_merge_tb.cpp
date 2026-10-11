@@ -174,7 +174,7 @@ int check_data(void *vdata, void *vref) {
     struct bench_args_t *ref = (struct bench_args_t *)vref;
     int has_errors = 0;
     int i;
-    TYPE data_sum, ref_sum;
+    int64_t data_sum, ref_sum;
 
     // Check sortedness and sum
     data_sum = data->a[0];
@@ -188,6 +188,7 @@ int check_data(void *vdata, void *vref) {
 
     for (i = 0; i < SIZE; i++) {
         if (data->a[i] != ref->a[i]) {
+            has_errors = 1;
             printf(
                 "ERROR: data->a[%d] = %" PRId32 ", ref->a[%d] = %" PRId32 "\n",
                 i,
@@ -197,8 +198,8 @@ int check_data(void *vdata, void *vref) {
         }
     }
     if ((data_sum != ref_sum)) {
-        printf("Ref sum: %" PRId32 "\n", ref_sum);
-        printf("Data sum: %" PRId32 "\n", data_sum);
+        printf("Ref sum: %" PRId64 "\n", ref_sum);
+        printf("Data sum: %" PRId64 "\n", data_sum);
     }
 
     // Return true if it's correct.

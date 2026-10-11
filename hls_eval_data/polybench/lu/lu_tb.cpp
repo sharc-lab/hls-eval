@@ -42,7 +42,7 @@ void print_array(int n, double A[40][40])
         for (j = 0; j < n; j++) {
             if ((i * n + j) % 20 == 0)
                 fprintf(stderr, "\n");
-            fprintf(stderr, "%0.6lf ", A[i][j]);
+            fprintf(stderr, "%.17g ", A[i][j]);
         }
     fprintf(stderr, "\nend   dump: %s\n", "A");
     fprintf(stderr, "==END   DUMP_ARRAYS==\n");

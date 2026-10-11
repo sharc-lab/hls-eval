@@ -13,7 +13,7 @@ c1:
     for (q = 1; q < PATTERN_SIZE; q++) {
     c2:
         while (k > 0 && pattern[k] != pattern[q]) {
-            k = kmpNext[q];
+            k = kmpNext[k - 1];
         }
         if (pattern[k] == pattern[q]) {
             k++;
@@ -37,7 +37,7 @@ k1:
     for (i = 0; i < STRING_SIZE; i++) {
     k2:
         while (q > 0 && pattern[q] != input[i]) {
-            q = kmpNext[q];
+            q = kmpNext[q - 1];
         }
         if (pattern[q] == input[i]) {
             q++;
@@ -47,5 +47,5 @@ k1:
             q = kmpNext[q - 1];
         }
     }
-    return 0;
+    return n_matches[0];
 }
