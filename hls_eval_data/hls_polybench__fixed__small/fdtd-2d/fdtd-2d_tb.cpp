@@ -4,6 +4,12 @@
 #include <stdlib.h>
 
 #include "fdtd-2d.h"
+#include <iostream>
+template<class T> void dump_raw(const T& value) {
+  ap_uint<T::width> bits = value.range(T::width-1,0);
+  std::cerr << bits.to_string(16) << ' ';
+}
+
 
 
 t_ap_fixed ex[ 60 + 0][80 + 0];
@@ -47,16 +53,15 @@ void print_array(int nx,
   for (i = 0; i < nx; i++)
     for (j = 0; j < ny; j++) {
       if ((i * nx + j) % 20 == 0) fprintf(stderr, "\n");
-      fprintf(stderr, "%0.6lf ", (float)ex[i][j]);
+      dump_raw(ex[i][j]);
     }
   fprintf(stderr, "\nend   dump: %s\n", "ex");
-  fprintf(stderr, "==END   DUMP_ARRAYS==\n");
 
   fprintf(stderr, "begin dump: %s", "ey");
   for (i = 0; i < nx; i++)
     for (j = 0; j < ny; j++) {
       if ((i * nx + j) % 20 == 0) fprintf(stderr, "\n");
-      fprintf(stderr, "%0.6lf ", (float)ey[i][j]);
+      dump_raw(ey[i][j]);
     }
   fprintf(stderr, "\nend   dump: %s\n", "ey");
 
@@ -64,9 +69,10 @@ void print_array(int nx,
   for (i = 0; i < nx; i++)
     for (j = 0; j < ny; j++) {
       if ((i * nx + j) % 20 == 0) fprintf(stderr, "\n");
-      fprintf(stderr, "%0.6lf ", (float)hz[i][j]);
+      dump_raw(hz[i][j]);
     }
   fprintf(stderr, "\nend   dump: %s\n", "hz");
+  fprintf(stderr, "==END   DUMP_ARRAYS==\n");
 }
 
 

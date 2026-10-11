@@ -1,1 +1,6 @@
 tags = ["pp4fpga"]
+
+[comparison]
+kind = "exact_tokens"
+channel = "stdout"
+token_count = 358

@@ -1,1 +1,7 @@
 tags = ["polybench__fixed__small"]
+
+[comparison]
+kind = "exact_tokens"
+channel = "stderr"
+completion_markers = ["==BEGIN DUMP_ARRAYS==", "==END   DUMP_ARRAYS=="]
+token_count = 100

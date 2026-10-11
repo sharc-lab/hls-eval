@@ -14,7 +14,7 @@ void projection(Triangle_3D triangle_3d, Triangle_2D *triangle_2d, bit2 angle) {
         triangle_2d->x2 = triangle_3d.x2;
         triangle_2d->y2 = triangle_3d.y2;
         triangle_2d->z =
-            triangle_3d.z0 / 3 + triangle_3d.z1 / 3 + triangle_3d.z2 / 3;
+            ((unsigned int)triangle_3d.z0 + (unsigned int)triangle_3d.z1 + (unsigned int)triangle_3d.z2) / 3;
     }
 
     else if (angle == 1) {
@@ -25,7 +25,7 @@ void projection(Triangle_3D triangle_3d, Triangle_2D *triangle_2d, bit2 angle) {
         triangle_2d->x2 = triangle_3d.x2;
         triangle_2d->y2 = triangle_3d.z2;
         triangle_2d->z =
-            triangle_3d.y0 / 3 + triangle_3d.y1 / 3 + triangle_3d.y2 / 3;
+            ((unsigned int)triangle_3d.y0 + (unsigned int)triangle_3d.y1 + (unsigned int)triangle_3d.y2) / 3;
     }
 
     else if (angle == 2) {
@@ -36,6 +36,6 @@ void projection(Triangle_3D triangle_3d, Triangle_2D *triangle_2d, bit2 angle) {
         triangle_2d->x2 = triangle_3d.z2;
         triangle_2d->y2 = triangle_3d.y2;
         triangle_2d->z =
-            triangle_3d.x0 / 3 + triangle_3d.x1 / 3 + triangle_3d.x2 / 3;
+            ((unsigned int)triangle_3d.x0 + (unsigned int)triangle_3d.x1 + (unsigned int)triangle_3d.x2) / 3;
     }
 }

@@ -23,3 +23,7 @@ Important Data Structures and Data Types:
 
 Sub-Components:
 - None
+
+### Precise active-domain and floating-point contract
+
+For this interface, 1 <= num_nodes <= MAX_NODES. Only node_embedding_table[0:num_nodes][0:EMB_SIZE] contributes to the result. Every pooled_embedding coordinate is overwritten, starting from T_data(0). For each coordinate, add the active nodes in increasing node index, assigning each addition back to T_data (the header defines native float). A wider accumulator or reassociation is not the specified finite-precision operation. Inactive rows and input-array final storage are not outputs.

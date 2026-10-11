@@ -234,8 +234,8 @@ int check_data(void *vdata, void *vref) {
 
     for (i = 0; i < N; i++) {
         diff = data->out[i] - ref->out[i];
-        has_errors |= (diff < -EPSILON) || (EPSILON < diff);
-        if ((diff < -EPSILON) || (EPSILON < diff)) {
+        has_errors |= !((-EPSILON <= diff) && (diff <= EPSILON));
+        if (!((-EPSILON <= diff) && (diff <= EPSILON))) {
             printf(
                 "Mismatch at index %d: %f (actual) vs. %f (expected)\n",
                 i,

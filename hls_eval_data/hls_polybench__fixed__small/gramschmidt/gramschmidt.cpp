@@ -20,7 +20,9 @@ void kernel_gramschmidt(
   t_ap_fixed nrm;
 
 
-  const t_ap_fixed eps = hls::nextafter(t_ap_fixed(0.0), t_ap_fixed(1.0));
+
+    for (i = 0; i < n; ++i)
+        for (j = 0; j < n; ++j) R[i][j] = 0;
 
   for (k = 0; k < n; k++)
     {
@@ -28,7 +30,10 @@ void kernel_gramschmidt(
       for (i = 0; i < m; i++)
         nrm += A[i][k] * A[i][k];
       R[k][k] = hls::sqrt(nrm);
-      if (R[k][k] == t_ap_fixed(0.0)) R[k][k] += eps;
+      if (R[k][k] == t_ap_fixed(0.0)) {
+        for (i = 0; i < m; ++i) Q[i][k] = 0;
+        continue;
+      }
       for (i = 0; i < m; i++)
         Q[i][k] = A[i][k] / R[k][k];
       for (j = k + 1; j < n; j++)

@@ -20,8 +20,8 @@ Inputs:
 - `b`: A 64-bit unsigned integer representing the second multiplicand.
 
 Outputs:
-- `z0Ptr`: A pointer to a 64-bit unsigned integer where the lower 64 bits of the product will be stored.
-- `z1Ptr`: A pointer to a 64-bit unsigned integer where the upper 64 bits of the product will be stored.
+- `z0Ptr`: A pointer to a 64-bit unsigned integer where the upper 64 bits of the product will be stored.
+- `z1Ptr`: A pointer to a 64-bit unsigned integer where the lower 64 bits of the product will be stored.
 
 Important Data Structures and Data Types:
 - `bits64`: An unsigned 64-bit integer type used for the inputs and outputs of the multiplication.

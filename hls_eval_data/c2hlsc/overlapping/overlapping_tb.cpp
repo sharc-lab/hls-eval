@@ -9,5 +9,5 @@ int main() {
     double result;
     Overlapping(&result, test_epsilon);
 
-    printf("result = %.0f\n", result);
+    printf("result = %.17g\n", result);
 }

@@ -39,7 +39,7 @@ void print_array(int m, int n, double C[20][30]) {
         for (j = 0; j < n; j++) {
             if ((i * m + j) % 20 == 0)
                 fprintf(stderr, "\n");
-            fprintf(stderr, "%0.6lf ", C[i][j]);
+            fprintf(stderr, "%.17g ", C[i][j]);
         }
     fprintf(stderr, "\nend   dump: %s\n", "C");
     fprintf(stderr, "==END   DUMP_ARRAYS==\n");

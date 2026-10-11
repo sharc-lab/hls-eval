@@ -193,14 +193,14 @@ int check_data(void *vdata, void *vref) {
     // for (r = 0; r < row_size; r++) {
     //     for (c = 0; c < col_size; c++) {
     //         diff = data->prod[r * row_size + c] - ref->prod[r * row_size +
-    //         c]; has_errors |= (diff < -EPSILON) || (EPSILON < diff);
+    //         c]; has_errors |= !((-EPSILON <= diff) && (diff <= EPSILON));
     //     }
     // }
 
     for (r = 0; r < row_size; r++) {
         for (c = 0; c < col_size; c++) {
             diff = data->prod[r * row_size + c] - ref->prod[r * row_size + c];
-            if ((diff < -EPSILON) || (EPSILON < diff)) {
+            if (!((-EPSILON <= diff) && (diff <= EPSILON))) {
                 printf(
                     "Output data mismatch at index %d: (actual) %f != %f "
                     "(expected), row = %d, col = %d\n",

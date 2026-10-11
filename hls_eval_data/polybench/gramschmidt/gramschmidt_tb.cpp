@@ -15,7 +15,7 @@ void init_array(
 
     for (i = 0; i < m; i++)
         for (j = 0; j < n; j++) {
-            A[i][j] = (((double)((i * j) % m) / m) * 100) + 10;
+            A[i][j] = (i == (j % m) ? 1.0 : 0.0);
             Q[i][j] = 0.0;
         }
     for (i = 0; i < n; i++)
@@ -37,7 +37,7 @@ void print_array(
         for (j = 0; j < n; j++) {
             if ((i * n + j) % 20 == 0)
                 fprintf(stderr, "\n");
-            fprintf(stderr, "%0.6lf ", R[i][j]);
+            fprintf(stderr, "%.17g ", R[i][j]);
         }
     fprintf(stderr, "\nend   dump: %s\n", "R");
 
@@ -46,10 +46,17 @@ void print_array(
         for (j = 0; j < n; j++) {
             if ((i * n + j) % 20 == 0)
                 fprintf(stderr, "\n");
-            fprintf(stderr, "%0.6lf ", Q[i][j]);
+            fprintf(stderr, "%.17g ", Q[i][j]);
         }
     fprintf(stderr, "\nend   dump: %s\n", "Q");
-    fprintf(stderr, "==END   DUMP_ARRAYS==\n");
+    fprintf(stderr, "begin dump: A\n");
+  for (int ai = 0; ai < m; ++ai) {
+    for (int aj = 0; aj < n; ++aj)
+      fprintf(stderr, "%.17g ", A[ai][aj]);
+    fprintf(stderr, "\n");
+  }
+  fprintf(stderr, "end   dump: A\n");
+  fprintf(stderr, "==END   DUMP_ARRAYS==\n");
 }
 
 int main() {

@@ -1,1 +1,4 @@
 tags = ["polybench"]
+
+[comparison]
+kind = "exit_code"

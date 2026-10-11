@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 
 #include "merge_sort_parallel.h"
@@ -6,6 +7,9 @@ int main() {
     int fail = 0;
     DTYPE A[SIZE] = {1, 6, 3, 7, 2, 5, 3, 0, 9, 10, 11, 12, 13, 14, 15, 8};
     DTYPE B[SIZE];
+    DTYPE expected[SIZE];
+    std::copy(A, A + SIZE, expected);
+    std::sort(expected, expected + SIZE);
 
     merge_sort_parallel(A, B);
     merge_sort_parallel(B, A);
@@ -21,6 +25,9 @@ int main() {
             fail = 1;
         }
     }
+
+    for (int i = 0; i < SIZE; ++i)
+        if (B[i] != expected[i]) fail = 1;
 
     if (fail == 1)
         printf("FAILED\n");

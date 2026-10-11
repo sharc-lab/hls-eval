@@ -6,7 +6,7 @@ The algorithm operates by maintaining a vector that starts along the x-axis and 
 The CORDIC algorithm can be described by the following equations:
 - \( x_{i+1} = x_i - y_i \cdot d_i \cdot 2^{-i} \)
 - \( y_{i+1} = y_i + x_i \cdot d_i \cdot 2^{-i} \)
-- \( \theta_{i+1} = \theta_i - \theta_i \cdot d_i \)
+- \( z_{i+1} = z_i - \operatorname{atan}(2^{-i}) \cdot d_i \)
 
 Where:
 - \( x_i \) and \( y_i \) are the coordinates of the vector at iteration \( i \).
@@ -15,7 +15,7 @@ Where:
 - \( \theta_i \) is the angle of rotation at iteration \( i \).
 
 The algorithm iterates for a fixed number of iterations (32 in this case) to achieve the desired precision. The initial vector is scaled by a constant factor \( K \) to ensure that the magnitude of the vector remains constant throughout the iterations. The value of \( K \) is given by:
-\[ K = \prod_{i=0}^{N-1} \sqrt{1 + 2^{-2i}} \]
+\[ K = \prod_{i=0}^{N-1} (1 + 2^{-2i})^{-1/2} \]
 Where \( N \) is the number of iterations. For 32 iterations, \( K \approx 0.607252935 \).
 
 ---
@@ -39,3 +39,5 @@ Important Data Structures and Data Types:
 
 Sub-Components:
 - None
+
+Numerical contract clarification: this is the finite fixed-point rotation recurrence, not a guarantee of exactly rounded mathematical sine/cosine. For any representable theta, initialize current_cos=COS_SIN_TYPE(0.607252935), current_sin=0 and factor=COS_SIN_TYPE(1). For each j=0..NUM_ITERATIONS-1, use sigma=(theta<0)?-1:1, store cos_shift=current_cos*sigma*factor and sin_shift=current_sin*sigma*factor in COS_SIN_TYPE from the old vector, then store current_cos=current_cos-sin_shift and current_sin=current_sin+cos_shift. Store theta=theta-sigma*cordic_phase[j] in THETA_TYPE and factor=factor/2 in COS_SIN_TYPE after each iteration. The given header table and default type conversion modes govern these stores. Return s=current_sin and c=current_cos. All scalar states use the original declared fixed types; no unstated accuracy tolerance or native trigonometric replacement is a grading rule.

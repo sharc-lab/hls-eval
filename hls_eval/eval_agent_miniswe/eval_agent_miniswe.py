@@ -17,6 +17,7 @@ from minisweagent.agents.default import DefaultAgent
 from minisweagent.environments.docker import DockerEnvironment
 from minisweagent.models.openrouter_model import OpenRouterModel
 
+from hls_eval.comparison import functional_passed
 from hls_eval.data import BenchmarkCase
 from hls_eval.eval import EvalThreadPools, Evaluator, serialize_eval_data
 from hls_eval.llms import Model, normalize_model_name
@@ -293,7 +294,8 @@ class HLSGenerationAgentEvaluator(Evaluator):
             print(f"[{eval_id}] Compiling and running the LLM version of the design...")
 
             future_tool_cpp = pool_csim.submit(
-                self.cpp_compiler_tool.run,
+                self.run_csim,
+                benchmark_case,
                 build_dir,
                 build_dir_source_files,
                 build_dir_not_source_files,
@@ -301,6 +303,10 @@ class HLSGenerationAgentEvaluator(Evaluator):
             )
 
             c_compile_out, c_run_out = future_tool_cpp.result()
+            eval_data["functional_passed"] = functional_passed(c_run_out)
+            eval_data["functional_check"] = (c_run_out or c_compile_out).data_tool[
+                "functional_check"
+            ]
 
             eval_data["c_compile_out"] = {}
             eval_data["c_compile_out"]["data_execution"] = {

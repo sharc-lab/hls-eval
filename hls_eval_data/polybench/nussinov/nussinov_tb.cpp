@@ -1,54 +1,55 @@
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "nussinov.h"
+#include <algorithm>
+#include <iostream>
 
-void init_array(int n, char seq[60], int table[60][60]) {
-    int i, j;
-
-    for (i = 0; i < n; i++) {
-        seq[i] = (char)((i + 1) % 4);
+// Independent oracle: either the leftmost base is unpaired, or enumerate its
+// partner and combine the disjoint inside/right matchings. No DUT/reference call.
+static int memo[60][60];
+static int score(const char seq[60], int i, int j) {
+    if (i >= j) return 0;
+    if (memo[i][j] >= 0) return memo[i][j];
+    int best = score(seq, i + 1, j);
+    for (int p = i + 1; p <= j; ++p) {
+        bool pair = (seq[i] == 'A' && (seq[p] == 'T' || seq[p] == 'U')) ||
+                    (seq[p] == 'A' && (seq[i] == 'T' || seq[i] == 'U')) ||
+                    (seq[i] == 'G' && seq[p] == 'C') ||
+                    (seq[i] == 'C' && seq[p] == 'G');
+        if (pair) best = std::max(best, 1 + score(seq, i + 1, p - 1)
+                                        + score(seq, p + 1, j));
     }
-
-    for (i = 0; i < n; i++)
-        for (j = 0; j < n; j++)
-            table[i][j] = 0;
-}
-
-void print_array(int n, int table[60][60])
-
-{
-    int i, j;
-    int t = 0;
-
-    fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
-    fprintf(stderr, "begin dump: %s", "table");
-    for (i = 0; i < n; i++) {
-        for (j = i; j < n; j++) {
-            if (t % 20 == 0)
-                fprintf(stderr, "\n");
-            fprintf(stderr, "%d ", table[i][j]);
-            t++;
-        }
-    }
-    fprintf(stderr, "\nend   dump: %s\n", "table");
-    fprintf(stderr, "==END   DUMP_ARRAYS==\n");
+    return memo[i][j] = best;
 }
 
 int main() {
-
-    int n = 60;
-
-    char seq[60];
-    int table[60][60];
-
-    init_array(n, seq, table);
-
-    kernel_nussinov(seq, table);
-
-    print_array(n, table);
-
-    return 0;
+    const char *patterns[] = {"A", "GC", "AU", "AT", "AGCTU", "UGAACGTTAC"};
+    const int lengths[] = {1, 2, 2, 2, 5, 10};
+    int fields = 0, failures = 0;
+    for (int c = 0; c < 6; ++c) {
+        char seq[60], original_seq[60];
+        int table[60][60];
+        for (int i = 0; i < 60; ++i) {
+            seq[i] = patterns[c][i % lengths[c]];
+            original_seq[i] = seq[i];
+            for (int j = 0; j < 60; ++j) {
+                table[i][j] = -777;
+                memo[i][j] = -1;
+            }
+        }
+        kernel_nussinov(seq, table);
+        for (int i = 0; i < 60; ++i) {
+            if (seq[i] != original_seq[i]) ++failures;
+            for (int j = i; j < 60; ++j) {
+                ++fields;
+                int expected = score(original_seq, i, j);
+                if (table[i][j] != expected) {
+                    if (failures < 8) std::cerr << "case=" << c << " field=" << i
+                        << ',' << j << " expected=" << expected
+                        << " actual=" << table[i][j] << '\n';
+                    ++failures;
+                }
+            }
+        }
+    }
+    std::cout << "NUSSINOV_FIXTURE fields=" << fields << " failures=" << failures << '\n';
+    return failures ? 1 : 0;
 }
