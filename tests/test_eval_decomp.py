@@ -269,3 +269,123 @@ def test_csim_passes_compiler_defines_to_vitis(tmp_path, monkeypatch):
     )
     tcl = next((tmp_path / "build").rglob("run_hls.tcl")).read_text()
     assert "-cflags {-DSIZE=4 -DFLAG -Wall -Wextra -Wno-unused-function}" in tcl
+
+
+def _tool_output(stdout="", stderr="", return_code=0, data_tool=None):
+    return ToolDataOutput(
+        ExecutionData(return_code, stdout, stderr, 1.0, 2.0, 1.0, False), data_tool
+    )
+
+
+def _dump(*values):
+    return (
+        "==BEGIN DUMP_ARRAYS==\nbegin dump: D\n"
+        + " ".join(values)
+        + "\nend   dump: D\n==END   DUMP_ARRAYS==\n"
+    )
+
+
+def test_array_dump_extraction():
+    from hls_eval.eval_decomp.eval_decomp import _extract_array_dump
+
+    assert _extract_array_dump("no dump here") is None
+    assert _extract_array_dump(_dump("1.0", "2.0")) == [
+        "begin", "dump:", "D", "1.0", "2.0", "end", "dump:", "D",
+    ]
+
+
+def test_empty_design_detection():
+    from hls_eval.eval_decomp.eval_decomp import _is_empty_design
+
+    used = {"resources_lut_used": 10}
+    assert _is_empty_design(_tool_output(data_tool={"resources_lut_used": 0}))
+    assert _is_empty_design(
+        _tool_output("WARNING: [SYNCHK 200-77] has no outputs", data_tool=used)
+    )
+    assert not _is_empty_design(_tool_output(data_tool=used))
+
+
+def _run_with_tb_outputs(state, reference_stderr, candidate_stderr, synth_data):
+    def run(build_dir, sources, aux_files=(), build_name=None, **kwargs):
+        stderr = reference_stderr if "reference_tb" in build_name else candidate_stderr
+        return _tool_output(), _tool_output(stderr=stderr)
+
+    state.csim.run.side_effect = run
+    original = state.synth.run.side_effect
+
+    def synthesize(build_dir, *args, **kwargs):
+        out = original(build_dir, *args, **kwargs)
+        if build_dir.name != "ground_truth_build":
+            return _tool_output(data_tool=synth_data)
+        return _tool_output(data_tool={"resources_lut_used": 5})
+
+    state.synth.run.side_effect = synthesize
+    return evaluate(state)
+
+
+def test_functional_pass_requires_matching_output_dump(setup_eval):
+    used = {"resources_lut_used": 5}
+    results = _run_with_tb_outputs(setup_eval, _dump("1.0"), _dump("1.0"), used)
+    assert all(d["pass_functional"] for d in results.values())
+    assert results[next(iter(results))]["functional_check"] == "output_dump"
+
+
+def test_functional_fails_when_output_dump_differs(setup_eval):
+    used = {"resources_lut_used": 5}
+    results = _run_with_tb_outputs(setup_eval, _dump("1.0"), _dump("9.0"), used)
+    assert not any(d["pass_functional"] for d in results.values())
+    assert all(d["pass_compile_tb"] for d in results.values())
+
+
+def test_functional_falls_back_to_exit_code_without_dump(setup_eval):
+    used = {"resources_lut_used": 5}
+    results = _run_with_tb_outputs(setup_eval, "", "", used)
+    assert all(d["pass_functional"] for d in results.values())
+    assert results[next(iter(results))]["functional_check"] == "return_code"
+
+
+def test_empty_synthesis_does_not_pass_synth(setup_eval):
+    results = _run_with_tb_outputs(
+        setup_eval, "", "", {"resources_lut_used": 0}
+    )
+    for data in results.values():
+        assert data["synth_return_code_zero"] is True
+        assert data["synth_empty_design"] is True
+        assert data["pass_synth"] is False
+
+
+def test_testbench_is_built_with_signature_check_wrapper(setup_eval):
+    state = setup_eval
+    _run_with_tb_outputs(state, "", "", {"resources_lut_used": 5})
+    candidate_calls = [
+        c for c in state.csim.run.call_args_list if "reference_tb" not in c.args[3]
+    ]
+    assert candidate_calls
+    for call in candidate_calls:
+        assert "decompiled_signature_checked.cpp" in {p.name for p in call.args[1]}
+        assert "decompiled.cpp" not in {p.name for p in call.args[1]}
+        wrapper = next(
+            p for p in call.args[1] if p.name == "decompiled_signature_checked.cpp"
+        )
+        text = wrapper.read_text()
+        assert text.index('#include "top.h"') < text.index("decompiled_impl.inc")
+
+
+def test_synthesis_reports_are_sanitized(tmp_path):
+    from hls_eval.eval_decomp.eval_decomp import _collect_synthesis_reports
+
+    proj = tmp_path / "proj/solution__synth"
+    (proj / "syn/report").mkdir(parents=True)
+    (proj / ".autopilot/db").mkdir(parents=True)
+    (proj / "syn/report/csynth.rpt").write_text(
+        "* Project:  secret_bench__proj\n* Date: today\n"
+        "| TOP | in k (../../hls_eval_data/x/secret.cpp:14) |\n"
+        "|- VITIS_LOOP_21_1 | 124 |\n"
+    )
+    (proj / ".autopilot/db/top-io-fe.xml").write_text('<arg src_type="ap_fixed"/>')
+    (proj / ".autopilot/db/secret.pp.0.cpp").write_text("SECRET_SOURCE")
+    reports = _collect_synthesis_reports(tmp_path)
+    assert set(reports) == {"hls_reports/csynth.rpt", "hls_reports/top_io_frontend.xml"}
+    text = "\n".join(reports.values())
+    assert "VITIS_LOOP_21_1" in text and "ap_fixed" in text
+    assert "secret" not in text.lower()
