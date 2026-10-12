@@ -54,7 +54,7 @@ def setup_eval(tmp_path):
     response = Mock(response_json={"id": "test-response"})
     response.text.return_value = (
         '<OUTPUT_CODE name="decompiled.cpp">'
-        "int kernel_KERNEL_NAME(int a) { return a + 1; }"
+        "int top(int a) { return a + 1; }"
         "</OUTPUT_CODE>"
     )
     model = SimpleNamespace(name="test-model", llm=Mock())
@@ -93,88 +93,55 @@ def test_decompilation_uses_rtl_and_validates_each_sample(setup_eval):
     assert len(results) == 2
     assert state.model.llm.prompt.call_count == 2
     assert state.synth.run.call_count == 3  # One golden synthesis for all samples.
-    assert state.csim.run.call_count == 2
+    # One reference testbench run for all samples, plus one testbench run per sample.
+    assert state.csim.run.call_count == 3
     golden_sources = state.synth.run.call_args_list[0].args[1]
     assert state.benchmark.tb_file not in golden_sources
     assert state.benchmark.kernel_fp in golden_sources
 
     for sample, data in results.items():
-        assert data["pass_all"] is True
-        assert data["pass_compile"] and data["pass_run"] and data["pass_synth"]
+        assert data["pass_compile_tb"] and data["pass_functional"]
+        assert data["pass_synth"] and data["synth_return_code_zero"]
+        assert data["reference_tb"]["pass_run"] is True
         assert "SECRET_" not in data["prompt"]
-        for rtl_text in (
-            "module kernel_KERNEL_NAME",
-            "module helper",
-            "0101",
-            "`define WIDTH 32",
-        ):
+        assert set(data["rtl_files"]) == {
+            "rtl/top.v",
+            "rtl/helper.sv",
+            "rtl/rom.dat",
+            "rtl/types.vh",
+        }
+        for rtl_text in ("module top;", "module helper", "0101", "`define WIDTH 32"):
             assert rtl_text in data["prompt"]
         sample_dir = state.result_dir / f"sample__{sample}"
         assert json.loads((sample_dir / "single_eval_data.json").read_text()) == data
         assert (sample_dir / "raw_llm_prompt.txt").read_text() == data["prompt"]
         assert (sample_dir / "raw_llm_output.txt").read_text() == data["raw_output"]
-        assert "kernel_KERNEL_NAME" in data["raw_output"]
         assert (
             data["generated_code"]["decompiled.cpp"]
-            == "int top(int a) { return a + 1; }"
+            == "int top(int a) { return a + 1; }\n"
         )
         assert (sample_dir / "design_generated/decompiled.cpp").read_text() == data[
             "generated_code"
         ]["decompiled.cpp"]
 
-    assert (state.result_dir / "rtl_synth/top.v").read_text() == "module top; endmodule"
-    assert (
-        state.result_dir / "rtl_synth_deidentified/kernel_KERNEL_NAME.v"
-    ).read_text() == "module kernel_KERNEL_NAME; endmodule"
-
-    for call in state.csim.run.call_args_list:
+    reference_call, *candidate_calls = state.csim.run.call_args_list
+    assert reference_call.args[3].endswith("__reference_tb")
+    assert len(candidate_calls) == 2
+    for call in candidate_calls:
         sources = call.args[1]
-        assert {p.name for p in sources} == {"decompiled.cpp", "top.h", "top_tb.cpp"}
+        assert {p.name for p in sources} == {
+            "decompiled_signature_checked.cpp",
+            "top_tb.cpp",
+            "top.h",
+        }
         assert all("SECRET_IMPLEMENTATION" not in p.read_text() for p in sources)
-        assert call.kwargs["aux_files"][0].read_text() == "SECRET_TEST_DATA"
-        assert call.kwargs["hls_compiler_defines"] == ["SIZE=4"]
+        assert {p.name for p in call.args[2]} == {"input.dat", "decompiled_impl.inc"}
         assert call.kwargs["hls_clock_period_ns"] == 7.0
     for call in state.synth.run.call_args_list[1:]:
         assert [p.name for p in call.args[1]] == ["decompiled.cpp"]
         assert call.kwargs["hls_compiler_defines"] == ["SIZE=4"]
         assert call.kwargs["hls_disable_auto_optimizations"] is True
-    assert "temperature" not in state.model.llm.prompt.call_args.kwargs
-
-
-@pytest.mark.parametrize("kernel", ["kernel_2mm", "kernel_jacobi_2d"])
-def test_kernel_identity_is_removed_from_entire_prompt(setup_eval, kernel):
-    state = setup_eval
-    state.benchmark.top_file.write_text(kernel)
-    original_synth = state.synth.run.side_effect
-
-    def synthesize(build_dir, *args, **kwargs):
-        result = original_synth(build_dir, *args, **kwargs)
-        if build_dir.name == "ground_truth_build":
-            rtl = build_dir / "project/solution__synth/syn/verilog"
-            (rtl / f"{kernel}.v").write_text(
-                f'(* CORE_GENERATION_INFO="{kernel}_{kernel},hls_ip" *)\n'
-                f"module {kernel};\n{kernel}_mul helper();\nendmodule // {kernel}"
-            )
-        return result
-
-    state.synth.run.side_effect = synthesize
-    results = evaluate(state)
-    for data in results.values():
-        assert kernel not in data["prompt"]
-        assert kernel.removeprefix("kernel_") not in data["prompt"]
-        assert "`kernel_KERNEL_NAME`" in data["prompt"]
-        assert 'name="kernel_KERNEL_NAME.v"' in data["prompt"]
-        assert "kernel_KERNEL_NAME_kernel_KERNEL_NAME,hls_ip" in data["prompt"]
-        assert "kernel_KERNEL_NAME_mul helper();" in data["prompt"]
-        assert f"int {kernel}(int a)" in data["generated_code"]["decompiled.cpp"]
-    assert all(
-        call.kwargs["hls_top_function"] == kernel
-        for call in state.synth.run.call_args_list
-    )
-    assert all(
-        call.kwargs["hls_top_function"] == kernel
-        for call in state.csim.run.call_args_list
-    )
+    assert state.model.llm.prompt.call_args.kwargs["temperature"] is None
 
 
 def test_deidentification_preserves_helper_references_and_memory_data():
@@ -192,6 +159,11 @@ def test_deidentification_preserves_helper_references_and_memory_data():
     assert "rom/kernel_2mm.dat" in rtl_files
 
 
+def _assert_only_reference_testbench_ran(state):
+    (call,) = state.csim.run.call_args_list
+    assert call.args[3].endswith("__reference_tb")
+
+
 @pytest.mark.parametrize(
     "error,flag", [(TAITimeout, "model_timeout"), (TAIPromptTooLong, "prompt_too_long")]
 )
@@ -199,8 +171,11 @@ def test_model_failures_are_saved_for_all_samples(setup_eval, error, flag):
     state = setup_eval
     state.model.llm.prompt.side_effect = error()
     results = evaluate(state)
-    assert all(data[flag] and not data["pass_all"] for data in results.values())
-    state.csim.run.assert_not_called()
+    assert all(
+        data[flag] and not data["pass_functional"] and not data["pass_synth"]
+        for data in results.values()
+    )
+    _assert_only_reference_testbench_ran(state)
     assert state.synth.run.call_count == 1
 
 
@@ -217,7 +192,7 @@ def test_invalid_output_does_not_run_tools(setup_eval, output):
     state.response.text.return_value = output
     results = evaluate(state)
     assert all(not data["can_parse_output"] for data in results.values())
-    state.csim.run.assert_not_called()
+    _assert_only_reference_testbench_ran(state)
     assert state.synth.run.call_count == 1
 
 
@@ -227,6 +202,7 @@ def test_invalid_output_does_not_run_tools(setup_eval, output):
         (tool_output(1), None, tool_output()),
         (tool_output(), tool_output(1), tool_output()),
         (tool_output(), tool_output(0, timeout=True), tool_output()),
+        (tool_output(), tool_output(), tool_output(0, timeout=True)),
         (tool_output(), tool_output(), tool_output(1)),
     ],
 )
@@ -241,7 +217,10 @@ def test_failed_validation_is_not_a_pass(
         else synth_result
     )
     state.csim.run.return_value = compile_result, run_result
-    assert all(not data["pass_all"] for data in evaluate(state).values())
+    assert all(
+        not (data["pass_functional"] and data["pass_synth"])
+        for data in evaluate(state).values()
+    )
 
 
 @pytest.mark.parametrize("missing_rtl", [False, True])
@@ -249,9 +228,12 @@ def test_invalid_golden_synthesis_stops_before_model(setup_eval, missing_rtl):
     state = setup_eval
     state.synth.run.side_effect = None
     state.synth.run.return_value = tool_output(0 if missing_rtl else 1)
-    with pytest.raises(RuntimeError):
-        evaluate(state)
+    results = evaluate(state)
     state.model.llm.prompt.assert_not_called()
+    for data in results.values():
+        assert data["ground_truth_error"]
+        assert not data["pass_functional"] and not data["pass_synth"]
+        assert "prompt" not in data
 
 
 def test_csim_passes_compiler_defines_to_vitis(tmp_path, monkeypatch):

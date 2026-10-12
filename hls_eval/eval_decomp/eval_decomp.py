@@ -439,6 +439,8 @@ class HLSDecompilationZeroShotEvaluator(Evaluator):
                     raise ValueError(
                         "Expected exactly one OUTPUT_CODE named decompiled.cpp"
                     )
+                if not generated_code["decompiled.cpp"].strip():
+                    raise ValueError("Generated C++ code is empty")
                 decompiled_code = generated_code["decompiled.cpp"].strip() + "\n"
                 eval_data["generated_code"] = {
                     "decompiled.cpp": decompiled_code,
@@ -510,11 +512,15 @@ class HLSDecompilationZeroShotEvaluator(Evaluator):
             eval_data["tb_compile_out"] = _serialize_tool_output(tb_compile_output)
             eval_data["pass_compile_tb"] = (
                 tb_compile_output.data_execution.return_code == 0
+                and not tb_compile_output.data_execution.timeout
             )
             eval_data["pass_functional"] = False
             if tb_run_output is not None:
                 eval_data["tb_run_out"] = _serialize_tool_output(tb_run_output)
-                tb_ran_ok = tb_run_output.data_execution.return_code == 0
+                tb_ran_ok = (
+                    tb_run_output.data_execution.return_code == 0
+                    and not tb_run_output.data_execution.timeout
+                )
                 candidate_dump = _extract_array_dump(
                     tb_run_output.data_execution.stderr
                 )
@@ -528,7 +534,10 @@ class HLSDecompilationZeroShotEvaluator(Evaluator):
                     )
 
             eval_data["vitis_hls_tool_out"] = _serialize_tool_output(synth_output)
-            synth_rc_zero = synth_output.data_execution.return_code == 0
+            synth_rc_zero = (
+                synth_output.data_execution.return_code == 0
+                and not synth_output.data_execution.timeout
+            )
             eval_data["synth_return_code_zero"] = synth_rc_zero
             eval_data["synth_empty_design"] = (
                 _is_empty_design(synth_output) if synth_rc_zero else None
