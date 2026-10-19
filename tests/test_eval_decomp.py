@@ -7,11 +7,7 @@ import pytest
 
 from hls_eval.data import BenchmarkCase
 from hls_eval.eval import EvalThreadPools
-from hls_eval.eval_decomp.eval_decomp import (
-    HLSDecompilationZeroShotEvaluator,
-    _deidentify_rtl,
-)
-from hls_eval.llms import TAIPromptTooLong, TAITimeout
+from hls_eval.eval_decomp.eval_decomp import HLSDecompilationZeroShotEvaluator
 from hls_eval.tools import ExecutionData, ToolDataOutput, VitisHLSCSimTool
 
 
@@ -37,7 +33,7 @@ def setup_eval(tmp_path):
     }.items():
         (design / name).write_text(content)
 
-    def synthesize(build_dir, source_files, **kwargs):
+    def synthesize(build_dir, source_files, *args, **kwargs):
         if build_dir.name == "ground_truth_build":
             rtl = build_dir / "project/solution__synth/syn/verilog"
             rtl.mkdir(parents=True)
@@ -126,6 +122,7 @@ def test_decompilation_uses_rtl_and_validates_each_sample(setup_eval):
 
     reference_call, *candidate_calls = state.csim.run.call_args_list
     assert reference_call.args[3].endswith("__reference_tb")
+    assert reference_call.kwargs["hls_compiler_defines"] == ["SIZE=4"]
     assert len(candidate_calls) == 2
     for call in candidate_calls:
         sources = call.args[1]
@@ -137,26 +134,13 @@ def test_decompilation_uses_rtl_and_validates_each_sample(setup_eval):
         assert all("SECRET_IMPLEMENTATION" not in p.read_text() for p in sources)
         assert {p.name for p in call.args[2]} == {"input.dat", "decompiled_impl.inc"}
         assert call.kwargs["hls_clock_period_ns"] == 7.0
+        assert call.kwargs["hls_compiler_defines"] == ["SIZE=4"]
     for call in state.synth.run.call_args_list[1:]:
-        assert [p.name for p in call.args[1]] == ["decompiled.cpp"]
+        assert [p.name for p in call.args[1]] == ["decompiled_signature_checked.cpp"]
+        assert {p.name for p in call.args[2]} == {"top.h", "decompiled_impl.inc"}
         assert call.kwargs["hls_compiler_defines"] == ["SIZE=4"]
         assert call.kwargs["hls_disable_auto_optimizations"] is True
     assert state.model.llm.prompt.call_args.kwargs["temperature"] is None
-
-
-def test_deidentification_preserves_helper_references_and_memory_data():
-    rtl_files = {
-        "kernel_2mm_kernel_2mm_helper.sv": 'module kernel_2mm_kernel_2mm_helper; $readmemh("rom/kernel_2mm.dat", mem); endmodule',
-        "rom/kernel_2mm.dat": "0101\n1110\n",
-    }
-    result = _deidentify_rtl(rtl_files, "kernel_2mm")
-    assert "kernel_KERNEL_NAME_kernel_KERNEL_NAME_helper.sv" in result
-    assert (
-        '"rom/kernel_KERNEL_NAME.dat"'
-        in result["kernel_KERNEL_NAME_kernel_KERNEL_NAME_helper.sv"]
-    )
-    assert result["rom/kernel_KERNEL_NAME.dat"] == "0101\n1110\n"
-    assert "rom/kernel_2mm.dat" in rtl_files
 
 
 def _assert_only_reference_testbench_ran(state):
@@ -164,15 +148,15 @@ def _assert_only_reference_testbench_ran(state):
     assert call.args[3].endswith("__reference_tb")
 
 
-@pytest.mark.parametrize(
-    "error,flag", [(TAITimeout, "model_timeout"), (TAIPromptTooLong, "prompt_too_long")]
-)
-def test_model_failures_are_saved_for_all_samples(setup_eval, error, flag):
+@pytest.mark.parametrize("error", [TimeoutError("slow"), RuntimeError("api down")])
+def test_model_failures_are_saved_for_all_samples(setup_eval, error):
     state = setup_eval
-    state.model.llm.prompt.side_effect = error()
+    state.model.llm.prompt.side_effect = error
     results = evaluate(state)
     assert all(
-        data[flag] and not data["pass_functional"] and not data["pass_synth"]
+        type(error).__name__ in data["llm_error"]
+        and not data["pass_functional"]
+        and not data["pass_synth"]
         for data in results.values()
     )
     _assert_only_reference_testbench_ran(state)
@@ -230,6 +214,8 @@ def test_invalid_golden_synthesis_stops_before_model(setup_eval, missing_rtl):
     state.synth.run.return_value = tool_output(0 if missing_rtl else 1)
     results = evaluate(state)
     state.model.llm.prompt.assert_not_called()
+    state.csim.run.assert_not_called()
+    assert len(results) == 1
     for data in results.values():
         assert data["ground_truth_error"]
         assert not data["pass_functional"] and not data["pass_synth"]
@@ -351,23 +337,3 @@ def test_testbench_is_built_with_signature_check_wrapper(setup_eval):
         )
         text = wrapper.read_text()
         assert text.index('#include "top.h"') < text.index("decompiled_impl.inc")
-
-
-def test_synthesis_reports_are_sanitized(tmp_path):
-    from hls_eval.eval_decomp.eval_decomp import _collect_synthesis_reports
-
-    proj = tmp_path / "proj/solution__synth"
-    (proj / "syn/report").mkdir(parents=True)
-    (proj / ".autopilot/db").mkdir(parents=True)
-    (proj / "syn/report/csynth.rpt").write_text(
-        "* Project:  secret_bench__proj\n* Date: today\n"
-        "| TOP | in k (../../hls_eval_data/x/secret.cpp:14) |\n"
-        "|- VITIS_LOOP_21_1 | 124 |\n"
-    )
-    (proj / ".autopilot/db/top-io-fe.xml").write_text('<arg src_type="ap_fixed"/>')
-    (proj / ".autopilot/db/secret.pp.0.cpp").write_text("SECRET_SOURCE")
-    reports = _collect_synthesis_reports(tmp_path)
-    assert set(reports) == {"hls_reports/csynth.rpt", "hls_reports/top_io_frontend.xml"}
-    text = "\n".join(reports.values())
-    assert "VITIS_LOOP_21_1" in text and "ap_fixed" in text
-    assert "secret" not in text.lower()

@@ -11,7 +11,6 @@ def build_decompilation_prompt(
     hls_compiler_defines: list[str],
     hls_disable_auto_optimizations: bool,
     hls_unsafe_math: bool,
-    synthesis_reports: dict[str, str] | None = None,
 ) -> str:
     prompt = dedent(
         f"""
@@ -24,10 +23,9 @@ def build_decompilation_prompt(
         Decompile the RTL into one self-contained C++14 translation unit. The
         implementation must:
         - define the top-level function `{top_function}`;
-        - use exactly the argument names and C++ types recorded in the
-          front-end interface description (`src_name` / `src_type`), including
-          fixed-point types such as `ap_fixed<W, I>`; the original testbench
-          calls the function with these types;
+        - use argument names and C++ types, including fixed-point types such
+          as `ap_fixed<W, I>`, that you infer from the RTL ports; the original
+          testbench calls the function with the original types;
         - reproduce the RTL module's ports, bit widths, signedness, and control
           interface as closely as possible in HLS C++;
         - use synthesizable constructs supported by Vitis HLS;
@@ -52,18 +50,5 @@ def build_decompilation_prompt(
         """
     ).strip()
     prompt += build_input_code_prompt_xml(rtl_files)
-    if synthesis_reports:
-        prompt += dedent(
-            """
-            ## Vitis HLS Synthesis Artifacts
-            These files were produced by Vitis HLS while synthesizing the
-            original design to the RTL above. They describe the original
-            top-level interface (argument names, source types, array sizes) and
-            its loop structure, trip counts, latency, and resource usage. Use
-            them to recover types and loop bounds that the RTL alone does not
-            show.
-            """
-        )
-        prompt += build_input_code_prompt_xml(synthesis_reports)
     prompt += "\n## Task Output\n"
     return prompt

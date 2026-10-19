@@ -10,12 +10,7 @@ from llm import Response
 from hls_eval.data import BenchmarkCase
 from hls_eval.eval_decomp.prompt_decomp import build_decompilation_prompt
 from hls_eval.eval import EvalThreadPools, Evaluator, serialize_eval_data
-from hls_eval.llms import (
-    Model,
-    TAIPromptTooLong,
-    TAITimeout,
-    normalize_model_name,
-)
+from hls_eval.llms import Model, normalize_model_name
 from hls_eval.prompting import (
     approx_num_tokens,
     extract_code_xml_from_llm_output,
@@ -110,56 +105,15 @@ def _is_empty_design(tool_output: ToolDataOutput) -> bool:
 
 
 def _write_signature_checked_source(
-    tb_dir: Path, header_names: list[str], decompiled_code: str
+    directory: Path, header_names: list[str], decompiled_code: str
 ) -> Path:
-    (tb_dir / "decompiled_impl.inc").write_text(decompiled_code)
-    wrapper = tb_dir / "decompiled_signature_checked.cpp"
+    """Include the reference headers before the candidate so that a signature
+    mismatch with the reference declaration is a compile error."""
+    (directory / "decompiled_impl.inc").write_text(decompiled_code)
+    wrapper = directory / "decompiled_signature_checked.cpp"
     includes = "".join(f'#include "{name}"\n' for name in header_names)
     wrapper.write_text(includes + '#include "decompiled_impl.inc"\n')
     return wrapper
-
-
-SYNTHESIS_REPORT_SOURCES = {
-    "hls_reports/csynth.rpt": "syn/report/csynth.rpt",
-    "hls_reports/top_io_frontend.xml": ".autopilot/db/top-io-fe.xml",
-}
-REPORT_IDENTIFYING_LINE = re.compile(
-    r"\* (Project|Date|Solution):|\.(cpp|cc|c|h|hpp):\d+"
-)
-
-
-def _collect_synthesis_reports(build_dir: Path) -> dict[str, str]:
-    reports: dict[str, str] = {}
-    for name, relative_path in SYNTHESIS_REPORT_SOURCES.items():
-        matches = sorted(build_dir.rglob(relative_path))
-        if not matches:
-            continue
-        lines = matches[0].read_text(errors="replace").splitlines()
-        reports[name] = "\n".join(
-            line for line in lines if not REPORT_IDENTIFYING_LINE.search(line)
-        )
-    return reports
-
-
-DEIDENTIFIED_KERNEL_NAME = "kernel_KERNEL_NAME"
-
-
-def _deidentify_rtl(rtl_files: dict[str, str], top_function: str) -> dict[str, str]:
-    deidentified = {}
-    for name, content in rtl_files.items():
-        renamed = name.replace(top_function, DEIDENTIFIED_KERNEL_NAME)
-        if renamed in deidentified:
-            raise ValueError(f"Deidentified RTL filename collision: {renamed}")
-        deidentified[renamed] = content.replace(top_function, DEIDENTIFIED_KERNEL_NAME)
-    return deidentified
-
-
-def _write_rtl_files(directory: Path, rtl_files: dict[str, str]) -> None:
-    directory.mkdir(parents=True, exist_ok=True)
-    for name, content in rtl_files.items():
-        destination = directory / name
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_text(content)
 
 
 class HLSDecompilationZeroShotEvaluator(Evaluator):
@@ -198,7 +152,6 @@ class HLSDecompilationZeroShotEvaluator(Evaluator):
         eval_id: str,
         ground_truth_synthesis_output: ToolDataOutput,
         rtl_file_names: list[str],
-        synthesis_report_names: list[str],
     ) -> dict[str, Any]:
         return {
             "eval_type": "hls_decomp_rtl_zero_shot",
@@ -226,7 +179,6 @@ class HLSDecompilationZeroShotEvaluator(Evaluator):
                 ground_truth_synthesis_output
             ),
             "rtl_files": rtl_file_names,
-            "synthesis_report_files": synthesis_report_names,
             "pass_compile_tb": False,
             "pass_functional": False,
             "functional_check": None,
@@ -268,6 +220,7 @@ class HLSDecompilationZeroShotEvaluator(Evaluator):
             hls_fpga_part=self.hls_fpga_part,
             hls_clock_period_ns=self.hls_clock_period_ns,
             hls_flow_target="vivado",
+            hls_compiler_defines=self.hls_compiler_defines,
         ).result()
 
         info: dict[str, Any] = {
@@ -337,19 +290,34 @@ class HLSDecompilationZeroShotEvaluator(Evaluator):
         else:
             ground_truth_error = "Ground-truth Vitis HLS synthesis failed"
 
-        prompt = None
-        synthesis_reports: dict[str, str] = {}
-        if ground_truth_error is None:
-            synthesis_reports = _collect_synthesis_reports(ground_truth_build_dir)
-            prompt = build_decompilation_prompt(
-                rtl_files,
-                benchmark_case.top_fn,
-                self.hls_clock_period_ns,
-                self.hls_fpga_part,
-                self.hls_compiler_defines,
-                self.hls_disable_auto_optimizations,
-                self.hls_unsafe_math,
+        if ground_truth_error is not None:
+            # Nothing to decompile: write one record for the case and stop
+            # before running the reference testbench or any model call.
+            eval_dir = eval_dir_top / "sample__0"
+            eval_dir.mkdir()
+            eval_data = self._base_eval_data(
+                benchmark_case,
+                model,
+                eval_id,
+                ground_truth_synthesis_output,
+                [],
             )
+            eval_data["ground_truth_error"] = ground_truth_error
+            serialize_eval_data(eval_id, eval_dir, eval_data)
+            (eval_dir_top / "all_eval_data.json").write_text(
+                json.dumps({0: eval_data}, indent=4)
+            )
+            return
+
+        prompt = build_decompilation_prompt(
+            rtl_files,
+            benchmark_case.top_fn,
+            self.hls_clock_period_ns,
+            self.hls_fpga_part,
+            self.hls_compiler_defines,
+            self.hls_disable_auto_optimizations,
+            self.hls_unsafe_math,
+        )
 
         reference_dump, reference_tb_info = self._run_reference_testbench(
             benchmark_case, eval_dir_top, eval_id, pools
@@ -367,22 +335,13 @@ class HLSDecompilationZeroShotEvaluator(Evaluator):
                 eval_id,
                 ground_truth_synthesis_output,
                 list(rtl_files),
-                list(synthesis_reports),
             )
 
             eval_data["reference_tb"] = reference_tb_info
-            if ground_truth_error is not None:
-                eval_data["ground_truth_error"] = ground_truth_error
-                serialize_eval_data(eval_id, eval_dir, eval_data)
-                continue
-
-            assert prompt is not None
             eval_data["prompt"] = prompt
             (eval_dir / "raw_llm_prompt.txt").write_text(prompt)
 
-            def call_model() -> tuple[
-                Response | None, str | None, bool, bool, float, float
-            ]:
+            def call_model() -> tuple[Response | None, str | None, str | None, float, float]:
                 t0 = time.monotonic()
                 try:
                     response = model.llm.prompt(
@@ -391,18 +350,16 @@ class HLSDecompilationZeroShotEvaluator(Evaluator):
                         temperature=self.temperature,
                     )
                     response._force()
+                    return response, response.text(), None, t0, time.monotonic()
+                except Exception as error:
+                    self.logger.exception(f"[{eval_id}] Model call failed")
                     return (
-                        response,
-                        response.text(),
-                        False,
-                        False,
+                        None,
+                        None,
+                        f"{type(error).__name__}: {error}",
                         t0,
                         time.monotonic(),
                     )
-                except TAITimeout:
-                    return None, None, True, False, t0, time.monotonic()
-                except TAIPromptTooLong:
-                    return None, None, False, True, t0, time.monotonic()
 
             self.logger.info(
                 f"[{eval_id}] Calling model with approximately "
@@ -411,13 +368,11 @@ class HLSDecompilationZeroShotEvaluator(Evaluator):
             (
                 response,
                 response_text,
-                model_timeout,
-                prompt_too_long,
+                llm_error,
                 llm_t0,
                 llm_t1,
             ) = pools.pool_llm.submit(call_model).result()
-            eval_data["model_timeout"] = model_timeout
-            eval_data["prompt_too_long"] = prompt_too_long
+            eval_data["llm_error"] = llm_error
             eval_data["llm_execution_time"] = {
                 "t0": llm_t0,
                 "t1": llm_t1,
@@ -454,8 +409,7 @@ class HLSDecompilationZeroShotEvaluator(Evaluator):
 
             design_generated_dir = eval_dir / "design_generated"
             design_generated_dir.mkdir()
-            generated_source = design_generated_dir / "decompiled.cpp"
-            generated_source.write_text(decompiled_code)
+            (design_generated_dir / "decompiled.cpp").write_text(decompiled_code)
 
             tb_dir = eval_dir / "tb_check"
             tb_dir.mkdir()
@@ -476,6 +430,17 @@ class HLSDecompilationZeroShotEvaluator(Evaluator):
             )
             tb_data_files.append(tb_dir / "decompiled_impl.inc")
 
+            synth_src_dir = eval_dir / "synth_src"
+            synth_src_dir.mkdir()
+            synth_headers = []
+            for h_file in header_sources:
+                dest = synth_src_dir / h_file.name
+                shutil.copy(h_file, dest)
+                synth_headers.append(dest)
+            synth_wrapper = _write_signature_checked_source(
+                synth_src_dir, [h.name for h in synth_headers], decompiled_code
+            )
+
             tb_build_dir = eval_dir / "tb_build"
             synth_build_dir = eval_dir / "synth_build"
             tb_build_dir.mkdir()
@@ -491,11 +456,13 @@ class HLSDecompilationZeroShotEvaluator(Evaluator):
                 hls_fpga_part=self.hls_fpga_part,
                 hls_clock_period_ns=self.hls_clock_period_ns,
                 hls_flow_target="vivado",
+                hls_compiler_defines=self.hls_compiler_defines,
             )
             synth_future = pools.pool_synth.submit(
                 self.vitis_hls_tool.run,
                 synth_build_dir,
-                [generated_source],
+                [synth_wrapper],
+                synth_headers + [synth_src_dir / "decompiled_impl.inc"],
                 build_name=f"{eval_id}__sample_{sample_idx}__synth",
                 hls_top_function=benchmark_case.top_fn,
                 hls_fpga_part=self.hls_fpga_part,
