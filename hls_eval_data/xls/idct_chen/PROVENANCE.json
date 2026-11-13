@@ -1,0 +1,7 @@
+{
+  "source_repository": "sharc-lab/HLSFactory",
+  "source_commit": "2aba8756de8e2fab1d1095b2483cfa695bf3be10",
+  "source_path": "hlsfactory/hls_dataset_sources/xls_upstream/idct_chen/idct_chen.x",
+  "source_sha256": "1166b8a58483a166550de600e1d910c3b12c253682ba0fc5156ae17e637cbced",
+  "license": "Apache-2.0 (see source file header)"
+}
