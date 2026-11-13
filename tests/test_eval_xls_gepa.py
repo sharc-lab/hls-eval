@@ -2,6 +2,7 @@
 
 import json
 import hashlib
+import importlib.util
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
@@ -132,3 +133,26 @@ class XLSGepaEvaluatorTests(unittest.TestCase):
                 self.assertEqual(hashlib.sha256(implementation.encode()).hexdigest(),
                                  record["source_sha256"])
                 self.assertEqual(original_hash, record["original_source_sha256"])
+
+    @unittest.skipUnless(importlib.util.find_spec("gepa"), "GEPA is optional")
+    def test_real_gepa_adapter_with_deterministic_reflection(self):
+        original = self.tmp_path / "idct.x"
+        original.write_text(ORIGINAL)
+        xls = self.tmp_path / "xls"
+        xls.mkdir()
+        evaluator = FakeXLS(original, xls, self.tmp_path / "work",
+                            XLSGepaConfig(top="idct", max_model_calls=1,
+                                          max_metric_calls=3,
+                                          search_timeout_seconds=30))
+        responses = []
+
+        def reflect(prompt):
+            responses.append(prompt)
+            return "```dslx\n" + ORIGINAL.replace("s32:1;", "s32:1; // same value", 1) + "\n```"
+
+        summary = evaluator.run_gepa(reflect)
+        self.assertEqual(len(responses), 1)
+        self.assertEqual(summary["model_calls"], 1)
+        self.assertFalse(summary["improvement_achieved"])
+        self.assertEqual(summary["best"]["correctness_status"], "passed_testbench")
+        self.assertTrue((Path(summary["run_dir"]) / "summary.json").is_file())
