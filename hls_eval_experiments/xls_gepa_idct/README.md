@@ -49,6 +49,12 @@ published on the host at that port.
 To evaluate one modified `.x` file without calling a model, use the baseline
 command with `--candidate /path/to/modified.x`. The original protected tests
 are used for the candidate regardless of any tests in that modified file.
+The exact manual rewrite and deliberately incorrect control used for the
+published results are included at `validation/manual-v2.x` and
+`validation/incorrect.x`. For example, add `--candidate validation/manual-v2.x`
+to the baseline command to rerun the manual control. The artifact test checks
+that these source files match the SHA256 hashes in their saved result records;
+it does not rerun XLS.
 
 The work directory stores `gepa_config.json`, original and candidate sources,
 the protected bench, XLS command output and arguments, per-candidate

@@ -6,7 +6,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
-from hls_eval.eval_xls_gepa import XLSGepaConfig, XLSGepaEvaluator
+from hls_eval.eval_xls_gepa import XLSGepaConfig, XLSGepaEvaluator, _split_tests
 
 
 ORIGINAL = """const W = s32:1;
@@ -119,3 +119,16 @@ class XLSGepaEvaluatorTests(unittest.TestCase):
         provenance = json.loads((case_dir / "PROVENANCE.json").read_text())
         actual = hashlib.sha256((case_dir / "idct_chen.x").read_bytes()).hexdigest()
         self.assertEqual(actual, provenance["source_sha256"])
+
+    def test_published_validation_sources_match_result_hashes(self):
+        repo = Path(__file__).parents[1]
+        pinned = repo / "hls_eval_data/xls/idct_chen/idct_chen.x"
+        original_hash = hashlib.sha256(pinned.read_bytes()).hexdigest()
+        for name in ("manual-v2", "incorrect"):
+            with self.subTest(name=name):
+                source = (repo / "validation" / f"{name}.x").read_text(encoding="utf-8")
+                implementation, _, _ = _split_tests(source)
+                record = json.loads((repo / "validation" / f"{name}.json").read_text())
+                self.assertEqual(hashlib.sha256(implementation.encode()).hexdigest(),
+                                 record["source_sha256"])
+                self.assertEqual(original_hash, record["original_source_sha256"])
