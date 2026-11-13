@@ -8,12 +8,16 @@ external model call was needed for the evaluator checks.
 
 ## Automated tests
 
+With pinned GEPA importable,
 `python3 -m unittest discover -s tests -p test_eval_xls_gepa.py -v` passed
-all seven tests. They cover pinned source provenance, rejection of a design
+all eight tests. They cover pinned source provenance, rejection of a design
 without tests, original and candidate use of the same protected bench,
 test-bench failure, formal counterexample rejection, and top-signature
-changes, and published candidate source hashes. The evaluator tests use a
-fake XLS command runner; the checks below use the real built XLS tools.
+changes, published candidate source hashes, and one deterministic GEPA search
+through the real GEPA API. The GEPA test uses a local callback and makes no
+external model request; it skips when GEPA is not installed. The evaluator
+tests use a fake XLS command runner; the checks below use the real built XLS
+tools.
 
 ## Real XLS results
 
