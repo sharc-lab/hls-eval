@@ -1,0 +1,61 @@
+{
+  "baseline": {
+    "source_sha256": "97ec82ce92ca589e284833b050f917b8cdc5c0fe77e93cd2a1336aa9aad3a603",
+    "original_source_sha256": "1166b8a58483a166550de600e1d910c3b12c253682ba0fc5156ae17e637cbced",
+    "correctness_status": "passed_testbench",
+    "testbench_passed": true,
+    "formal_status": "not_run",
+    "metrics": {
+      "critical_path_unit_delay": 40,
+      "optimized_ir_node_count": 1883,
+      "optimized_ir_operation_counts": {
+        "add": 296,
+        "array": 1,
+        "array_index": 64,
+        "bit_slice": 592,
+        "concat": 184,
+        "literal": 82,
+        "sign_ext": 264,
+        "sub": 224,
+        "umul": 176
+      },
+      "secondary_critical_path_estimate_ps": 8488
+    },
+    "score": 0.024390243902439025,
+    "is_baseline": true,
+    "ir_signature": "(f:bits[32][64])->bits[32][64]",
+    "feedback": "Passed 5 protected DSLX tests and fixed XLS codegen. Formal: not_run. Unit-model path: 40.",
+    "elapsed_seconds": 0.5672645869999826
+  },
+  "best": {
+    "source_sha256": "97ec82ce92ca589e284833b050f917b8cdc5c0fe77e93cd2a1336aa9aad3a603",
+    "original_source_sha256": "1166b8a58483a166550de600e1d910c3b12c253682ba0fc5156ae17e637cbced",
+    "correctness_status": "passed_testbench",
+    "testbench_passed": true,
+    "formal_status": "proven_equivalent",
+    "metrics": {
+      "critical_path_unit_delay": 40,
+      "optimized_ir_node_count": 1883,
+      "optimized_ir_operation_counts": {
+        "add": 296,
+        "array": 1,
+        "array_index": 64,
+        "bit_slice": 592,
+        "concat": 184,
+        "literal": 82,
+        "sign_ext": 264,
+        "sub": 224,
+        "umul": 176
+      },
+      "secondary_critical_path_estimate_ps": 8488
+    },
+    "score": 0.024390243902439025,
+    "is_baseline": false,
+    "ir_signature": "(f:bits[32][64])->bits[32][64]",
+    "feedback": "Passed 5 protected DSLX tests and fixed XLS codegen. Formal: proven_equivalent. Unit-model path: 40.",
+    "elapsed_seconds": 0.7560157260000437
+  },
+  "model_calls": 1,
+  "improvement_achieved": false,
+  "run_dir": "/tmp/hls-eval-xls-gepa-review-run-gepa/runs/20261113-032611"
+}

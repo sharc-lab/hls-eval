@@ -1,0 +1,28 @@
+{
+  "source_sha256": "a7cf773fa9498b0ce50120b9a175e903372cca7333351ba6cdd565d9b01683bc",
+  "original_source_sha256": "1166b8a58483a166550de600e1d910c3b12c253682ba0fc5156ae17e637cbced",
+  "correctness_status": "passed_testbench",
+  "testbench_passed": true,
+  "formal_status": "proven_equivalent",
+  "metrics": {
+    "critical_path_unit_delay": 40,
+    "optimized_ir_node_count": 1820,
+    "optimized_ir_operation_counts": {
+      "add": 288,
+      "array": 1,
+      "array_index": 64,
+      "bit_slice": 544,
+      "concat": 168,
+      "literal": 83,
+      "sign_ext": 264,
+      "sub": 224,
+      "umul": 184
+    },
+    "secondary_critical_path_estimate_ps": 8424
+  },
+  "score": 0.024390243902439025,
+  "is_baseline": false,
+  "ir_signature": "(f:bits[32][64])->bits[32][64]",
+  "feedback": "Passed 5 protected DSLX tests and fixed XLS codegen. Formal: proven_equivalent. Unit-model path: 40.",
+  "elapsed_seconds": 0.8007751009999993
+}
