@@ -1,0 +1,50 @@
+{
+  "baseline": {
+    "source_sha256": "5284116413ac28bad79fa4fa9044ee294ca366fca683bb8419fc47a4f31768f8",
+    "original_source_sha256": "8643a8d99c830652df6ace6015b424ee8027019e357eec5d175863f8a464684c",
+    "correctness_status": "passed_testbench",
+    "testbench_passed": true,
+    "formal_status": "not_run",
+    "metrics": {
+      "critical_path_unit_delay": 3,
+      "optimized_ir_node_count": 6,
+      "optimized_ir_operation_counts": {
+        "add": 1,
+        "concat": 2,
+        "literal": 3
+      },
+      "secondary_critical_path_estimate_ps": 224
+    },
+    "score": 0.25,
+    "is_baseline": true,
+    "ir_signature": "(message:bits[8])->bits[32]",
+    "feedback": "Passed 1 protected DSLX tests and fixed XLS codegen. Formal: not_run. Unit-model path: 3.",
+    "elapsed_seconds": 0.06344782900009704
+  },
+  "best": {
+    "source_sha256": "5284116413ac28bad79fa4fa9044ee294ca366fca683bb8419fc47a4f31768f8",
+    "original_source_sha256": "8643a8d99c830652df6ace6015b424ee8027019e357eec5d175863f8a464684c",
+    "correctness_status": "passed_testbench",
+    "testbench_passed": true,
+    "formal_status": "proven_equivalent",
+    "metrics": {
+      "critical_path_unit_delay": 3,
+      "optimized_ir_node_count": 6,
+      "optimized_ir_operation_counts": {
+        "add": 1,
+        "concat": 2,
+        "literal": 3
+      },
+      "secondary_critical_path_estimate_ps": 224
+    },
+    "score": 0.25,
+    "is_baseline": false,
+    "ir_signature": "(message:bits[8])->bits[32]",
+    "feedback": "Passed 1 protected DSLX tests and fixed XLS codegen. Formal: proven_equivalent. Unit-model path: 3.",
+    "elapsed_seconds": 0.04790247500000078
+  },
+  "model_calls": 1,
+  "model_errors": [],
+  "improvement_achieved": false,
+  "run_dir": "/tmp/hls-eval-adler32-gepa-20261113/runs/20261113-205004"
+}

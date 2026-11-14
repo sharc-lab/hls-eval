@@ -76,3 +76,29 @@ This first integration intentionally uses the original DSLX tests rather than
 HLS-Eval's C/C++ `BenchmarkCase`, which requires a C/C++ test bench and Vitis.
 Broader benchmark selection and additional comparison baselines can follow
 after the first design runs end to end in the shared environment.
+
+## Second design: Adler32
+
+The pinned HLSFactory `xls_upstream/adler32/adler32.x` is included at
+`hls_eval_data/xls/adler32/adler32.x` with source provenance. Its top function
+is `main` and is not marked `pub`; the evaluator now accepts either form. The
+original DSLX test function has six assertions.
+
+Run the baseline with a fresh work directory:
+
+```bash
+python -m hls_eval_experiments.xls_gepa_idct.run_xls_gepa \
+  --source hls_eval_data/xls/adler32/adler32.x \
+  --top main \
+  --xls-root /path/to/xls \
+  --work-dir /path/to/output/xls-gepa-adler32
+```
+
+In the recorded Docker run, the baseline passed its protected DSLX tests and
+codegen. The optimized IR had six nodes, unit-model critical path 3, and an
+ASAP7 delay estimate of 224 ps, yielding score 0.25. One bounded GEPA call
+using local `qwen2.5-coder:3b` returned the original implementation. Formal
+equivalence passed, but the score remained 0.25; no improvement was achieved.
+The exact run summary and evaluator/tool fingerprint manifest are included in
+`hls_eval_data/xls/adler32/`. These estimates are from XLS; they are not
+placed-and-routed timing or area measurements.
