@@ -8,12 +8,16 @@ external model call was needed for the evaluator checks.
 
 ## Automated tests
 
+With pinned GEPA importable,
 `python3 -m unittest discover -s tests -p test_eval_xls_gepa.py -v` passed
-all six tests. They cover pinned source provenance, rejection of a design
+all eight tests. They cover pinned source provenance, rejection of a design
 without tests, original and candidate use of the same protected bench,
 test-bench failure, formal counterexample rejection, and top-signature
-changes. These tests use a fake XLS command runner; the checks below use
-the real built XLS tools.
+changes, published candidate source hashes, and one deterministic GEPA search
+through the real GEPA API. The GEPA test uses a local callback and makes no
+external model request; it skips when GEPA is not installed. The evaluator
+tests use a fake XLS command runner; the checks below use the real built XLS
+tools.
 
 ## Real XLS results
 
@@ -29,7 +33,11 @@ original DSLX test bench. It does not run the earlier 527-input differential
 suite; that earlier suite and its results remain separate evidence.
 
 Saved evaluator records: `baseline.json`, `manual-v2.json`, and
-`incorrect.json` in this directory.
+`incorrect.json` in this directory. The exact candidate source files are
+`manual-v2.x` and `incorrect.x`. The artifact test in
+`tests/test_eval_xls_gepa.py` verifies their implementation hashes against
+the saved evaluator records and the pinned original source hash. Rerunning
+XLS is still required to reproduce the measurements and correctness outcomes.
 
 ## Bounded GEPA check
 
