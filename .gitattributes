@@ -1,0 +1,2 @@
+hls_eval_data/xls/**/*.x text eol=lf
+validation/*.x text eol=lf
