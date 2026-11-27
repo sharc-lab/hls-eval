@@ -133,6 +133,10 @@ class XLSGepaEvaluator:
             raise ValueError("source_file must be an existing DSLX .x file")
         self.original = self.source_file.read_text(encoding="utf-8")
         self.implementation, self.tests, self.test_count = _split_tests(self.original)
+        # Imports belong to the pinned design, not to the model-editable source.
+        import_pattern = r"(?m)^\s*import\s+[A-Za-z_][A-Za-z_0-9.]*\s*;[^\n]*\n?"
+        self.pinned_imports = "".join(re.findall(import_pattern, self.implementation))
+        self.editable_implementation = re.sub(import_pattern, "", self.implementation)
         if self.test_count == 0:
             raise ValueError("The original DSLX design must contain at least one #[test] function")
         self.top_signature = _dslx_signature(self.implementation, config.top)
@@ -233,9 +237,11 @@ class XLSGepaEvaluator:
             "is_baseline": is_baseline,
         }
         started = time.monotonic()
-        (directory / "candidate.x").write_text(implementation)
+        compiled_implementation = (implementation if is_baseline else
+                                   self.pinned_imports + implementation)
+        (directory / "candidate.x").write_text(compiled_implementation)
         protected = directory / "protected_tests.x"
-        protected.write_text(implementation + "\n\n" + self.tests + "\n")
+        protected.write_text(compiled_implementation + "\n\n" + self.tests + "\n")
         try:
             if split_error:
                 raise RuntimeError(split_error)
@@ -359,7 +365,8 @@ class XLSGepaEvaluator:
             "reflection_model": getattr(reflection_lm, "model", type(reflection_lm).__name__),
         }, indent=2) + "\n")
         template = prompt or (
-            "Rewrite only the DSLX implementation. Preserve the top signature, "
+            "Rewrite only the DSLX implementation. Do not include imports, "
+            "attributes, procs, or tests. Preserve the top signature, "
             "test-visible behavior, fixed-width arithmetic, and all original tests. "
             "Return the complete DSLX implementation in one fenced code block. "
             "If unsure, return it unchanged.\n\nCandidate:\n```dslx\n<curr_param>\n```\n\n"
@@ -382,7 +389,7 @@ class XLSGepaEvaluator:
 
         try:
             result = gepa.optimize(
-                seed_candidate={"dslx": self.implementation},
+                seed_candidate={"dslx": self.editable_implementation},
                 trainset=[{"design": self.source_hash}],
                 valset=[{"design": self.source_hash}],
                 adapter=Adapter(), reflection_lm=budgeted_reflection,

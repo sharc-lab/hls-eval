@@ -1,0 +1,12 @@
+{
+  "source_sha256": "ab63f52834fbf870b44ffc2f008e35fd6d56a49940ee55ae0d2e51e97eb29164",
+  "original_source_sha256": "0efea30f3f7b8a78cad163be6ee99d3b5aa0a31716fe343c83537b40e92252bd",
+  "correctness_status": "rejected",
+  "testbench_passed": false,
+  "formal_status": "not_run",
+  "metrics": {},
+  "score": 0.0,
+  "is_baseline": false,
+  "feedback": "protected_tests: /tmp/hls-eval-third-design-runs/prefix-sum-fixed/candidates/ab63f52834fbf870b44ffc2f008e35fd6d56a49940ee55ae0d2e51e97eb29164/protected_tests.x:9:40-9:41\n0007:         let lookback = u32:1 << i;\n0008:         for (j, updated): (u32, u16[ARRAY_SIZE]) in u32:0..ARRAY_SIZE {\n0009:             if j >= lookback { updated = updated + c[j - lookback] } else { updated }\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^ ParseError: Expected '}', got '='\n0010:         }(c)\n0011:     }(values)\n",
+  "elapsed_seconds": 0.004690135999908307
+}

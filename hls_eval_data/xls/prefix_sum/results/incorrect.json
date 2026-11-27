@@ -1,0 +1,12 @@
+{
+  "source_sha256": "ddb3363814759d70daf8e44704690f96f5a3c6fe1117104345d7f37820820538",
+  "original_source_sha256": "0efea30f3f7b8a78cad163be6ee99d3b5aa0a31716fe343c83537b40e92252bd",
+  "correctness_status": "rejected",
+  "testbench_passed": false,
+  "formal_status": "not_run",
+  "metrics": {},
+  "score": 0.0,
+  "is_baseline": false,
+  "feedback": "protected_tests: [ RUN UNITTEST  ] prefix_sum_test\n/tmp/hls-eval-third-design-runs/prefix-sum-fixed/candidates/ddb3363814759d70daf8e44704690f96f5a3c6fe1117104345d7f37820820538/protected_tests.x:33:14-33:87\n0031: fn prefix_sum_test() {\n0032:     let result = prefix_sum(u16[16]:[u16:1, ...]);\n0033:     assert_eq(result, u16[16]:[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]);\n~~~~~~~~~~~~~~~~~~~^-----------------------------------------------------------------------^ FailureError: The program being interpreted failed!\n  lhs and rhs were not equal:\n  [\n      u16:1,\n<     u16:0,\n>     u16:2,\n<     u16:65535,\n>     u16:3,\n<     u16:0,\n>     u16:4,\n<     u16:65535,\n>     u16:5,\n<     u16:0,\n>     u16:6,\n<     u16:1,\n>     u16:7,\n<     u16:0,\n>     u16:8,\n<     u16:65535,\n>     u16:9,\n<     u16:0,\n>     u16:10,\n<     u16:1,\n>     u16:11,\n<     u16:0,\n>     u16:12,\n<     u16:1,\n>     u16:13,\n<     u16:0,\n>     u16:14,\n<     u16:65535,\n>     u16:15,\n<     u16:0\n>     u16:16\n  ]\n; first differing index: 1 :: 0 vs 2\n0034: \n0035:     let result = prefix_sum(u16[16]:[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]);\n[        FAILED ] prefix_sum_test\n[===============] 1 test(s) ran; 1 failed; 0 skipped.\n",
+  "elapsed_seconds": 0.4121352519998709
+}

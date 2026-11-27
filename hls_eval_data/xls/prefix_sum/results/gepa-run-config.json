@@ -1,0 +1,17 @@
+{
+  "source_sha256": "0efea30f3f7b8a78cad163be6ee99d3b5aa0a31716fe343c83537b40e92252bd",
+  "config": {
+    "top": "prefix_sum",
+    "pipeline_stages": 1,
+    "delay_model": "unit",
+    "secondary_delay_model": "asap7",
+    "opt_level": 3,
+    "command_timeout_seconds": 180,
+    "formal_timeout_seconds": 60,
+    "max_metric_calls": 12,
+    "max_model_calls": 2,
+    "search_timeout_seconds": 1800,
+    "seed": 20260930
+  },
+  "reflection_model": "qwen2.5-coder:3b"
+}

@@ -1,0 +1,12 @@
+{
+  "source_sha256": "b71924ad0f186882384ccd7cc2d60038a9a7462d780594c38521a01d1c614873",
+  "original_source_sha256": "0efea30f3f7b8a78cad163be6ee99d3b5aa0a31716fe343c83537b40e92252bd",
+  "correctness_status": "rejected",
+  "testbench_passed": false,
+  "formal_status": "not_run",
+  "metrics": {},
+  "score": 0.0,
+  "is_baseline": false,
+  "feedback": "protected_tests: /tmp/hls-eval-third-design-runs/prefix-sum-fixed/candidates/b71924ad0f186882384ccd7cc2d60038a9a7462d780594c38521a01d1c614873/protected_tests.x:15:18-15:19\n0013: \n0014: fn update(array: u16[ARRAY_SIZE], index: u32, value: u16) {\n0015:     array[index] = value;\n~~~~~~~~~~~~~~~~~~~~~~~^ ParseError: Expected '}', got '='\n0016: }\n0017: \n",
+  "elapsed_seconds": 0.01060842099968795
+}
