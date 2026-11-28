@@ -1,2 +1,3 @@
 hls_eval_data/xls/**/*.x text eol=lf
 validation/*.x text eol=lf
+hls_eval_data/xls/prefix_sum/*.x text eol=lf

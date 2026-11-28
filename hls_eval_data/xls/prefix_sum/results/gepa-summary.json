@@ -1,0 +1,52 @@
+{
+  "baseline": {
+    "source_sha256": "ed484580d0620cb16ee22513a74f219862eaeadac5c10b54b7785ca3ba9c3575",
+    "original_source_sha256": "0efea30f3f7b8a78cad163be6ee99d3b5aa0a31716fe343c83537b40e92252bd",
+    "correctness_status": "passed_testbench",
+    "testbench_passed": true,
+    "formal_status": "not_run",
+    "metrics": {
+      "critical_path_unit_delay": 7,
+      "optimized_ir_node_count": 82,
+      "optimized_ir_operation_counts": {
+        "add": 49,
+        "array": 1,
+        "array_index": 16,
+        "literal": 16
+      },
+      "secondary_critical_path_estimate_ps": 1420
+    },
+    "score": 0.125,
+    "is_baseline": true,
+    "ir_signature": "(values:bits[16][16])->bits[16][16]",
+    "feedback": "Passed 1 protected DSLX tests and fixed XLS codegen. Formal: not_run. Unit-model path: 7.",
+    "elapsed_seconds": 1.3675049380001383
+  },
+  "best": {
+    "source_sha256": "a1d30b904b70dd2958e599351ddbaf99cfde354703641a9f7af376ad7ab4e7c3",
+    "original_source_sha256": "0efea30f3f7b8a78cad163be6ee99d3b5aa0a31716fe343c83537b40e92252bd",
+    "correctness_status": "passed_testbench",
+    "testbench_passed": true,
+    "formal_status": "proven_equivalent",
+    "metrics": {
+      "critical_path_unit_delay": 7,
+      "optimized_ir_node_count": 82,
+      "optimized_ir_operation_counts": {
+        "add": 49,
+        "array": 1,
+        "array_index": 16,
+        "literal": 16
+      },
+      "secondary_critical_path_estimate_ps": 1420
+    },
+    "score": 0.125,
+    "is_baseline": false,
+    "ir_signature": "(values:bits[16][16])->bits[16][16]",
+    "feedback": "Passed 1 protected DSLX tests and fixed XLS codegen. Formal: proven_equivalent. Unit-model path: 7.",
+    "elapsed_seconds": 0.8310969409999416
+  },
+  "model_calls": 2,
+  "model_errors": [],
+  "improvement_achieved": false,
+  "run_dir": "/tmp/hls-eval-third-design-runs/prefix-sum-fixed/runs/20261127-040220"
+}

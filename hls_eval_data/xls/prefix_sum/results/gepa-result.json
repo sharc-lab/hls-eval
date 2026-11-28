@@ -1,0 +1,68 @@
+{
+  "candidates": [
+    {
+      "dslx": "\n// Copyright 2022 The XLS Authors\n//\n// Licensed under the Apache License, Version 2.0 (the \"License\");\n// you may not use this file except in compliance with the License.\n// You may obtain a copy of the License at\n//\n//      http://www.apache.org/licenses/LICENSE-2.0\n//\n// Unless required by applicable law or agreed to in writing, software\n// distributed under the License is distributed on an \"AS IS\" BASIS,\n// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n// See the License for the specific language governing permissions and\n// limitations under the License.\n\nconst ARRAY_SIZE = u32:16;\n\n// Function that implements the Hillis-Steele parallel prefix sum algorithm.\n// https://en.wikipedia.org/wiki/Prefix_sum#Algorithm_1:_Shorter_span,_more_parallel\n// An adder chain would use (n-1) adders and add (n-1) adder delays.\n// This implementation uses ~(n lg n) adders, but only adds (lg n) adder delays.\nfn prefix_sum(values: u16[ARRAY_SIZE]) -> u16[ARRAY_SIZE] {\n    for (i, c): (u32, u16[ARRAY_SIZE]) in u32:0..std::flog2(ARRAY_SIZE) {\n        let lookback = u32:1 << i;\n        for (j, updated): (u32, u16[ARRAY_SIZE]) in u32:0..ARRAY_SIZE {\n            if j >= lookback { update(updated, j, c[j] + c[j - lookback]) } else { updated }\n        }(c)\n    }(values)\n}\n\n\n"
+    }
+  ],
+  "parents": [
+    [
+      null
+    ]
+  ],
+  "val_aggregate_scores": [
+    0.125
+  ],
+  "val_subscores": [
+    {
+      "0": 0.125
+    }
+  ],
+  "best_outputs_valset": {
+    "0": [
+      [
+        0,
+        {
+          "source_sha256": "a1d30b904b70dd2958e599351ddbaf99cfde354703641a9f7af376ad7ab4e7c3",
+          "original_source_sha256": "0efea30f3f7b8a78cad163be6ee99d3b5aa0a31716fe343c83537b40e92252bd",
+          "correctness_status": "passed_testbench",
+          "testbench_passed": true,
+          "formal_status": "proven_equivalent",
+          "metrics": {
+            "critical_path_unit_delay": 7,
+            "optimized_ir_node_count": 82,
+            "optimized_ir_operation_counts": {
+              "add": 49,
+              "array": 1,
+              "array_index": 16,
+              "literal": 16
+            },
+            "secondary_critical_path_estimate_ps": 1420
+          },
+          "score": 0.125,
+          "is_baseline": false,
+          "ir_signature": "(values:bits[16][16])->bits[16][16]",
+          "feedback": "Passed 1 protected DSLX tests and fixed XLS codegen. Formal: proven_equivalent. Unit-model path: 7.",
+          "elapsed_seconds": 0.8310969409999416
+        }
+      ]
+    ]
+  },
+  "per_val_instance_best_candidates": {
+    "0": [
+      0
+    ]
+  },
+  "val_aggregate_subscores": null,
+  "per_objective_best_candidates": null,
+  "objective_pareto_front": null,
+  "discovery_eval_counts": [
+    0
+  ],
+  "total_metric_calls": 5,
+  "num_full_val_evals": 1,
+  "run_dir": "/tmp/hls-eval-third-design-runs/prefix-sum-fixed/runs/20261127-040220",
+  "seed": 20260930,
+  "_str_candidate_key": null,
+  "best_idx": 0,
+  "validation_schema_version": 2
+}

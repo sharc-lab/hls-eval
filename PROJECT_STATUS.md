@@ -2,6 +2,14 @@
 
 Updated 2026-11-26. Destination: `sharc-lab/hls-eval`. HLSFactory supplies pinned DSLX designs only.
 
+## Third design: prefix sum
+
+- PR #12 was verified open against `main`, head `charith/xls-gepa-main-integration` at `549c797`, and unmerged. This work is on the separate `charith/xls-gepa-third-design` branch based on that head.
+- Selected the nontrivial 16-element Hillis-Steele prefix sum with a clear `prefix_sum` top and one original test function containing two assertions. The source is pinned to HLSFactory commit `2aba8756de8e2fab1d1095b2483cfa695bf3be10`, SHA256 `0efea30f3f7b8a78cad163be6ee99d3b5aa0a31716fe343c83537b40e92252bd`.
+- The evaluator now keeps original imports pinned outside GEPA's editable DSLX implementation. This fixed a zero-scoring seed discovered in an initial three-call attempt. The final run used two local `qwen2.5-coder:3b` calls with unchanged XLS settings. Twelve focused tests passed.
+- Baseline: protected test passed, score 0.125, unit path 7, ASAP7 estimate 1420 ps, 82 optimized IR nodes; formal `not_run`. Incorrect subtraction: protected test failed, score zero. Manual equivalent rewrite: protected test passed, formal `proven_equivalent`, score 0.125, same estimates. GEPA's seed passed and was formally equivalent, but both generated proposals failed DSLX parsing and scored zero. No valid GEPA-generated improvement was found.
+- Reproduction commands, full provenance, tool fingerprints, and saved records are in `hls_eval_data/xls/prefix_sum/README.md` and `results/`. Formal was not run for the baseline or rejected proposals; no final-run formal result was inconclusive.
+
 ## Integration
 
 - GitHub `main` is `e31f731` and contains PR #9. PR #10 merged into `charith/xls-gepa-evaluator`; PR #11 merged into `charith/xls-gepa-artifact-verification`. That stacked branch is `cb5622e`. Neither #10 nor #11 reached `main` as of this check.
@@ -31,4 +39,4 @@ Both pinned source files match the SHA256 values in their HLSFactory provenance 
 
 ## Next command
 
-After the integration PR is opened, select a third design from the pinned HLSFactory commit and run its baseline, incorrect control, justified manual control if available, and a bounded one-call local GEPA search. Keep the experiment on a separate branch and record the exact source hash, tool hashes, candidate results, and model-call count. Do not claim an optimization unless a valid GEPA candidate improves the fixed score.
+Review the focused third-design PR against PR #12's integration branch. Do not merge either PR from this experiment. A future search can improve the candidate prompt or model, but must keep the source and XLS settings pinned and report only valid score gains.

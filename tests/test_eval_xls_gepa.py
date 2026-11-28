@@ -77,6 +77,19 @@ class XLSGepaEvaluatorTests(unittest.TestCase):
         config = json.loads((self.tmp_path / "work/gepa_config.json").read_text())
         self.assertEqual(config["test_count"], 1)
 
+    def test_pinned_import_is_available_without_being_model_editable(self):
+        source = self.tmp_path / "with_import.x"
+        source.write_text("import std;\n" + ORIGINAL)
+        evaluator = FakeXLS(source, self.tmp_path / "xls",
+                            self.tmp_path / "work", XLSGepaConfig(top="idct"))
+        self.assertNotIn("import std;", evaluator.editable_implementation)
+        result = evaluator.evaluate(evaluator.editable_implementation)
+        self.assertEqual(result["correctness_status"], "passed_testbench")
+        protected = (self.tmp_path / "work" / "candidates" /
+                     result["source_sha256"] / "protected_tests.x").read_text()
+        self.assertIn("import std;", protected)
+        self.assertIn("fn original_test()", protected)
+
     def test_failing_candidate_receives_zero_score(self):
         evaluator = make_evaluator(self.tmp_path)
         result = evaluator.evaluate(ORIGINAL.replace("s32:1;", "s32:999;", 1))
@@ -142,6 +155,27 @@ class XLSGepaEvaluatorTests(unittest.TestCase):
         self.assertEqual(actual, summary["baseline"]["original_source_sha256"])
         self.assertEqual(summary["model_calls"], 1)
         self.assertFalse(summary["improvement_achieved"])
+
+    def test_prefix_sum_artifacts_match_pinned_sources(self):
+        case_dir = Path(__file__).parents[1] / "hls_eval_data/xls/prefix_sum"
+        records = case_dir / "results"
+        provenance = json.loads((case_dir / "provenance.json").read_text())
+        config = json.loads((records / "config.json").read_text())
+        summary = json.loads((records / "gepa-summary.json").read_text())
+        original_hash = hashlib.sha256((case_dir / "prefix_sum.x").read_bytes()).hexdigest()
+        self.assertEqual(original_hash, provenance["source_sha256"])
+        self.assertEqual(original_hash, config["source_sha256"])
+        self.assertEqual(original_hash, summary["baseline"]["original_source_sha256"])
+        for name in ("incorrect", "manual-equivalent"):
+            with self.subTest(name=name):
+                source_hash = hashlib.sha256((case_dir / f"{name}.x").read_bytes()).hexdigest()
+                record = json.loads((records / f"{name}.json").read_text())
+                self.assertEqual(source_hash, record["source_sha256"])
+        self.assertLessEqual(summary["model_calls"], 3)
+        self.assertFalse(summary["improvement_achieved"])
+        for name in ("gepa-candidate-a", "gepa-candidate-b"):
+            proposal = json.loads((records / f"{name}.json").read_text())
+            self.assertEqual(proposal["score"], 0)
 
     def test_published_validation_sources_match_result_hashes(self):
         repo = Path(__file__).parents[1]
