@@ -22,3 +22,9 @@ Important Data Structures and Data Types:
 
 Sub-Components:
 - None
+Complete computation and constants:
+- Partition epsilon into1024 contiguous blocks of1032 bits. In each block, examine1024 starting offsets j=0..1023; a match means epsilon[i*1032+j+k]==1 for every k=0..8. Overlapping matches are counted.
+- Initialize nu[0..5] to zero. For a block with W matches, increment nu[W] if W<=4, otherwise nu[5].
+- The six predefined weights, in order, are double literals {2.746566,5.386218,7.17457,9.94322,14.198031,7.1497515}.
+- Set result to sum over k=0..5 of double(nu[k])*double(nu[k])*pi[k], in increasing k. This weighted statistic is the intended quantity in this task; do not substitute another probability normalization or NIST formulation.
+- All input elements are binary. Input is read-only in behavior; only *result is a defined output.

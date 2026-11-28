@@ -24,3 +24,5 @@ Important Data Structures and Data Types:
 
 Sub-Components:
 - None
+
+Typed pipeline clarification: first convert each gradient component from its original pixel_t to outer_pixel_t using the original header's AP conversion modes. Form xx, yy, zz, xy, xz, yz from these converted outer_pixel_t operands, then assign each product to its corresponding outer_pixel_t output field using the original conversion/quantization modes. No native-float intermediate or full-pixel product before this conversion is required. All six fields of every image cell are outputs.

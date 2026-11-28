@@ -45,14 +45,14 @@ void print_array(int n,
   fprintf(stderr, "begin dump: %s", "x1");
   for (i = 0; i < n; i++) {
     if (i % 20 == 0) fprintf (stderr, "\n");
-    fprintf (stderr, "%0.6lf ", (float)x1[i]);
+    fprintf(stderr, "%s ", ap_uint<32>(x1[i].range(31, 0)).to_string(16).c_str());
   }
   fprintf(stderr, "\nend   dump: %s\n", "x1");
 
   fprintf(stderr, "begin dump: %s", "x2");
   for (i = 0; i < n; i++) {
     if (i % 20 == 0) fprintf (stderr, "\n");
-    fprintf (stderr, "%0.6lf ", (float)x2[i]);
+    fprintf(stderr, "%s ", ap_uint<32>(x2[i].range(31, 0)).to_string(16).c_str());
   }
   fprintf(stderr, "\nend   dump: %s\n", "x2");
   fprintf(stderr, "==END   DUMP_ARRAYS==\n");

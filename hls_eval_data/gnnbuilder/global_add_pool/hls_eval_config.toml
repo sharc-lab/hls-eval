@@ -1,1 +1,4 @@
 tags = ["gnnbuilder"]
+
+[comparison]
+kind = "exit_code"

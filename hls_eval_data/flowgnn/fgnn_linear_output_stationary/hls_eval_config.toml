@@ -1,1 +1,4 @@
 tags = ["flowgnn"]
+
+[comparison]
+kind = "exit_code"

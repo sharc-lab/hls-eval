@@ -24,6 +24,20 @@ cd hls-eval
 uv sync
 ```
 
+## Benchmark contracts
+
+Version 2 Vitis results record `benchmark_contract_version = 2`. The revised
+fixtures include numerical and output-contract changes. Compare scores within
+the same contract version and scored design cohort. A case's `[comparison]`
+table selects its trusted self-checking testbench or complete reference-output
+comparison. An undeclared policy leaves functional correctness unverified.
+
+The version 2 zero-shot editing task accepts the edited kernel implementation
+under its original filename. Preserve the public signature and put fixed-point
+conversions inside the kernel. The original headers, testbench and input data
+are used for grading. The evaluator also reads legacy three-file responses
+and takes only the implementation from them.
+
 ## Citation
 
 This work was presented at the ICLAD 2025 conference. If you use HLS-Eval in your research, please cite the following paper:

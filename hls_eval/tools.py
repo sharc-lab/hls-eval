@@ -160,10 +160,14 @@ class VitisHLSSynthTool:
         tcl_script += f"open_project {build_name}__proj\n"
         compiler_cflags = _compiler_defines_to_cflags(hls_compiler_defines or [])
         for fp in source_files:
+            if fp in tb_files:
+                continue
+            # BenchmarkCase.source_files includes the testbench translation unit.
+            is_bench = fp.suffix in {".c", ".cc", ".cpp"} and fp.stem.endswith("_tb")
+            flags = " -tb" if is_bench else ""
             if compiler_cflags:
-                tcl_script += f"add_files -cflags {{{compiler_cflags}}} {fp}\n"
-            else:
-                tcl_script += f"add_files {fp}\n"
+                flags += f" -cflags {{{compiler_cflags}}}"
+            tcl_script += f"add_files{flags} {fp}\n"
         for fp in tb_files:
             tcl_script += f"add_files -tb {fp}\n"
         tcl_script += f"open_solution solution__synth -flow_target {hls_flow_target}\n"

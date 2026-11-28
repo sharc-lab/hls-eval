@@ -22,7 +22,7 @@ void bfs(
     level_counts[0] = 1;
 
 loop_horizons:
-    for (horizon = 0; horizon < N_LEVELS; horizon++) {
+    for (horizon = 0; horizon + 1 < N_LEVELS; horizon++) {
         cnt = 0;
     // Add unmarked neighbors of the current horizon to the next horizon
     loop_nodes:

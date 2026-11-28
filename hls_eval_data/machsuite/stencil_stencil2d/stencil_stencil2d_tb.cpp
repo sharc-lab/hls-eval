@@ -190,10 +190,9 @@ int check_data(void *vdata, void *vref) {
 
     for (row = 0; row < row_size; row++) {
         for (col = 0; col < col_size; col++) {
-            diff = data->sol[row * col_size + col] -
-                   ref->sol[row * col_size + col];
-            has_errors |= (diff < -EPSILON) || (EPSILON < diff);
-            if ((diff < -EPSILON) || (EPSILON < diff)) {
+            diff = (data->sol[row * col_size + col] != ref->sol[row * col_size + col]);
+            has_errors |= diff != 0;
+            if (diff != 0) {
                 printf(
                     "Mismatch at index %d: %d (actual) vs. %d (expected)\nrow: "
                     "%d, col: %d\n",
@@ -202,7 +201,7 @@ int check_data(void *vdata, void *vref) {
                     ref->sol[row * col_size + col],
                     row,
                     col);
-                printf("diff: %f\n", diff);
+                printf("mismatch flag: %d\n", (int)diff);
             }
         }
     }

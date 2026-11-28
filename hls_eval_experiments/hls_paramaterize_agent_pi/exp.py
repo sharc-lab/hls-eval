@@ -3,7 +3,7 @@ from pathlib import Path
 
 from dotenv import dotenv_values
 
-from hls_eval.data import BenchmarkCase, find_benchmark_case_dirs
+from hls_eval.data import BenchmarkCase, find_benchmark_case_dirs, select_verified_cases
 from hls_eval.eval_agent_pi.eval_agent_pi_paramaterized import (
     HLSParameterizationAgentEvaluatorPi,
 )
@@ -54,7 +54,7 @@ if __name__ == "__main__":
         if len(set(bc.tags_all).intersection(sets_to_test)) > 0
     ]
 
-    all_benchmark_cases = sorted(all_benchmark_cases, key=lambda x: x.name)
+    all_benchmark_cases = select_verified_cases(all_benchmark_cases)
 
     # all_benchmark_cases = all_benchmark_cases[:1]
 

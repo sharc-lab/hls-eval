@@ -4,14 +4,14 @@
 
 void print_triangle(Triangle_2D triangle) {
     printf(
-        "Triangle: (%d, %d), (%d, %d), (%d, %d) z=%d\n",
-        triangle.x0,
-        triangle.y0,
-        triangle.x1,
-        triangle.y1,
-        triangle.x2,
-        triangle.y2,
-        triangle.z);
+        "Triangle: (%u, %u), (%u, %u), (%u, %u) z=%u\n",
+        (unsigned int)triangle.x0,
+        (unsigned int)triangle.y0,
+        (unsigned int)triangle.x1,
+        (unsigned int)triangle.y1,
+        (unsigned int)triangle.x2,
+        (unsigned int)triangle.y2,
+        (unsigned int)triangle.z);
 }
 
 int main() {
@@ -73,7 +73,7 @@ int main() {
     // Points outside
     bit1 result_5 = pixel_in_triangle(11, 5, triangle1);
     bit1 result_6 = pixel_in_triangle(6, 11, triangle1);
-    bit1 result_7 = pixel_in_triangle(-1, 0, triangle1);
+    bit1 result_7 = pixel_in_triangle(255, 0, triangle1);
 
     fail_flag |= (result_5 != 0);
     fail_flag |= (result_6 != 0);
@@ -96,7 +96,7 @@ int main() {
     if (result_7 != 0) {
         std::cout << "Error: incorrect result_7: " << result_7 << std::endl;
         std::cout << "Expected: 0" << std::endl;
-        std::cout << "point: x=-1, y=0" << std::endl;
+        std::cout << "point: x=255, y=0" << std::endl;
         print_triangle(triangle1);
     }
 

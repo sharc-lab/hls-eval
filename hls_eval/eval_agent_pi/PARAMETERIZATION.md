@@ -75,8 +75,10 @@ The checks are:
   C++ type, linkage and storage class against the original. Explicit
   `#pragma HLS INTERFACE` directives in the kernels must also remain unchanged.
 - Compile the kernel translation units and headers with the original testbench
-  and execute it via Vitis HLS `csim_design`, requiring exit code zero within
-  the timeout.
+  and execute it via Vitis HLS `csim_design`. The fixture's `[comparison]`
+  policy requires either a passing self-check or a matching reference dump.
+  The default experiments log and omit cases without a declared policy before
+  submitting work. The direct evaluator rejects an unsupported case.
 - Run Vitis `csynth_design` using the original top name, with fixed part/clock
   settings, unsafe math optimizations enabled, and Vitis HLS's own automatic
   optimizations (auto-pipelining, auto-unrolling, throughput-driven array

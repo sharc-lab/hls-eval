@@ -74,7 +74,7 @@ int main() {
     (original / "top.txt").write_text("kernel\n")
     (original / "kernel_description.md").write_text("Add one to the input.\n")
     (original / "hls_eval_config.toml").write_text(
-        'tags = ["test"]\ntb_data = ["input.txt"]\n'
+        'tags = ["test"]\ntb_data = ["input.txt"]\n[comparison]\nkind = "exit_code"\n'
     )
     return original
 
@@ -296,11 +296,13 @@ def test_identical_renderings_are_not_parameterization(
 @requires_clang
 def test_synthesis_exception_is_local_to_point(evaluator, design, tmp_path, pools):
     agent = submission(design, tmp_path)
-    evaluator.vitis_hls_tool.run.side_effect = [
-        output(metrics=metrics()),
-        RuntimeError("missing report"),
-        output(metrics=metrics()),
-    ]
+
+    def synthesize(build_dir, *args, **kwargs):
+        if build_dir.parent.name == "point__0":
+            raise RuntimeError("missing report")
+        return output(metrics=metrics())
+
+    evaluator.vitis_hls_tool.run.side_effect = synthesize
     result = evaluate(evaluator, design, agent, tmp_path, pools)
     assert not result["passed"]
     assert "missing report" in result["points"][0]["synthesis_error"]

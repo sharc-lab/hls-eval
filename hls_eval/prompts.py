@@ -104,10 +104,9 @@ def build_prompt_gen_zero_shot(
 prompt_edit = dedent(
     """
 ## Task Description
-Given a complete implementation of an HLS kernel in C++, a pre-written C++ design header, a pre-written C++ testbench, and a natural language description of the HLS design, generate the edited C++ code of the kernel (and possibly header and testbench) to perform the specific editing task outlined below.
-
-When editing the provided HLS code, do not make new versions of the HLS kernels; edit the provided HLS kernels directly.
-Edits should maintain consistency across the kernel, header, and testbench files. For example, changing function signatures and types in the kernel should be reflected in all places relevant in the code.
+Edit the kernel implementation for the requested task. Preserve the top-level signature,
+public header, and testbench. Keep helper functions and private types in the kernel
+source. The grader uses the original header, testbench and data files.
 
 Make sure the resulting edited code is still correct syntactically and functionally so that it will pass compilation, testbench execution, and HLS synthesis.
 """
@@ -151,9 +150,9 @@ If the user is also doing `cmath` operations on the original datatype numbers, t
 The HLS math library has the namespace `hls::*` and can be included with the following "hls_math.h" file. It supports most of the same math operators under the std::* namespace.
 
 Typedefs for these new types are encouraged to make the code more readable.
-Ideally, `typedef` statements should be placed in a header file so they can be reached by all source files.
+Place private typedefs in the implementation file. Convert values at the public interface boundary.
 
-The resulting code should maintain the same functionality as the original code but should convert all variants of int, uint, float, and double types to the appropriate arbitrary precision types.
+The resulting code should maintain the same functionality as the original code but should convert internal int, uint, float, and double types to the appropriate arbitrary precision types.
 """
 ).strip()
 
@@ -246,24 +245,12 @@ If loop tiling and unrolling optimizations are not applicable to the provided ke
 prompt_output_format_editing_xml = dedent(
     text="""
 ## Output Format
-The generated HLS edited output code should be provided in the following format:
+Return only the kernel implementation in one XML block, using its original filename:
 ```
-<OUTPUT_CODE name="kernel_name.h">
-    ...
-</OUTPUT_CODE>
 <OUTPUT_CODE name="kernel_name.cpp">
     ...
 </OUTPUT_CODE>
-<OUTPUT_CODE name="kernel_name_tb.cpp">
-    ...
-</OUTPUT_CODE>
 ```
-Please use this XML format and do not use other formats like markdown code blocks or plain text.
-
-You must output all three code blocks: the edited kernel code, the edited header file, and the edited testbench code.
-If one of the files is not edited, you still need output the code block with the original code.
-In the example above `kernel_name` should be replaced with the original name of the kernel.
-Make sure the testbench filename ends with `_tb.cpp`.
 
 Only output the generated HLS code in the XML format and nothing else.
 """

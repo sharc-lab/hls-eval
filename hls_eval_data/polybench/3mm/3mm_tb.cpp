@@ -40,7 +40,7 @@ void print_array(int ni, int nl, double G[16][22]) {
         for (j = 0; j < nl; j++) {
             if ((i * ni + j) % 20 == 0)
                 fprintf(stderr, "\n");
-            fprintf(stderr, "%0.6lf ", G[i][j]);
+            fprintf(stderr, "%.17g ", G[i][j]);
         }
     fprintf(stderr, "\nend   dump: %s\n", "G");
     fprintf(stderr, "==END   DUMP_ARRAYS==\n");

@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <cmath>
 #include <cstdarg>
 #include <fcntl.h>
 #include <stdio.h>
@@ -218,10 +219,10 @@ int check_data(void *vdata, void *vref) {
     for (i = 0; i < FFT_SIZE; i++) {
         real_diff = data->real[i] - ref->real[i];
         img_diff = data->img[i] - ref->img[i];
-        has_errors |= (real_diff < -EPSILON) || (EPSILON < real_diff);
+        has_errors |= !std::isfinite(data->real[i]) || !std::isfinite(ref->real[i]) || (real_diff < -EPSILON) || (EPSILON < real_diff);
         if (has_errors)
             printf("ERROR: %d (real): %f (%f)\n", i, real_diff, EPSILON);
-        has_errors |= (img_diff < -EPSILON) || (EPSILON < img_diff);
+        has_errors |= !std::isfinite(data->img[i]) || !std::isfinite(ref->img[i]) || (img_diff < -EPSILON) || (EPSILON < img_diff);
         if (has_errors)
             printf("ERROR: %d (img): %f (%f)\n", i, img_diff, EPSILON);
     }

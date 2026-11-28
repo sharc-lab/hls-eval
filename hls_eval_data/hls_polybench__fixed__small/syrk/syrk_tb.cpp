@@ -4,6 +4,12 @@
 #include <stdlib.h>
 
 #include "syrk.h"
+#include <iostream>
+template<class T> void dump_raw(const T& value) {
+  ap_uint<T::width> bits = value.range(T::width-1,0);
+  std::cerr << bits.to_string(16) << ' ';
+}
+
 
 
 t_ap_fixed C[ 80 + 0][80 + 0];
@@ -37,9 +43,9 @@ void print_array(int n,
   fprintf(stderr, "==BEGIN DUMP_ARRAYS==\n");
   fprintf(stderr, "begin dump: %s", "C");
   for (i = 0; i < n; i++)
-    for (j = 0; j < n; j++) {
+    for (j = 0; j <= i; j++) {
 	if ((i * n + j) % 20 == 0) fprintf (stderr, "\n");
-	fprintf (stderr, "%0.6lf ", (float)C[i][j]);
+	dump_raw(C[i][j]);
     }
   fprintf(stderr, "\nend   dump: %s\n", "C");
   fprintf(stderr, "==END   DUMP_ARRAYS==\n");

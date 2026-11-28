@@ -198,11 +198,11 @@ void des_crypt(des_block_t *in, des_block_t *out, des_key_t *key) {
 
     for (idx = 0; idx < 15; ++idx) {
         t = state[1];
-        state[1] = f(state[1], key[idx]) ^ state[0];
+        state[1] = f(state[1], &(*key)[idx]) ^ state[0];
         state[0] = t;
     }
     // Perform the final loop manually as it doesn't switch sides
-    state[0] = f(state[1], key[15]) ^ state[0];
+    state[0] = f(state[1], &(*key)[15]) ^ state[0];
 
     InvIP(&state, out);
 }

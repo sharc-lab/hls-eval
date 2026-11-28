@@ -9,6 +9,8 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.transforms import blended_transform_factory
 
+from hls_eval.comparison import recorded_functional_result
+
 DIR_CURRENT = Path(__file__).resolve().parent
 DIR_CURRENT_OUTPUT_DATA = DIR_CURRENT / "output_data"
 if not DIR_CURRENT_OUTPUT_DATA.exists():
@@ -78,10 +80,7 @@ for eval_case_run_dir in DIR_CURRENT_OUTPUT_DATA.iterdir():
             eval_data["c_compile_out"]["data_execution"]["return_code"] == 0
         )
 
-    if "c_run_out" not in eval_data:
-        df_row["pass_tb"] = False
-    else:
-        df_row["pass_tb"] = eval_data["c_run_out"]["data_execution"]["return_code"] == 0
+    df_row["pass_tb"] = recorded_functional_result(eval_data)
 
     if "vitis_hls_tool_out" not in eval_data:
         df_row["pass_synth"] = False
@@ -180,7 +179,7 @@ def plot_pass_rate(df_pass: pd.DataFrame):
         df_model = df_pass[df_pass["model_name"] == model]
         pass_rates_agg[model] = (
             df_model[["pass_parse", "pass_compile", "pass_tb", "pass_synth"]]
-            .mean()
+            .agg(lambda values: values.mean() if values.notna().all() else np.nan)
             .to_dict()
         )
 
@@ -259,7 +258,7 @@ def plot_pass_rate_grouped(df_pass: pd.DataFrame, group_tags: list[str]):
             df_model = df_tag[df_tag["model_name"] == model]
             pass_rates_agg[tag][model] = (
                 df_model[["pass_parse", "pass_compile", "pass_tb", "pass_synth"]]
-                .mean()
+                .agg(lambda values: values.mean() if values.notna().all() else np.nan)
                 .to_dict()
             )
 

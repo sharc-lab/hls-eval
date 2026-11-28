@@ -4,7 +4,7 @@ The `pixel_in_triangle` kernel is designed to determine whether a given pixel is
 
 The high-level dataflow of the design involves the following steps: 
 1. Calculate the cross products between the pixel and each edge of the triangle using the formula: $pi = (x - x0) * (y1 - y0) - (y - y0) * (x1 - x0)$, where $(x0, y0)$ and $(x1, y1)$ are the coordinates of two consecutive vertices of the triangle.
-2. Check the signs of the cross products. If all signs are the same (i.e., all positive or all negative), the pixel is considered inside the triangle.
+2. Check the signs of the cross products. If all signs are the same (i.e., all nonnegative or all nonpositive), the pixel is considered inside the triangle.
 3. Return a boolean value indicating whether the pixel is inside the triangle.
 
 The architecture of the design is straightforward, with no complex control flow or data dependencies. The kernel is designed to be efficient and scalable, with a simple and regular dataflow that can be easily pipelined and parallelized.
@@ -31,3 +31,4 @@ Important Data Structures and Data Types:
 
 Sub-Components:
 - None
+Boundary/type contract: include points on edges and vertices. For nondegenerate triangles, return1 exactly when all three signed cross products are nonnegative or all are nonpositive; otherwise return0. Interpret bit8 coordinates as unsigned values0..255, but form differences and cross products in a signed integer type sufficient for the full coordinate range. The unused z field does not affect the result. Triangles in tests are nondegenerate; no collinear-triangle convention is required. Passing a negative literal through bit8 first converts it to its unsigned representation; it is not a negative geometric coordinate.

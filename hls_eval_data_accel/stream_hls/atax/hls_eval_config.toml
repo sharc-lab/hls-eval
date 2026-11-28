@@ -4,3 +4,6 @@ tb_data = [
     "input_1.bin",
     "output_0.bin",
 ]
+
+[comparison]
+kind = "exit_code"

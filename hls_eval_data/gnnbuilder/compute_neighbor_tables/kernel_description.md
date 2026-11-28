@@ -30,3 +30,9 @@ Important Data Structures and Data Types:
 
 Sub-Components:
 - None
+
+### Precise valid-graph and output-domain contract
+
+Inputs satisfy 1 <= num_nodes <= MAX_NODES and 0 <= num_edges <= MAX_EDGES; each endpoint of edge_list[0:num_edges] is in [0,num_nodes). edge_list has MAX_EDGES rows, independently of MAX_NODES. in_degree_table and out_degree_table are supplied graph-consistent input degrees, not additional output arrays. Self-loops and duplicate edges are allowed.
+
+For node v, neighbor_table_offsets[v] is the sum of supplied in-degrees for nodes less than v. Its in-neighbors occupy a contiguous segment of neighbor_table; each element is the source endpoint of an edge ending at v, preserving original edge_list traversal order within that destination. All num_nodes offsets and num_edges neighbor entries are outputs. Output tails beyond those active lengths and scratch/input storage do not have a preservation requirement. Zero-edge graphs still define every active node offset as zero.

@@ -27,7 +27,7 @@ def extract_code_xml_from_llm_output(llm_output: str) -> dict[str, str]:
     code = {}
 
     tags_matches: list[re.Match] = []
-    tags_matches += re.finditer(r"<OUTPUT_CODE name=\".+\">", llm_output)
+    tags_matches += re.finditer(r'<OUTPUT_CODE name="[^"\n]+">', llm_output)
     tags_matches += re.finditer(r"</OUTPUT_CODE(\s+name=\"(?:\S+)\")?>", llm_output)
 
     tags = list(map(lambda x: x.group(0), tags_matches))
@@ -44,7 +44,7 @@ def extract_code_xml_from_llm_output(llm_output: str) -> dict[str, str]:
     for i in range(0, len(sorted_tags), 2):
         start = sorted_tag_locs[i] + sorted_tag_lengths[i]
         end = sorted_tag_locs[i + 1]
-        name = re.findall(r"name=\"(.+)\"", sorted_tags[i])[0]
+        name = re.findall(r'name="([^"\n]+)"', sorted_tags[i])[0]
         code[name] = llm_output[start:end]
 
     return code

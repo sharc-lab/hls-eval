@@ -1,1 +1,8 @@
 tags = ["c2hlsc"]
+
+[comparison]
+kind = "numeric_dump"
+channel = "stdout"
+abs_tol = "1e-9"
+rel_tol = "1e-6"
+token_count = 3

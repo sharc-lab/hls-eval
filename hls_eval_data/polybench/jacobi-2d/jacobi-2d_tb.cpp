@@ -26,10 +26,9 @@ void print_array(int n, double A[30][30])
         for (j = 0; j < n; j++) {
             if ((i * n + j) % 20 == 0)
                 fprintf(stderr, "\n");
-            fprintf(stderr, "%0.6lf ", A[i][j]);
+            fprintf(stderr, "%.17g ", A[i][j]);
         }
     fprintf(stderr, "\nend   dump: %s\n", "A");
-    fprintf(stderr, "==END   DUMP_ARRAYS==\n");
 }
 
 int main() {
@@ -45,6 +44,13 @@ int main() {
     kernel_jacobi_2d(A, B);
 
     print_array(n, A);
+    fprintf(stderr, "begin dump: B\n");
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) fprintf(stderr, "%.17g ", B[i][j]);
+        fprintf(stderr, "\n");
+    }
+    fprintf(stderr, "end   dump: B\n");
+    fprintf(stderr, "==END   DUMP_ARRAYS==\n");
 
     return 0;
 }

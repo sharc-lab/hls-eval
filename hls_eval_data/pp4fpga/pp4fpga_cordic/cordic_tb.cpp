@@ -31,8 +31,10 @@ int main(int argc, char **argv) {
 
     fp = fopen("out.dat", "w");
     for (int i = 1; i < NUM_DEGREE; i++) {
-        radian = i * M_PI / 180;
+        radian = i * 3.141592653589793238462643383279502884 / 180;
         cordic(radian, s, c);
+        printf("CORDIC %d s=%s c=%s\n", i,
+               s.range(11,0).to_string(16).c_str(), c.range(11,0).to_string(16).c_str());
         zs = sin((double)radian);
         zc = cos((double)radian);
         error_sin = (abs_double((double)s - zs) / zs) * 100.0;

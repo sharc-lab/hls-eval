@@ -1,15 +1,5 @@
 Kernel Description:
-The `kernel_seidel_2d` design is an implementation of a Gauss-Seidel style stencil computation over 2D data with a 9-point stencil pattern. The algorithm iteratively updates each element of a 2D array `A` using the average of its nine neighboring elements from the previous time step. The computation is simplified as a stencil operation, where each element is updated using the values of its neighbors.
-
-$$
-\begin{aligned}
-data^{t}_{(i,j)} = \frac{1}{9} \big(
-& data^{t-1}_{(i-1,j-1)} + data^{t-1}_{(i-1,j)} + data^{t-1}_{(i-1,j+1)} \\
-& + data^{t-1}_{(i,j-1)} + data^{t}_{(i,j)} + data^{t-1}_{(i,j+1)} \\
-& + data^{t-1}_{(i+1,j-1)} + data^{t-1}_{(i+1,j)} + data^{t-1}_{(i+1,j+1)}
-\big)
-\end{aligned}
-$$
+The kernel performs an in-place row-major nine-point Gauss-Seidel stencil on A. Repeat20 iterations. Within each iteration, process i=1..38 in increasing order, then j=1..38 in increasing order. Replace A[i][j] by the native-double sum of the nine entries in its3-by3 neighborhood, divided by9.0; sum in row-major neighborhood order, including the center entry. Every read uses the currently stored A: entries already updated in this iteration use their new values and other entries use their previous values. This is not a snapshot/Jacobi update. The boundary rows and columns are preserved.
 
 Note that the design assumes a fixed size of 40x40 for the 2D array `A`, and the number of time steps is fixed at 20. These constants can be modified to accommodate different problem sizes and time steps.
 

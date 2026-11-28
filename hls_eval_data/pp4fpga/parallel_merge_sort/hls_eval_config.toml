@@ -1,1 +1,4 @@
 tags = ["pp4fpga"]
+
+[comparison]
+kind = "exit_code"

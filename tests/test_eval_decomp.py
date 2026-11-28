@@ -25,7 +25,7 @@ def setup_eval(tmp_path):
     for name, content in {
         "top.txt": "top",
         "kernel_description.md": "SECRET_DESCRIPTION",
-        "hls_eval_config.toml": 'tags = ["test"]\ntb_data = ["input.dat"]',
+        "hls_eval_config.toml": 'tags = ["test"]\ntb_data = ["input.dat"]\n[comparison]\nkind = "exit_code"',
         "top.h": "int top(int a); // SECRET_HEADER",
         "top.cpp": "int top(int a) { return a + 1; } // SECRET_IMPLEMENTATION",
         "top_tb.cpp": '#include "top.h"\nint main() { return top(1) != 2; } // SECRET_TB',
@@ -278,6 +278,12 @@ def _run_with_tb_outputs(state, reference_stderr, candidate_stderr, synth_data):
         stderr = reference_stderr if "reference_tb" in build_name else candidate_stderr
         return _tool_output(), _tool_output(stderr=stderr)
 
+    if reference_stderr:
+        config = state.benchmark.design_dir / "hls_eval_config.toml"
+        config.write_text(config.read_text().replace(
+            'kind = "exit_code"',
+            f'kind = "exact_tokens"\nchannel = "stderr"\ntoken_count = {len(reference_stderr.split())}',
+        ))
     state.csim.run.side_effect = run
     original = state.synth.run.side_effect
 
@@ -295,7 +301,7 @@ def test_functional_pass_requires_matching_output_dump(setup_eval):
     used = {"resources_lut_used": 5}
     results = _run_with_tb_outputs(setup_eval, _dump("1.0"), _dump("1.0"), used)
     assert all(d["pass_functional"] for d in results.values())
-    assert results[next(iter(results))]["functional_check"] == "output_dump"
+    assert results[next(iter(results))]["functional_check"]["kind"] == "exact_tokens"
 
 
 def test_functional_fails_when_output_dump_differs(setup_eval):
@@ -305,11 +311,11 @@ def test_functional_fails_when_output_dump_differs(setup_eval):
     assert all(d["pass_compile_tb"] for d in results.values())
 
 
-def test_functional_falls_back_to_exit_code_without_dump(setup_eval):
+def test_declared_self_checker_uses_exit_code(setup_eval):
     used = {"resources_lut_used": 5}
     results = _run_with_tb_outputs(setup_eval, "", "", used)
     assert all(d["pass_functional"] for d in results.values())
-    assert results[next(iter(results))]["functional_check"] == "return_code"
+    assert results[next(iter(results))]["functional_check"]["kind"] == "exit_code"
 
 
 def test_empty_synthesis_does_not_pass_synth(setup_eval):

@@ -90,9 +90,9 @@ def compute_pass_rates_custom(df: pd.DataFrame, ks=[1, 5]):
         for k in ks:
             pass_at_k_parse = pass_at_k(n_samples, n_pass_parse, k)
             pass_at_k_compile = pass_at_k(n_samples, n_pass_compile, k)
-            pass_at_k_tb = pass_at_k(n_samples, n_pass_tb, k)
+            pass_at_k_tb = pass_at_k(n_samples, n_pass_tb, k) if df_group["pass_tb"].notna().all() else np.nan
             pass_at_k_synth = pass_at_k(n_samples, n_pass_synth, k)
-            pass_at_k_tb_and_synth = pass_at_k(n_samples, n_pass_tb_and_synth, k)
+            pass_at_k_tb_and_synth = pass_at_k(n_samples, n_pass_tb_and_synth, k) if df_group["pass_tb"].notna().all() else np.nan
 
             pass_at_k_vals = {
                 "pass_parse": pass_at_k_parse,
@@ -130,7 +130,7 @@ def compute_pass_rates_custom(df: pd.DataFrame, ks=[1, 5]):
     # now what we want to do is for each (metric, k) we want to compute the avcge for each model over all evals
     # df_agg = (
     #     df_new.groupby(["model_name", "metric_name", "k"])
-    #     .agg({"pass_rate": "mean"})
+    #     .agg({"pass_rate": lambda rates: rates.mean(skipna=False)})
     #     .reset_index()
     # )
     # show all the columns
@@ -156,7 +156,7 @@ def compute_pass_rates_custom(df: pd.DataFrame, ks=[1, 5]):
                 "k",
             ]
         )
-        .agg({"pass_rate": "mean"})
+        .agg({"pass_rate": lambda rates: rates.mean(skipna=False)})
         .reset_index()
     )
 
@@ -170,7 +170,7 @@ def compute_pass_rates_custom(df: pd.DataFrame, ks=[1, 5]):
                 "k",
             ]
         )
-        .agg({"pass_rate": "mean"})
+        .agg({"pass_rate": lambda rates: rates.mean(skipna=False)})
         .reset_index()
     )
 

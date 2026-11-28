@@ -1,1 +1,9 @@
 tags = ["polybench"]
+
+[comparison]
+kind = "numeric_dump"
+channel = "stderr"
+abs_tol = "1e-9"
+rel_tol = "1e-6"
+completion_markers = ["==BEGIN DUMP_ARRAYS==", "==END   DUMP_ARRAYS=="]
+token_count = 362

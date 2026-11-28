@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+from hls_eval.comparison import recorded_functional_result
 from hls_eval_experiments.exp_utils import (
     build_df_from_all_eval_json_files,
     build_pass_table,
@@ -58,9 +59,7 @@ def build_trace_df(all_eval_json_paths: list[Path]) -> pd.DataFrame:
     for fp in all_eval_json_paths:
         data = json.loads(fp.read_text())
         for eval_index, ev in data.items():
-            pass_tb = False
-            if "c_run_out" in ev:
-                pass_tb = ev["c_run_out"]["data_execution"]["return_code"] == 0
+            pass_tb = recorded_functional_result(ev)
 
             pass_synth = False
             if "vitis_hls_tool_out" in ev:

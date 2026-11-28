@@ -7,6 +7,7 @@ from typing import Any
 
 from llm import Response
 
+from hls_eval.comparison import execution_succeeded, grade_csim
 from hls_eval.data import BenchmarkCase
 from hls_eval.eval_decomp.prompt_decomp import build_decompilation_prompt
 from hls_eval.eval import EvalThreadPools, Evaluator, serialize_eval_data
@@ -193,7 +194,7 @@ class HLSDecompilationZeroShotEvaluator(Evaluator):
         eval_dir_top: Path,
         eval_id: str,
         pools: EvalThreadPools,
-    ) -> tuple[list[str] | None, dict[str, Any]]:
+    ) -> tuple[ToolDataOutput, ToolDataOutput | None, dict[str, Any]]:
         ref_dir = eval_dir_top / "reference_tb_check"
         ref_dir.mkdir()
         sources = []
@@ -225,23 +226,15 @@ class HLSDecompilationZeroShotEvaluator(Evaluator):
 
         info: dict[str, Any] = {
             "tb_compile_out": _serialize_tool_output(compile_output),
-            "pass_compile_tb": compile_output.data_execution.return_code == 0,
+            "pass_compile_tb": execution_succeeded(compile_output),
             "pass_run": False,
             "has_array_dump": False,
         }
-        if run_output is None:
-            return None, info
-        info["tb_run_out"] = _serialize_tool_output(run_output)
-        info["pass_run"] = run_output.data_execution.return_code == 0
-        if not info["pass_run"]:
-            self.logger.warning(
-                f"[{eval_id}] Reference testbench failed; functional check "
-                "falls back to the exit code only"
-            )
-            return None, info
-        dump = _extract_array_dump(run_output.data_execution.stderr)
-        info["has_array_dump"] = dump is not None
-        return dump, info
+        if run_output is not None:
+            info["tb_run_out"] = _serialize_tool_output(run_output)
+            info["pass_run"] = execution_succeeded(run_output)
+            info["has_array_dump"] = _extract_array_dump(run_output.data_execution.stderr) is not None
+        return compile_output, run_output, info
 
     def evaluate_design(
         self,
@@ -319,7 +312,7 @@ class HLSDecompilationZeroShotEvaluator(Evaluator):
             self.hls_unsafe_math,
         )
 
-        reference_dump, reference_tb_info = self._run_reference_testbench(
+        ref_compile, ref_run, reference_tb_info = self._run_reference_testbench(
             benchmark_case, eval_dir_top, eval_id, pools
         )
         reference_expects_hardware = (
@@ -481,24 +474,17 @@ class HLSDecompilationZeroShotEvaluator(Evaluator):
                 tb_compile_output.data_execution.return_code == 0
                 and not tb_compile_output.data_execution.timeout
             )
-            eval_data["pass_functional"] = False
             if tb_run_output is not None:
                 eval_data["tb_run_out"] = _serialize_tool_output(tb_run_output)
-                tb_ran_ok = (
-                    tb_run_output.data_execution.return_code == 0
-                    and not tb_run_output.data_execution.timeout
+            if execution_succeeded(ref_compile) and execution_succeeded(ref_run):
+                check = grade_csim(
+                    benchmark_case.toml_data.get("comparison"), tb_compile_output,
+                    tb_run_output, ref_compile, ref_run,
                 )
-                candidate_dump = _extract_array_dump(
-                    tb_run_output.data_execution.stderr
-                )
-                if reference_dump is None:
-                    eval_data["functional_check"] = "return_code"
-                    eval_data["pass_functional"] = tb_ran_ok
-                else:
-                    eval_data["functional_check"] = "output_dump"
-                    eval_data["pass_functional"] = (
-                        tb_ran_ok and candidate_dump == reference_dump
-                    )
+            else:
+                check = {"status": "fixture_error", "passed": None, "reason": "Reference testbench failed"}
+            eval_data["functional_check"] = check
+            eval_data["pass_functional"] = check["passed"]
 
             eval_data["vitis_hls_tool_out"] = _serialize_tool_output(synth_output)
             synth_rc_zero = (

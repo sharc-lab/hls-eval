@@ -1,3 +1,4 @@
+import logging
 import shutil
 from pathlib import Path
 
@@ -179,3 +180,16 @@ def find_benchmark_case_dirs(start_dir) -> list[Path]:
     all_dirs = [d for d in start_dir.rglob("*") if d.is_dir()]
     benchmark_case_dirs = [d for d in all_dirs if (d / "hls_eval_config.toml").exists()]
     return benchmark_case_dirs
+
+
+def select_verified_cases(cases: list[BenchmarkCase]) -> list[BenchmarkCase]:
+    """Select the executable cohort before launching a parameterization sweep."""
+    selected = []
+    for case in cases:
+        if case.toml_data.get("comparison"):
+            selected.append(case)
+        else:
+            logging.getLogger(__name__).warning("Skipping %s: no comparison policy", case.design_dir)
+    if not selected:
+        raise ValueError("No cases in the selected cohort have a functional comparison policy")
+    return sorted(selected, key=lambda case: case.name)

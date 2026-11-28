@@ -7,8 +7,12 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+from hls_eval.comparison import recorded_functional_result
+
 
 def pass_at_k(n: int, c: int, k: int) -> float:
+    if k > n:
+        return np.nan
     if n - c < k:
         return 1.0
     return float(1.0 - np.prod(1.0 - k / np.arange(n - c + 1, n + 1)))
@@ -85,6 +89,7 @@ def build_df_from_all_eval_json_files(all_eval_json_paths: list[Path]):
             df_row["model_name"] = eval_data["model_name"]
             df_row["benchmark_case_tags"] = eval_data["benchmark_case_tags"]
 
+            df_row["benchmark_contract_version"] = eval_data.get("benchmark_contract_version", 1)
             df_row["eval_index"] = eval_index
 
             if "can_parse_output" not in eval_data:
@@ -92,21 +97,27 @@ def build_df_from_all_eval_json_files(all_eval_json_paths: list[Path]):
             else:
                 df_row["pass_parse"] = eval_data["can_parse_output"]
 
-            if "c_compile_out" not in eval_data:
+            if "pass_compile_tb" in eval_data:
+                df_row["pass_compile"] = eval_data["pass_compile_tb"]
+            elif "c_compile_out" not in eval_data:
                 df_row["pass_compile"] = False
             else:
                 df_row["pass_compile"] = (
                     eval_data["c_compile_out"]["data_execution"]["return_code"] == 0
                 )
 
-            if "c_run_out" not in eval_data:
-                df_row["pass_tb"] = False
+            df_row["pass_tb"] = recorded_functional_result(eval_data)
+            check = eval_data.get("functional_check")
+            if isinstance(check, dict):
+                df_row["functional_status"] = check["status"]
+            elif df_row["pass_tb"] is None:
+                df_row["functional_status"] = "unverified"
             else:
-                df_row["pass_tb"] = (
-                    eval_data["c_run_out"]["data_execution"]["return_code"] == 0
-                )
+                df_row["functional_status"] = "passed" if df_row["pass_tb"] else "failed"
 
-            if "vitis_hls_tool_out" not in eval_data:
+            if "pass_synth" in eval_data:
+                df_row["pass_synth"] = eval_data["pass_synth"]
+            elif "vitis_hls_tool_out" not in eval_data:
                 df_row["pass_synth"] = False
             else:
                 df_row["pass_synth"] = (
@@ -168,6 +179,8 @@ def build_df_from_all_eval_json_files(all_eval_json_paths: list[Path]):
 
             rows.append(df_row)
 
+    if len({row["benchmark_contract_version"] for row in rows}) > 1:
+        raise ValueError("Select results from a single benchmark contract version")
     df = pd.concat([df, pd.DataFrame(rows)], ignore_index=True)
     return df
 
@@ -186,14 +199,17 @@ def compute_pass_rates(df: pd.DataFrame, ks=[1, 5]):
         n_pass_compile = df_group["pass_compile"].sum()
         n_pass_tb = df_group["pass_tb"].sum()
         n_pass_synth = df_group["pass_synth"].sum()
-        n_pass_tb_and_synth = df_group["pass_tb_and_synth"].sum()
+        n_pass_tb_and_synth = (df_group["pass_tb"].eq(True) & df_group["pass_synth"].eq(True)).sum()
+        functional_known = df_group["pass_tb"].notna().all()
 
         for k in ks:
             pass_at_k_parse = pass_at_k(n_samples, n_pass_parse, k)
             pass_at_k_compile = pass_at_k(n_samples, n_pass_compile, k)
-            pass_at_k_tb = pass_at_k(n_samples, n_pass_tb, k)
+            pass_at_k_tb = pass_at_k(n_samples, n_pass_tb, k) if functional_known else np.nan
             pass_at_k_synth = pass_at_k(n_samples, n_pass_synth, k)
-            pass_at_k_tb_and_synth = pass_at_k(n_samples, n_pass_tb_and_synth, k)
+            pass_at_k_tb_and_synth = (
+                pass_at_k(n_samples, n_pass_tb_and_synth, k) if functional_known else np.nan
+            )
 
             pass_at_k_vals = {
                 "pass_parse": pass_at_k_parse,
@@ -229,7 +245,8 @@ def compute_pass_rates(df: pd.DataFrame, ks=[1, 5]):
     # now what we want to do is for each (metric, k) we want to compute the avcge for each model over all evals
     df_agg = (
         df_new.groupby(["model_name", "metric_name", "k"])
-        .agg({"pass_rate": "mean"})
+        .agg(pass_rate=("pass_rate", lambda rates: rates.mean(skipna=False)),
+             verified_designs=("pass_rate", "count"), eligible_designs=("pass_rate", "size"))
         .reset_index()
     )
 

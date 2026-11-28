@@ -214,6 +214,8 @@ void data_to_output(int fd, void *vdata) {
     // Section 1
     write_section_header(fd);
     write_uint64_t_array(fd, data->level_counts, N_LEVELS);
+    write_section_header(fd);
+    for (int n=0;n<N_NODES;++n) fd_printf(fd,"%d\n",(int)data->level[n]);
 }
 
 int check_data(void *vdata, void *vref) {
@@ -239,11 +241,70 @@ int check_data(void *vdata, void *vref) {
         }
     }
 
+    // Full per-node output, independently calculated from frozen input.data.
+    static const level_t expected_level[N_NODES] = {
+        3, 2, 2, 2, 2, 2, 1, 3, 1, 1, 1, 2, 2, 2, 3, 127,
+        2, 2, 2, 2, 2, 2, 2, 2, 127, 3, 2, 2, 2, 1, 3, 1,
+        2, 2, 2, 127, 2, 3, 0, 2, 2, 2, 2, 2, 2, 2, 127, 2,
+        127, 127, 2, 2, 2, 127, 127, 2, 1, 3, 2, 2, 2, 2, 2, 2,
+        2, 2, 1, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 127, 2, 2,
+        3, 2, 2, 2, 2, 2, 2, 1, 2, 2, 127, 127, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 1, 3, 2, 2, 2, 3, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 1, 2, 3, 2, 127, 127, 2, 2, 1, 2, 3,
+        2, 2, 2, 127, 3, 2, 2, 2, 2, 2, 2, 127, 2, 1, 1, 2,
+        2, 1, 2, 3, 127, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 1, 2, 2, 127, 3, 2, 2, 3, 2, 2, 2, 2, 1, 2,
+        2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 3, 3, 2, 2, 127, 1, 2, 2, 2, 3, 2, 2, 2, 2, 2,
+        2, 2, 127, 127, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 2, 2,
+        2, 2, 2, 2, 2, 3, 2, 2, 2, 2, 127, 2, 2, 2, 2, 3,
+        1, 2, 3, 2, 127, 1, 2, 2, 2, 127, 1, 2, 2, 2, 2, 2
+    };
+    for (int n=0;n<N_NODES;++n) {
+        if (data->level[n] != expected_level[n]) {
+            printf("level[%d]: %d expected %d\n",n,(int)data->level[n],(int)expected_level[n]);
+            has_errors = 1;
+        }
+    }
+
     // Return true if it's correct.
     return !has_errors;
 }
 
+static int check_boundary_cases() {
+    // A chain reaching the last legal depth, plus isolated unreachable nodes.
+    for (int depth = 0; depth < N_LEVELS; depth += N_LEVELS - 1) {
+        node_t nodes[N_NODES] = {};
+        edge_t edges[N_EDGES] = {};
+        level_t levels[N_NODES];
+        struct {
+            edge_index_t counts[N_LEVELS];
+            edge_index_t sentinel;
+        } output = {};
+        output.sentinel = 0x123456789abcdef0ULL;
+        for (int n = 0; n < N_NODES; ++n) {
+            levels[n] = MAX_LEVEL;
+            if (n < depth) {
+                nodes[n].edge_begin = n;
+                nodes[n].edge_end = n + 1;
+                edges[n].dst = n + 1;
+            }
+        }
+        bfs(nodes, edges, 0, levels, output.counts);
+        if (output.sentinel != 0x123456789abcdef0ULL) return 1;
+        for (int n = 0; n < N_NODES; ++n)
+            if (levels[n] != (n <= depth ? n : MAX_LEVEL)) return 1;
+        for (int n = 0; n < N_LEVELS; ++n)
+            if (output.counts[n] != (n <= depth ? 1 : 0)) return 1;
+    }
+    return 0;
+}
+
 int main() {
+    if (check_boundary_cases()) {
+        fprintf(stderr, "BFS boundary regression failed\n");
+        return 1;
+    }
     // Parse command line.
     char *in_file;
     char *check_file;

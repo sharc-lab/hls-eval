@@ -4,6 +4,12 @@
 #include <stdlib.h>
 
 #include "doitgen.h"
+#include <iostream>
+template<class T> void dump_raw(const T& value) {
+  ap_uint<T::width> bits = value.range(T::width-1,0);
+  std::cerr << bits.to_string(16) << ' ';
+}
+
 
 
 t_ap_fixed A[ 25 + 0][20 + 0][30 + 0];
@@ -23,7 +29,7 @@ void init_array(int nr, int nq, int np,
 	A[i][j][k] = (t_ap_fixed) ((i*j + k)%np) / np;
   for (i = 0; i < np; i++)
     for (j = 0; j < np; j++)
-      C4[i][j] = (t_ap_fixed) (i*j % np) / np;
+      C4[i][j] = (t_ap_fixed) ((i*7 + j*11 + 3) % np) / np;
 }
 
 
@@ -38,7 +44,7 @@ void print_array(int nr, int nq, int np,
     for (j = 0; j < nq; j++)
       for (k = 0; k < np; k++) {
 	if ((i*nq*np+j*np+k) % 20 == 0) fprintf (stderr, "\n");
-	fprintf (stderr, "%0.6lf ", (float)A[i][j][k]);
+	dump_raw(A[i][j][k]);
       }
   fprintf(stderr, "\nend   dump: %s\n", "A");
   fprintf(stderr, "==END   DUMP_ARRAYS==\n");

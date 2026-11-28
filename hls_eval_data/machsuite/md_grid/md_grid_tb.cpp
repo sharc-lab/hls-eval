@@ -151,12 +151,15 @@ struct bench_args_t {
     dvector_t position[blockSide][blockSide][blockSide][densityFactor];
 };
 
+static int32_t fixture_n_points[blockSide][blockSide][blockSide];
+
 int INPUT_SIZE = sizeof(struct bench_args_t);
 
 #define EPSILON ((TYPE)1.0e-6)
 
 void run_benchmark(void *vargs) {
     struct bench_args_t *args = (struct bench_args_t *)vargs;
+    memcpy(fixture_n_points, args->n_points, sizeof(fixture_n_points));
     md(args->n_points, args->force, args->position);
 }
 
@@ -242,7 +245,7 @@ int check_data(void *vdata, void *vref) {
     for (i = 0; i < blockSide; i++) {
         for (j = 0; j < blockSide; j++) {
             for (k = 0; k < blockSide; k++) {
-                for (d = 0; d < densityFactor; d++) {
+                for (d = 0; d < fixture_n_points[i][j][k]; d++) {
                     diff_x =
                         data->force[i][j][k][d].x - ref->force[i][j][k][d].x;
                     diff_y =
@@ -250,8 +253,8 @@ int check_data(void *vdata, void *vref) {
                     diff_z =
                         data->force[i][j][k][d].z - ref->force[i][j][k][d].z;
 
-                    has_errors |= (diff_x < -EPSILON) || (EPSILON < diff_x);
-                    if ((diff_x < -EPSILON) || (EPSILON < diff_x)) {
+                    has_errors |= !((-EPSILON <= diff_x) && (diff_x <= EPSILON));
+                    if (!((-EPSILON <= diff_x) && (diff_x <= EPSILON))) {
                         printf(
                             "Mismatch at force[%d][%d][%d][%d].x\n",
                             i,
@@ -263,8 +266,8 @@ int check_data(void *vdata, void *vref) {
                         printf("  Diff: %f\n", diff_x);
                     }
 
-                    has_errors |= (diff_y < -EPSILON) || (EPSILON < diff_y);
-                    if ((diff_y < -EPSILON) || (EPSILON < diff_y)) {
+                    has_errors |= !((-EPSILON <= diff_y) && (diff_y <= EPSILON));
+                    if (!((-EPSILON <= diff_y) && (diff_y <= EPSILON))) {
                         printf(
                             "Mismatch at force[%d][%d][%d][%d].y\n",
                             i,
@@ -276,8 +279,8 @@ int check_data(void *vdata, void *vref) {
                         printf("  Diff: %f\n", diff_y);
                     }
 
-                    has_errors |= (diff_z < -EPSILON) || (EPSILON < diff_z);
-                    if ((diff_z < -EPSILON) || (EPSILON < diff_z)) {
+                    has_errors |= !((-EPSILON <= diff_z) && (diff_z <= EPSILON));
+                    if (!((-EPSILON <= diff_z) && (diff_z <= EPSILON))) {
                         printf(
                             "Mismatch at force[%d][%d][%d][%d].z\n",
                             i,

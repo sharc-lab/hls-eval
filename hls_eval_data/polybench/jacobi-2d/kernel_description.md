@@ -23,7 +23,7 @@ Inputs:
 - `B`: a 2D array of size 30x30, representing the output data for the stencil computation.
 
 Outputs:
-- None
+- `A` and `B`: both 30x30 arrays are updated in place. Each of the 20 time steps first writes the interior of B from A and then the interior of A from the newly written B, using the given 5-point expression. Boundary elements of both arrays retain their entry values.
 
 Important Data Structures and Data Types:
 - `double [30][30]`: a 2D array of size 30x30, used to represent the input and output data for the stencil computation.

@@ -73,12 +73,12 @@ fill_out:
 trace:
     while (a_idx > 0 || b_idx > 0) {
         r = b_idx * (ALEN + 1);
-        if (ptr[r + a_idx] == ALIGN) {
+        if (a_idx > 0 && b_idx > 0 && ptr[r + a_idx] == ALIGN) {
             alignedA[a_str_idx++] = SEQA[a_idx - 1];
             alignedB[b_str_idx++] = SEQB[b_idx - 1];
             a_idx--;
             b_idx--;
-        } else if (ptr[r + a_idx] == SKIPB) {
+        } else if (a_idx > 0 && (b_idx == 0 || ptr[r + a_idx] == SKIPB)) {
             alignedA[a_str_idx++] = SEQA[a_idx - 1];
             alignedB[b_str_idx++] = '-';
             a_idx--;

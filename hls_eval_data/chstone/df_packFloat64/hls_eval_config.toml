@@ -1,1 +1,4 @@
 tags = ["chstone"]
+
+[comparison]
+kind = "exit_code"

@@ -1,1 +1,6 @@
 tags = ["c2hlsc"]
+
+[comparison]
+kind = "exact_tokens"
+channel = "stdout"
+token_count = 4

@@ -10,11 +10,18 @@ void kernel_gramschmidt(double A[20][30], double R[30][30], double Q[20][30]) {
 
     double nrm;
 
+    for (i = 0; i < n; ++i)
+        for (j = 0; j < n; ++j) R[i][j] = 0;
+
     for (k = 0; k < n; k++) {
         nrm = 0.0;
         for (i = 0; i < m; i++)
             nrm += A[i][k] * A[i][k];
         R[k][k] = sqrt(nrm);
+        if (R[k][k] == 0.0) {
+            for (i = 0; i < m; ++i) Q[i][k] = 0.0;
+            continue;
+        }
         for (i = 0; i < m; i++)
             Q[i][k] = A[i][k] / R[k][k];
         for (j = k + 1; j < n; j++) {

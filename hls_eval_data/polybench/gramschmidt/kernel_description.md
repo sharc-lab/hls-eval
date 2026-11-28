@@ -1,35 +1,7 @@
-Kernel Description:
-The kernel_gramschmidt design is an implementation of the Modified Gram-Schmidt algorithm for QR decomposition. It takes a matrix A as input and produces two matrices Q and R such that A = QR, where Q is an orthogonal matrix and R is an upper triangular matrix. The algorithm is described in a tech report by Walter Gander.
+# Rank-deficient modified Gram-Schmidt numerical kernel
 
-The design consists of three main stages: normalization, orthogonalization, and update. In the normalization stage, the norm of each column of A is computed and stored in the diagonal elements of R. In the orthogonalization stage, each column of A is divided by the corresponding norm to produce the columns of Q. In the update stage, the remaining columns of A are updated using the computed Q and R.
+Use the complete original header and its scalar types/dimensions. A is 20x30, Q is 20x30, and R is 30x30. M=20<N=30; a full-column-rank input or N mutually orthonormal columns is not required or possible. This is a numerical recurrence with dependent columns permitted, rather than a promise of a full-rank thin QR factorization.
 
-It takes the following as input,
+Initialize every entry of R to zero. Process columns k in increasing order. In the declared scalar type, initialize norm to zero and accumulate A[i][k]*A[i][k] for rows i in increasing order, with a store into norm after each addition. Store sqrt(norm) into R[k][k] using the native sqrt for double or hls::sqrt for the fixed type. If the stored diagonal is exactly zero, write Q[i][k]=0 for all rows and leave the rest of this R row zero; continue to the next column without dividing by zero or updating the remaining A columns. There is no near-zero threshold or epsilon replacement.
 
-- $A: M \times N$ rank $N$ matrix ($M \geq N$).
-
-and gives the following as outputs:
-
-- $Q: M \times N$ orthogonal matrix
-- $R: N \times N$ upper triangular matrix
-
-such that $A = QR$.
-
----
-
-Top-Level Function: `kernel_gramschmidt`
-
-Complete Function Signature of the Top-Level Function:
-`void kernel_gramschmidt(double A[20][30], double R[30][30], double Q[20][30]);`
-
-Inputs:
-- `A`: a 20x30 matrix of doubles, representing the input matrix to be decomposed.
-
-Outputs:
-- `Q`: a 20x30 matrix of doubles, representing the orthogonal matrix.
-- `R`: a 30x30 matrix of doubles, representing the upper triangular matrix.
-
-Important Data Structures and Data Types:
-- `double`: a 64-bit floating-point number, used to represent the elements of the input and output matrices.
-
-Sub-Components:
-- None
+Otherwise write Q[i][k]=A[i][k]/R[k][k] in the declared type. For each column j>k in increasing order, accumulate R[k][j] from zero using Q[i][k]*A[i][j], storing in the declared type after each row addition, then update each A[i][j] with A[i][j]-Q[i][k]*R[k][j], storing in the declared type. Observable results are all Q and R entries and the in-place residual A. Input values are finite and supplied so that computed squared norms do not overflow and are nonnegative in the declared type. The testbench serializes native double outputs with 17 significant digits; comparison accepts an absolute error of max(1e-9, 1e-6*abs(expected)). Conversion and storage points above define the numerical kernel.

@@ -36,7 +36,7 @@ void print_array(int m,
   for (i = 0; i < m; i++)
     for (j = 0; j < m; j++) {
       if ((i * m + j) % 20 == 0) fprintf (stderr, "\n");
-      fprintf (stderr, "%0.6lf ", (float)cov[i][j]);
+      fprintf(stderr, "%s ", ap_uint<32>(cov[i][j].range(31, 0)).to_string(16).c_str());
     }
   fprintf(stderr, "\nend   dump: %s\n", "cov");
   fprintf(stderr, "==END   DUMP_ARRAYS==\n");

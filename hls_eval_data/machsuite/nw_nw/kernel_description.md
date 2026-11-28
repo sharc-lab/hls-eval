@@ -42,3 +42,5 @@ Sub-Components:
 - `fill_out` and `fill_in`: nested loops to fill the matrix `M` with similarity scores.
 - `trace`: a loop to trace back the optimal alignment path from the filled matrix and generate the aligned sequences.
 - `pad_a` and `pad_b`: loops to pad the aligned sequences with underscores to ensure a fixed length of `ALEN+BLEN` characters.
+
+Deterministic output clarification: use MATCH_SCORE=1, MISMATCH_SCORE=-1 and GAP_SCORE=-1. When optimal scores tie, choose the left predecessor first (consume SEQA, put '-' in alignedB), then the up predecessor (consume SEQB, put '-' in alignedA), then the diagonal predecessor. Starting from (ALEN,BLEN), emit traceback characters in that traversal order (the aligned arrays are reversed, not subsequently reversed to forward order); pad every remaining element of both ALEN+BLEN arrays with '_'. At the matrix boundary, consume only the remaining sequence without reading a predecessor outside the matrix or a sequence at negative index. M and ptr are working storage; the two aligned arrays are the functional outputs checked here.

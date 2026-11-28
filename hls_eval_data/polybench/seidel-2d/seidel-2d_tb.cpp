@@ -10,7 +10,7 @@ void init_array(int n, double A[40][40]) {
 
     for (i = 0; i < n; i++)
         for (j = 0; j < n; j++)
-            A[i][j] = ((double)i * (j + 2) + 2) / n;
+            A[i][j] = (double)((i*37 + j*17 + i*j*3) % 97) / 128.0;
 }
 
 void print_array(int n, double A[40][40])
@@ -24,7 +24,7 @@ void print_array(int n, double A[40][40])
         for (j = 0; j < n; j++) {
             if ((i * n + j) % 20 == 0)
                 fprintf(stderr, "\n");
-            fprintf(stderr, "%0.6lf ", A[i][j]);
+            fprintf(stderr, "%.17g ", A[i][j]);
         }
     fprintf(stderr, "\nend   dump: %s\n", "A");
     fprintf(stderr, "==END   DUMP_ARRAYS==\n");
