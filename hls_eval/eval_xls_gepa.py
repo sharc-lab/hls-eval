@@ -72,10 +72,10 @@ def _ir_signature(ir: str) -> str:
 
 def _dslx_signature(source: str, top: str) -> str:
     uncommented = re.sub(r"//[^\n]*|/\*.*?\*/", "", source, flags=re.S)
-    match = re.search(r"\bpub\s+fn\s+" + re.escape(top) +
+    match = re.search(r"\b(?:pub\s+)?fn\s+" + re.escape(top) +
                       r"\s*\((.*?)\)\s*->\s*([^\{]+)\{", uncommented, re.S)
     if not match:
-        raise ValueError(f"Missing public DSLX top function: {top}")
+        raise ValueError(f"Missing DSLX top function: {top}")
     return re.sub(r"\s+", "", f"({match.group(1)})->{match.group(2)}")
 
 

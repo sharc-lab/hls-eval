@@ -1,0 +1,7 @@
+{
+  "source_repository": "sharc-lab/HLSFactory",
+  "source_commit": "2aba8756de8e2fab1d1095b2483cfa695bf3be10",
+  "source_path": "hlsfactory/hls_dataset_sources/xls_upstream/adler32/adler32.x",
+  "source_sha256": "8643a8d99c830652df6ace6015b424ee8027019e357eec5d175863f8a464684c",
+  "license": "Apache-2.0 (see source file header)"
+}

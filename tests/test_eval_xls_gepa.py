@@ -2,11 +2,12 @@
 
 import json
 import hashlib
+import importlib.util
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
-from hls_eval.eval_xls_gepa import XLSGepaConfig, XLSGepaEvaluator
+from hls_eval.eval_xls_gepa import XLSGepaConfig, XLSGepaEvaluator, _split_tests
 
 
 ORIGINAL = """const W = s32:1;
@@ -114,8 +115,66 @@ class XLSGepaEvaluatorTests(unittest.TestCase):
             XLSGepaEvaluator(source, self.tmp_path, self.tmp_path / "work",
                              XLSGepaConfig(top="idct"))
 
+    def test_nonpublic_top_function_is_supported(self):
+        source = self.tmp_path / "nonpublic.x"
+        source.write_text(ORIGINAL.replace("pub fn idct", "fn idct"))
+        xls = self.tmp_path / "xls"
+        xls.mkdir()
+        evaluator = FakeXLS(source, xls, self.tmp_path / "work",
+                            XLSGepaConfig(top="idct"))
+        self.assertEqual(evaluator.evaluate()["correctness_status"],
+                         "passed_testbench")
+
     def test_bundled_idct_matches_pinned_provenance(self):
         case_dir = Path(__file__).parents[1] / "hls_eval_data/xls/idct_chen"
         provenance = json.loads((case_dir / "PROVENANCE.json").read_text())
         actual = hashlib.sha256((case_dir / "idct_chen.x").read_bytes()).hexdigest()
         self.assertEqual(actual, provenance["source_sha256"])
+
+    def test_bundled_adler32_matches_pinned_provenance(self):
+        case_dir = Path(__file__).parents[1] / "hls_eval_data/xls/adler32"
+        provenance = json.loads((case_dir / "PROVENANCE.json").read_text())
+        actual = hashlib.sha256((case_dir / "adler32.x").read_bytes()).hexdigest()
+        self.assertEqual(actual, provenance["source_sha256"])
+        manifest = json.loads((case_dir / "gepa-config.json").read_text())
+        summary = json.loads((case_dir / "gepa-one-call-summary.json").read_text())
+        self.assertEqual(actual, manifest["source_sha256"])
+        self.assertEqual(actual, summary["baseline"]["original_source_sha256"])
+        self.assertEqual(summary["model_calls"], 1)
+        self.assertFalse(summary["improvement_achieved"])
+
+    def test_published_validation_sources_match_result_hashes(self):
+        repo = Path(__file__).parents[1]
+        pinned = repo / "hls_eval_data/xls/idct_chen/idct_chen.x"
+        original_hash = hashlib.sha256(pinned.read_bytes()).hexdigest()
+        for name in ("manual-v2", "incorrect"):
+            with self.subTest(name=name):
+                source = (repo / "validation" / f"{name}.x").read_text(encoding="utf-8")
+                implementation, _, _ = _split_tests(source)
+                record = json.loads((repo / "validation" / f"{name}.json").read_text())
+                self.assertEqual(hashlib.sha256(implementation.encode()).hexdigest(),
+                                 record["source_sha256"])
+                self.assertEqual(original_hash, record["original_source_sha256"])
+
+    @unittest.skipUnless(importlib.util.find_spec("gepa"), "GEPA is optional")
+    def test_real_gepa_adapter_with_deterministic_reflection(self):
+        original = self.tmp_path / "idct.x"
+        original.write_text(ORIGINAL)
+        xls = self.tmp_path / "xls"
+        xls.mkdir()
+        evaluator = FakeXLS(original, xls, self.tmp_path / "work",
+                            XLSGepaConfig(top="idct", max_model_calls=1,
+                                          max_metric_calls=3,
+                                          search_timeout_seconds=30))
+        responses = []
+
+        def reflect(prompt):
+            responses.append(prompt)
+            return "```dslx\n" + ORIGINAL.replace("s32:1;", "s32:1; // same value", 1) + "\n```"
+
+        summary = evaluator.run_gepa(reflect)
+        self.assertEqual(len(responses), 1)
+        self.assertEqual(summary["model_calls"], 1)
+        self.assertFalse(summary["improvement_achieved"])
+        self.assertEqual(summary["best"]["correctness_status"], "passed_testbench")
+        self.assertTrue((Path(summary["run_dir"]) / "summary.json").is_file())

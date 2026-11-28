@@ -1,0 +1,30 @@
+{
+  "source_file": "/tmp/hls-eval-xls-gepa-review/hls_eval_data/xls/adler32/adler32.x",
+  "source_sha256": "8643a8d99c830652df6ace6015b424ee8027019e357eec5d175863f8a464684c",
+  "xls_root": "/home/xls-developer/xls",
+  "test_count": 1,
+  "tool_sha256": {
+    "interpreter": "c5e60c3ebd9c09ada16e24d5a10013083ca616dd25bf1249034fc01a2a08e6ae",
+    "convert": "588e6a18473a4e4c17053538bd4f53e8a082146fa5f8976c6054a87778c4afec",
+    "opt": "974882f0c051a4cba1cebaafa0f6f1a10d2df1bfba4f2474b816023838d325e5",
+    "codegen": "e84b8e7e95b3b71ec049a6da7d1a0e8ba4d2f40bdb90af0fd84620025e3c6ba9",
+    "delay": "d3197005cf5d94f08e71b1f927686afb4b1c481cfb1182c4df0c41876a5e5a50",
+    "formal": "68a6d5fa266fe5a3f24f41acb6c90e0bcc3b6ee462144ca3f158ab69524568f3"
+  },
+  "evaluator_sha256": "b1251463d33047d591a06ff2bd3942b48f29e628797e8f6d2db20e6a42d77769",
+  "correctness_gate": "protected_original_dslx_tests_and_codegen",
+  "formal_policy": "counterexample_rejects; timeout_inconclusive",
+  "config": {
+    "top": "main",
+    "pipeline_stages": 1,
+    "delay_model": "unit",
+    "secondary_delay_model": "asap7",
+    "opt_level": 3,
+    "command_timeout_seconds": 180,
+    "formal_timeout_seconds": 60,
+    "max_metric_calls": 12,
+    "max_model_calls": 1,
+    "search_timeout_seconds": 1800,
+    "seed": 20260930
+  }
+}
